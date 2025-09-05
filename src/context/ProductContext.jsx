@@ -26,7 +26,6 @@ export const ProductProvider = ({ children }) => {
 
     try {
       const response = await apiService.getProducts(params);
-      console.log(response);
       if (!response.success) {
         throw new Error("Failed to fetch products");
       }
