@@ -1,0 +1,1121 @@
+.pageContainer {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.loadingContainer {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingContent {
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid #2563eb;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #4b5563;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.subtitle {
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .statsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .statsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.statCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.statContent {
+  display: flex;
+  align-items: center;
+}
+
+.statIconContainer {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.statIcon {
+  height: 1.5rem;
+  width: 1.5rem;
+  color: white;
+}
+
+.statIconBlue {
+  background-color: #3b82f6;
+}
+
+.statIconGreen {
+  background-color: #10b981;
+}
+
+.statIconPurple {
+  background-color: #8b5cf6;
+}
+
+.statIconYellow {
+  background-color: #f59e0b;
+}
+
+.statText {
+  margin-left: 1rem;
+}
+
+.statName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.statValueContainer {
+  display: flex;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.statChange {
+  margin-left: 0.5rem;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+}
+
+.statChangeUp {
+  color: #059669;
+}
+
+.statChangeIcon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.25rem;
+}
+
+.alertsContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.alert {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  display: flex;
+  align-items: center;
+}
+
+.alertYellow {
+  background-color: #fffbeb;
+  border: 1px solid #fcd34d;
+}
+
+.alertRed {
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+}
+
+.alertIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.alertYellowIcon {
+  color: #d97706;
+}
+
+.alertRedIcon {
+  color: #dc2626;
+}
+
+.alertContent {
+  flex: 1;
+}
+
+.alertTitle {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.alertYellowTitle {
+  color: #92400e;
+}
+
+.alertRedTitle {
+  color: #991b1b;
+}
+
+.alertMessage {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.alertYellowMessage {
+  color: #b45309;
+}
+
+.alertRedMessage {
+  color: #b91c1c;
+}
+
+.alertButton {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.alertYellowButton {
+  background-color: #d97706;
+  color: white;
+}
+
+.alertYellowButton:hover {
+  background-color: #b45309;
+}
+
+.alertRedButton {
+  background-color: #dc2626;
+  color: white;
+}
+
+.alertRedButton:hover {
+  background-color: #b91c1c;
+}
+
+.tabsContainer {
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 2rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 2rem;
+}
+
+.tabButton {
+  padding: 0.5rem 0;
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.tabButton:hover {
+  color: #374151;
+  border-bottom-color: #d1d5db;
+}
+
+.tabButtonActive {
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+}
+
+.tabIcon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.5rem;
+}
+
+.tabContent {
+  margin-bottom: 2rem;
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .overviewGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.cardHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.cardTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.cardBody {
+  padding: 1.5rem;
+}
+
+.activityList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.activityItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.activityIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.activityGreenIcon {
+  color: #059669;
+}
+
+.activityBlueIcon {
+  color: #2563eb;
+}
+
+.activityPurpleIcon {
+  color: #7c3aed;
+}
+
+.activityContent {
+  flex: 1;
+}
+
+.activityMessage {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.activityTime {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.productList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.productItem {
+  display: flex;
+  align-items: center;
+}
+
+.productImage {
+  height: 3rem;
+  width: 3rem;
+  border-radius: 0.5rem;
+  object-fit: cover;
+}
+
+.productInfo {
+  margin-left: 1rem;
+  flex: 1;
+}
+
+.productName {
+  font-weight: 500;
+  color: #111827;
+}
+
+.productVendor {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.productDetails {
+  text-align: right;
+}
+
+.productPrice {
+  font-weight: 500;
+  color: #111827;
+}
+
+.productRating {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.quickActions {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.quickActionsTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.quickActionsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .quickActionsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.quickActionLink {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.quickActionLink:hover {
+  background-color: #f9fafb;
+}
+
+.quickActionIcon {
+  height: 2rem;
+  width: 2rem;
+  margin-right: 0.75rem;
+}
+
+.quickActionBlueIcon {
+  color: #2563eb;
+}
+
+.quickActionGreenIcon {
+  color: #059669;
+}
+
+.quickActionPurpleIcon {
+  color: #7c3aed;
+}
+
+.quickActionOrangeIcon {
+  color: #ea580c;
+}
+
+.quickActionIndigoIcon {
+  color: #4f46e5;
+}
+
+.quickActionPinkIcon {
+  color: #db2777;
+}
+
+.quickActionYellowIcon {
+  color: #d97706;
+}
+
+.quickActionGrayIcon {
+  color: #6b7280;
+}
+
+.quickActionContent {
+  flex: 1;
+}
+
+.quickActionTitle {
+  font-weight: 500;
+  color: #111827;
+}
+
+.quickActionDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.tableContainer {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tableHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tableTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.tableInfo {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHead {
+  background-color: #f9fafb;
+}
+
+.tableHeaderCell {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tableRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableRow:hover {
+  background-color: #f9fafb;
+}
+
+.tableCell {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+}
+
+.vendorCell {
+  display: flex;
+  align-items: center;
+}
+
+.vendorImage {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.vendorInfo {
+  margin-left: 1rem;
+}
+
+.vendorName {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.vendorEmail {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.badge {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 9999px;
+}
+
+.badgeGreen {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badgeYellow {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.badgeRed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.badgeGray {
+  background-color: #f3f4f6;
+  color: #374151;
+}
+
+.actionCell {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  color: #4b5563;
+  transition: color 0.2s;
+}
+
+.actionButton:hover {
+  color: #111827;
+}
+
+.actionIcon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .productsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.productCard {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: box-shadow 0.2s;
+}
+
+.productCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.productCardImage {
+  width: 100%;
+  height: 12rem;
+  object-fit: cover;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.productCardName {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.productCardVendor {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.productCardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.productCardPrice {
+  font-size: 1.125rem;
+  font-weight: bold;
+  color: #2563eb;
+}
+
+.productCardRating {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.productCardActions {
+  display: flex;
+  gap: 0.5rem;
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+}
+
+.productCardAction {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.productCardActionBlue {
+  color: #2563eb;
+}
+
+.productCardActionBlue:hover {
+  color: #1d4ed8;
+}
+
+.productCardActionGreen {
+  color: #059669;
+}
+
+.productCardActionGreen:hover {
+  color: #047857;
+}
+
+.productCardActionRed {
+  color: #dc2626;
+}
+
+.productCardActionRed:hover {
+  color: #b91c1c;
+}
+
+.userStatsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .userStatsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.userStatCard {
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.userStatCardBlue {
+  background-color: #dbeafe;
+}
+
+.userStatCardGreen {
+  background-color: #dcfce7;
+}
+
+.userStatCardPurple {
+  background-color: #e9d5ff;
+}
+
+.userStatContent {
+  display: flex;
+  align-items: center;
+}
+
+.userStatIcon {
+  height: 2rem;
+  width: 2rem;
+  margin-right: 0.75rem;
+}
+
+.userStatBlueIcon {
+  color: #2563eb;
+}
+
+.userStatGreenIcon {
+  color: #059669;
+}
+
+.userStatPurpleIcon {
+  color: #7c3aed;
+}
+
+.userStatText {
+  flex: 1;
+}
+
+.userStatLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.userStatBlueLabel {
+  color: #1e40af;
+}
+
+.userStatGreenLabel {
+  color: #065f46;
+}
+
+.userStatPurpleLabel {
+  color: #5b21b6;
+}
+
+.userStatValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.userStatBlueValue {
+  color: #1e40af;
+}
+
+.userStatGreenValue {
+  color: #065f46;
+}
+
+.userStatPurpleValue {
+  color: #5b21b6;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #6b7280;
+}
+
+.emptyIcon {
+  height: 3rem;
+  width: 3rem;
+  color: #9ca3af;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+}
+
+.emptyText {
+  font-size: 0.875rem;
+}
+
+.analyticsControls {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.analyticsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.analyticsTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.analyticsSelect {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+
+.analyticsSelect:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .analyticsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.analyticsCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.analyticsCardTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.analyticsChart {
+  height: 16rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.salesChart {
+  background: linear-gradient(to bottom right, #dbeafe, #e0e7ff);
+}
+
+.visitorsChart {
+  background: linear-gradient(to bottom right, #dcfce7, #d1fae5);
+}
+
+.chartPlaceholder {
+  text-align: center;
+}
+
+.chartIcon {
+  height: 4rem;
+  width: 4rem;
+  margin-bottom: 1rem;
+}
+
+.salesChartIcon {
+  color: #3b82f6;
+}
+
+.visitorsChartIcon {
+  color: #10b981;
+}
+
+.chartLabel {
+  color: #4b5563;
+}
+
+.chartValue {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.categoriesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .categoriesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .categoriesGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.categoryCard {
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+.categoryName {
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.categorySales {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #2563eb;
+  margin-bottom: 0.25rem;
+}
+
+.categoryPercentage {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.adminTools {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-top: 2rem;
+}
+
+.adminToolsTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.adminToolsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .adminToolsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .adminToolsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.adminToolLink {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.adminToolLink:hover {
+  background-color: #f9fafb;
+}
+
+.adminToolIcon {
+  height: 2rem;
+  width: 2rem;
+  margin-right: 0.75rem;
+}
+
+.adminToolBlueIcon {
+  color: #2563eb;
+}
+
+.adminToolGreenIcon {
+  color: #059669;
+}
+
+.adminToolPurpleIcon {
+  color: #7c3aed;
+}
+
+.adminToolOrangeIcon {
+  color: #ea580c;
+}
+
+.adminToolIndigoIcon {
+  color: #4f46e5;
+}
+
+.adminToolPinkIcon {
+  color: #db2777;
+}
+
+.adminToolYellowIcon {
+  color: #d97706;
+}
+
+.adminToolGrayIcon {
+  color: #6b7280;
+}
+
+.adminToolContent {
+  flex: 1;
+}
+
+.adminToolTitle {
+  font-weight: 500;
+  color: #111827;
+}
+
+.adminToolDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}

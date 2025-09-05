@@ -1,0 +1,735 @@
+/* Modern Header Styles */
+.header {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  transition: all 0.3s ease;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding: 0 2rem;
+  }
+}
+
+/* Main Navigation */
+.mainNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 4rem;
+  gap: 1rem;
+}
+
+/* Logo */
+.logo {
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.logoLink {
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.logoText {
+  font-size: 1.75rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #1e3a8a, #7c3aed);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  letter-spacing: -0.025em;
+}
+
+.navAndActions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+/* Desktop Navigation */
+.desktopNav {
+  display: none;
+  align-items: center;
+  gap: 1.5rem;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 1024px) {
+  .desktopNav {
+    display: flex;
+  }
+}
+
+.navLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #374151;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.navLink:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.05);
+  transform: translateY(-1px);
+}
+
+.navLink:active {
+  transform: translateY(0);
+}
+
+/* Always Visible Buttons - AR Showroom and Social */
+.alwaysVisibleButtons {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+@media (max-width: 450px) {
+  .alwaysVisibleButtons {
+    gap: 0;
+  }
+}
+
+.alwaysVisibleButton {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  color: #374151;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
+  position: relative;
+  background: rgba(30, 58, 138, 0.05);
+  border: 1px solid rgba(30, 58, 138, 0.1);
+}
+
+@media (max-width: 450px) {
+  .alwaysVisibleButton:nth-child(2) {
+    display: none;
+  }
+}
+
+.alwaysVisibleButton:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.05);
+  transform: translateY(-1px);
+}
+
+.alwaysVisibleButtonText {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  .alwaysVisibleButtonText {
+    display: inline;
+  }
+
+  .alwaysVisibleButton {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+  }
+}
+
+/* Mobile Search Bar */
+.mobileSearchBar {
+  display: block;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+@media (min-width: 768px) {
+  .mobileSearchBar {
+    display: none;
+  }
+}
+
+.mobileSearchContainer {
+  position: relative;
+}
+
+/* Search Bar Below Header */
+.searchBarBelowHeader {
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 4rem;
+  z-index: 45;
+  animation: slideDown 0.3s ease-out;
+}
+
+.searchBarContainer {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+@media (min-width: 640px) {
+  .searchBarContainer {
+    padding: 0 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .searchBarContainer {
+    padding: 0 2rem;
+  }
+}
+
+.searchBarContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+
+.closeSearchBarButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #374151;
+  background: rgba(55, 65, 81, 0.05);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.closeSearchBarButton:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.1);
+}
+
+/* Desktop Actions */
+.desktopActions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+/* Search Button */
+.searchButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #374151;
+  background: rgba(55, 65, 81, 0.05);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.searchButton:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.1);
+  transform: translateY(-1px);
+}
+
+@media (min-width: 768px) {
+  .searchButton {
+    display: flex;
+  }
+}
+
+/* Action Buttons */
+.actionButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #374151;
+  background: rgba(55, 65, 81, 0.05);
+  border: none;
+  border-radius: 0.75rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.actionButton:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.1);
+  transform: translateY(-1px);
+}
+
+/* Hide wishlist button on very small screens */
+.hideOnSmallScreen {
+  display: flex;
+}
+
+@media (max-width: 450px) {
+  .hideOnSmallScreen {
+    display: none;
+  }
+}
+
+/* Badges */
+.badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 0.25rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: white;
+  border: 2px solid white;
+}
+
+.wishlistBadge {
+  background: linear-gradient(135deg, #ec4899, #f43f5e);
+}
+
+.cartBadge {
+  background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+/* User Menu */
+.userMenu {
+  position: relative;
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  padding: 0.25rem;
+  background: none;
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.userButton:hover {
+  background: rgba(30, 58, 138, 0.05);
+  transform: translateY(-1px);
+}
+
+.avatarContainer {
+  position: relative;
+}
+
+.avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  object-fit: cover;
+  border: 2px solid rgba(30, 58, 138, 0.1);
+  transition: all 0.3s ease;
+}
+
+.userButton:hover .avatar {
+  border-color: rgba(30, 58, 138, 0.3);
+}
+
+.notificationDot {
+  position: absolute;
+  top: -0.125rem;
+  right: -0.125rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  border: 2px solid white;
+  border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+
+/* Dropdown Menus */
+.dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.5rem);
+  min-width: 16rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 0.5rem;
+  z-index: 60;
+  animation: dropdownSlide 0.2s ease-out;
+}
+
+.dropdownHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.dropdownAvatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  object-fit: cover;
+}
+
+.dropdownUserInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.dropdownUserName {
+  font-weight: 600;
+  color: #111827;
+  font-size: 0.875rem;
+}
+
+.dropdownUserRole {
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: #374151;
+  text-decoration: none;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  position: relative;
+}
+
+.dropdownItem:hover {
+  background: rgba(30, 58, 138, 0.05);
+  color: #1e3a8a;
+  transform: translateX(0.125rem);
+}
+
+.dropdownButton {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: #dc2626;
+  background: none;
+  border: none;
+  border-radius: 0.75rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.dropdownButton:hover {
+  background: rgba(220, 38, 38, 0.05);
+  transform: translateX(0.125rem);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05);
+  margin: 0.5rem 0;
+}
+
+.notificationCount,
+.itemCount {
+  margin-left: auto;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.125rem 0.5rem;
+  border-radius: 0.5rem;
+  min-width: 1.25rem;
+  text-align: center;
+}
+
+/* Mobile Menu */
+.mobileMenuButton {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  color: #374151;
+  background: rgba(55, 65, 81, 0.05);
+  border: none;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.mobileMenuButton:hover {
+  color: #1e3a8a;
+  background: rgba(30, 58, 138, 0.1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 1023.5px) {
+  .mobileMenuButton {
+    display: flex;
+  }
+}
+
+.mobileMenuOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 40;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.mobileMenu {
+  position: absolute;
+  top: 5rem;
+  left: 1rem;
+  right: 1rem;
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  animation: slideDown 0.3s ease-out;
+}
+
+@media (max-width: 767px) {
+  .mobileMenu {
+    top: 8rem;
+  }
+}
+
+.mobileNavLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mobileNavLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  color: #374151;
+  background: none;
+  border: none;
+  border-radius: 0.75rem;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.mobileNavLink:hover {
+  background: rgba(30, 58, 138, 0.05);
+  color: #1e3a8a;
+  transform: translateX(0.25rem);
+}
+
+.mobileNavLink:active {
+  transform: translateX(0.125rem);
+  background: rgba(30, 58, 138, 0.1);
+}
+
+/* Small screen buttons in mobile menu */
+.smallScreenButtons {
+  display: none;
+  flex-direction: column;
+  gap: 0.25rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+
+@media (max-width: 450px) {
+  .smallScreenButtons {
+    display: flex;
+  }
+}
+
+.smallScreenButtons .mobileNavLink {
+  position: relative;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-1rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dropdownSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.8;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .mainNav {
+    height: 3.5rem;
+  }
+
+  .logoText {
+    font-size: 1.5rem;
+  }
+
+  .searchBarBelowHeader {
+    top: 3.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0 0.75rem;
+  }
+
+  .mainNav {
+    height: 3rem;
+  }
+
+  .logoText {
+    font-size: 1.25rem;
+  }
+
+  .avatar {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .mobileSearchBar {
+    padding: 0.5rem 0;
+  }
+
+  .searchBarBelowHeader {
+    top: 3rem;
+  }
+
+  .alwaysVisibleButton {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .alwaysVisibleButtons {
+    gap: 1rem;
+  }
+  .alwaysVisibleButton {
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .logoText {
+    font-size: 1.125rem;
+  }
+
+  .mobileSearchBar {
+    padding: 0.375rem 0;
+  }
+
+  .actionButton,
+  .mobileMenuButton {
+    padding: 0.5rem;
+  }
+
+  .alwaysVisibleButton {
+    padding: 0.5rem;
+    gap: 2em;
+    background: rgba(30, 58, 138, 0.05);
+    border: 1px solid rgba(30, 58, 138, 0.1);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .header {
+    border-bottom: 2px solid #000;
+  }
+
+  .navLink:hover,
+  .actionButton:hover {
+    background: #000;
+    color: #fff;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

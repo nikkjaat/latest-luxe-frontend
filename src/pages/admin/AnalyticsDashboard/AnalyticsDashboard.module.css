@@ -1,0 +1,920 @@
+.pageContainer {
+  min-height: 100vh;
+  background-color: #f9fafb;
+}
+
+.container {
+  max-width: 80rem;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .container {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+}
+
+.loadingContainer {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingContent {
+  text-align: center;
+}
+
+.loadingSpinner {
+  width: 4rem;
+  height: 4rem;
+  border: 4px solid #2563eb;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 1rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.loadingText {
+  color: #4b5563;
+}
+
+.header {
+  margin-bottom: 2rem;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+}
+
+.backLink {
+  color: #2563eb;
+  margin-right: 0.75rem;
+}
+
+.backLink:hover {
+  color: #1d4ed8;
+}
+
+.backIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.headerTitle {
+  font-size: 1.875rem;
+  font-weight: bold;
+  color: #111827;
+}
+
+.headerSubtitle {
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
+
+.headerControls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.timeframeSelect {
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+
+.timeframeSelect:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
+
+.refreshButton {
+  background-color: #2563eb;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.refreshButton:hover {
+  background-color: #1d4ed8;
+}
+
+.refreshIcon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.5rem;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 768px) {
+  .metricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .metricsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.metricCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.metricContent {
+  display: flex;
+  align-items: center;
+}
+
+.metricIcon {
+  height: 2rem;
+  width: 2rem;
+}
+
+.metricGreenIcon {
+  color: #059669;
+}
+
+.metricBlueIcon {
+  color: #2563eb;
+}
+
+.metricPurpleIcon {
+  color: #7c3aed;
+}
+
+.metricOrangeIcon {
+  color: #ea580c;
+}
+
+.metricText {
+  margin-left: 0.75rem;
+}
+
+.metricLabel {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.metricValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #111827;
+  margin-top: 0.25rem;
+}
+
+.metricChange {
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.metricPositiveChange {
+  color: #059669;
+}
+
+.metricNegativeChange {
+  color: #dc2626;
+}
+
+.chartsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .chartsGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.chartCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.chartHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.chartTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+}
+
+.chartTitleIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.chartBlueIcon {
+  color: #2563eb;
+}
+
+.chartGreenIcon {
+  color: #059669;
+}
+
+.chartPurpleIcon {
+  color: #7c3aed;
+}
+
+.chartOrangeIcon {
+  color: #ea580c;
+}
+
+.exportButton {
+  color: #2563eb;
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.exportButton:hover {
+  color: #1d4ed8;
+}
+
+.exportButton:disabled {
+  opacity: 0.5;
+}
+
+.exportIcon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.25rem;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.chartContainer {
+  height: 16rem;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.salesChart {
+  background: linear-gradient(to bottom right, #dbeafe, #e0e7ff);
+}
+
+.visitorsChart {
+  background: linear-gradient(to bottom right, #dcfce7, #d1fae5);
+}
+
+.chartPlaceholder {
+  text-align: center;
+}
+
+.chartPlaceholderIcon {
+  height: 4rem;
+  width: 4rem;
+  margin-bottom: 1rem;
+}
+
+.salesPlaceholderIcon {
+  color: #3b82f6;
+}
+
+.visitorsPlaceholderIcon {
+  color: #10b981;
+}
+
+.chartLabel {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.chartValue {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.chartBars {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.25rem;
+  margin-top: 1rem;
+}
+
+.chartBar {
+  background-color: #3b82f6;
+  border-radius: 0.125rem;
+}
+
+.productsCategoriesGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .productsCategoriesGrid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.productsCard,
+.categoriesCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.productsHeader,
+.categoriesHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+}
+
+.productsList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.productItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  background-color: #f9fafb;
+  border-radius: 0.5rem;
+}
+
+.productInfo {
+  display: flex;
+  align-items: center;
+}
+
+.productRank {
+  width: 2rem;
+  height: 2rem;
+  background-color: #e9d5ff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 0.75rem;
+}
+
+.productRankText {
+  font-size: 0.875rem;
+  font-weight: bold;
+  color: #7c3aed;
+}
+
+.productDetails h4 {
+  font-weight: 500;
+  color: #111827;
+}
+
+.productDetails p {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.productRevenue {
+  text-align: right;
+}
+
+.productRevenueValue {
+  font-weight: bold;
+  color: #059669;
+}
+
+.productRevenueLabel {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.categoriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.categoryItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.categoryInfo {
+  display: flex;
+  align-items: center;
+}
+
+.categoryColor {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+}
+
+.categoryDetails h4 {
+  font-weight: 500;
+  color: #111827;
+}
+
+.categoryDetails p {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.categoryStats {
+  text-align: right;
+}
+
+.categoryPercentage {
+  font-weight: bold;
+  color: #111827;
+}
+
+.categoryBar {
+  width: 5rem;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.categoryBarFill {
+  height: 100%;
+  border-radius: 0.5rem;
+  background-color: #2563eb;
+}
+
+.customerMetricsCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.customerMetricsHeader {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.customerMetricsIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+  color: #2563eb;
+}
+
+.customerMetricsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+  .customerMetricsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .customerMetricsGrid {
+    grid-template-columns: repeat(5, 1fr);
+  }
+}
+
+.customerMetric {
+  text-align: center;
+}
+
+.customerMetricValue {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.25rem;
+}
+
+.customerMetricBlue {
+  color: #2563eb;
+}
+
+.customerMetricGreen {
+  color: #059669;
+}
+
+.customerMetricPurple {
+  color: #7c3aed;
+}
+
+.customerMetricOrange {
+  color: #ea580c;
+}
+
+.customerMetricRed {
+  color: #dc2626;
+}
+
+.customerMetricLabel {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.insightsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+@media (min-width: 1024px) {
+  .insightsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.insightCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.insightHeader {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.insightIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.insightGreenIcon {
+  color: #059669;
+}
+
+.insightBlueIcon {
+  color: #2563eb;
+}
+
+.insightList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.insightItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.insightLabel {
+  color: #6b7280;
+}
+
+.insightValue {
+  font-weight: bold;
+}
+
+.insightPositiveValue {
+  color: #059669;
+}
+
+.insightDivider {
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1rem;
+}
+
+.insightSubtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.insightProgress {
+  width: 100%;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  height: 0.5rem;
+}
+
+.insightProgressFill {
+  height: 100%;
+  border-radius: 0.5rem;
+  background-color: #059669;
+}
+
+.trafficItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.trafficSource {
+  display: flex;
+  align-items: center;
+}
+
+.trafficColor {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  margin-right: 0.75rem;
+}
+
+.trafficBlue {
+  background-color: #3b82f6;
+}
+
+.trafficGreen {
+  background-color: #10b981;
+}
+
+.trafficPurple {
+  background-color: #8b5cf6;
+}
+
+.trafficOrange {
+  background-color: #f59e0b;
+}
+
+.trafficName {
+  color: #374151;
+}
+
+.trafficStats {
+  display: flex;
+  align-items: center;
+}
+
+.trafficPercentage {
+  font-weight: 500;
+  color: #111827;
+  margin-right: 0.5rem;
+}
+
+.trafficBar {
+  width: 4rem;
+  background-color: #e5e7eb;
+  border-radius: 0.5rem;
+  height: 0.5rem;
+}
+
+.trafficBarFill {
+  height: 100%;
+  border-radius: 0.5rem;
+}
+
+.trafficBarBlue {
+  background-color: #3b82f6;
+}
+
+.trafficBarGreen {
+  background-color: #10b981;
+}
+
+.trafficBarPurple {
+  background-color: #8b5cf6;
+}
+
+.trafficBarOrange {
+  background-color: #f59e0b;
+}
+
+.reportsCard {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.reportsHeader {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 1rem;
+}
+
+.reportsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reportButton {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.reportButton:hover {
+  background-color: #f9fafb;
+}
+
+.reportButton:disabled {
+  opacity: 0.5;
+}
+
+.reportInfo {
+  display: flex;
+  align-items: center;
+}
+
+.reportIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+  margin-right: 0.75rem;
+}
+
+.reportGreenIcon {
+  color: #059669;
+}
+
+.reportBlueIcon {
+  color: #2563eb;
+}
+
+.reportPurpleIcon {
+  color: #7c3aed;
+}
+
+.dashboardLink {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  background-color: #2563eb;
+  color: white;
+  border-radius: 0.5rem;
+  transition: background-color 0.2s;
+  margin-top: 0.75rem;
+}
+
+.dashboardLink:hover {
+  background-color: #1d4ed8;
+}
+
+.dashboardIcon {
+  height: 1rem;
+  width: 1rem;
+  margin-right: 0.5rem;
+}
+
+.analyticsTable {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tableHeader {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableTitle {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tableHead {
+  background-color: #f9fafb;
+}
+
+.tableHeaderCell {
+  padding: 0.75rem 1.5rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.tableRow {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tableCell {
+  padding: 1rem 1.5rem;
+  white-space: nowrap;
+}
+
+.tableMetric {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #111827;
+}
+
+.tableValue {
+  font-size: 0.875rem;
+  color: #111827;
+}
+
+.tableChange {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.tablePositiveChange {
+  color: #059669;
+}
+
+.tableNegativeChange {
+  color: #dc2626;
+}
+
+.tableTrendIcon {
+  height: 1rem;
+  width: 1rem;
+}
+
+.tablePositiveTrend {
+  color: #059669;
+}
+
+.tableNegativeTrend {
+  color: #dc2626;
+}

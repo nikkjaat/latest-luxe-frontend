@@ -1,0 +1,411 @@
+.page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #dbeafe, white, #e0e7ff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+}
+
+.container {
+  max-width: 28rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.header {
+  text-align: center;
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+}
+
+.iconWrapper {
+  position: relative;
+}
+
+.mainIcon {
+  width: 4rem;
+  height: 4rem;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: pulse 2s infinite;
+}
+
+.sparklesIcon {
+  height: 2rem;
+  width: 2rem;
+  color: white;
+}
+
+.decorIcon {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: #f97316;
+  border-radius: 50%;
+  animation: bounce 1s infinite;
+}
+
+.title {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #6b7280;
+}
+
+.formCard {
+  background: white;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  padding: 2rem;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.errorMessage {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  padding: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  animation: shake 0.5s ease-in-out;
+}
+
+.formFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.fieldGroup {
+  position: relative;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1.25rem;
+  width: 1.25rem;
+  color: #9ca3af;
+  transition: color 0.3s ease;
+}
+
+.fieldGroup:focus-within .inputIcon {
+  color: #3b82f6;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.input:hover {
+  border-color: #9ca3af;
+}
+
+.input:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #3b82f6;
+  border-color: transparent;
+}
+
+.passwordInput {
+  padding-right: 3rem;
+}
+
+.toggleButton {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #9ca3af;
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.toggleButton:hover {
+  color: #6b7280;
+}
+
+.toggleIcon {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.formOptions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkboxGroup {
+  display: flex;
+  align-items: center;
+}
+
+.checkbox {
+  height: 1rem;
+  width: 1rem;
+  color: #3b82f6;
+  border-color: #d1d5db;
+  border-radius: 0.25rem;
+  margin-right: 0.5rem;
+}
+
+.checkboxLabel {
+  font-size: 0.875rem;
+  color: #374151;
+}
+
+.forgotLink {
+  font-size: 0.875rem;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.forgotLink:hover {
+  color: #2563eb;
+}
+
+.submitButton {
+  width: 100%;
+  background: linear-gradient(to right, #3b82f6, #8b5cf6);
+  color: white;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1.125rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: linear-gradient(to right, #2563eb, #7c3aed);
+  transform: scale(1.05);
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+.submitButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.buttonText {
+  display: flex;
+  align-items: center;
+}
+
+.buttonIcon {
+  margin-left: 0.5rem;
+  height: 1.25rem;
+  width: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.submitButton:hover:not(:disabled) .buttonIcon {
+  transform: translateX(0.25rem);
+}
+
+.spinner {
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid white;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.divider {
+  margin-top: 1.5rem;
+}
+
+.dividerLine {
+  position: relative;
+}
+
+.dividerBorder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+}
+
+.dividerBorderLine {
+  width: 100%;
+  border-top: 1px solid #d1d5db;
+}
+
+.dividerText {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  font-size: 0.875rem;
+}
+
+.dividerTextSpan {
+  padding: 0 0.5rem;
+  background: white;
+  color: #6b7280;
+}
+
+.socialButtons {
+  margin-top: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.socialButton {
+  width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  padding: 0.75rem 1rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  background: white;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+}
+
+.socialButton:hover {
+  background: #f9fafb;
+}
+
+.socialIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.signupPrompt {
+  margin-top: 2rem;
+  text-align: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.signupLink {
+  font-weight: 500;
+  color: #3b82f6;
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.signupLink:hover {
+  color: #2563eb;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .page {
+    padding: 1.5rem 1rem;
+  }
+  
+  .formCard {
+    padding: 1.5rem;
+  }
+  
+  .title {
+    font-size: 1.5rem;
+  }
+}

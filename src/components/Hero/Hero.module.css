@@ -1,0 +1,344 @@
+.hero {
+  position: relative;
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 50%, #7c3aed 100%);
+  color: white;
+  overflow: hidden;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.backgroundPattern {
+  position: absolute;
+  inset: 0;
+  opacity: 0.1;
+  background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+
+.container {
+  position: relative;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 6rem 1rem;
+  z-index: 10;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.content {
+  animation: fadeInUp 0.8s ease-out;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.badgeIcon {
+  height: 2rem;
+  width: 2rem;
+  color: #fbbf24;
+  margin-right: 0.75rem;
+  animation: pulse 2s infinite;
+}
+
+.badgeText {
+  color: #fbbf24;
+  font-weight: 600;
+  font-size: 1.125rem;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  line-height: 1.1;
+}
+
+@media (min-width: 1024px) {
+  .title {
+    font-size: 3.75rem;
+  }
+}
+
+.titleGradient {
+  display: block;
+  background: linear-gradient(to right, #fbbf24, #f97316);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.description {
+  font-size: 1.25rem;
+  color: #dbeafe;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+}
+
+.buttonGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .buttonGroup {
+    flex-direction: row;
+  }
+}
+
+.primaryButton {
+  background: linear-gradient(to right, #fbbf24, #f97316);
+  color: #1f2937;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.primaryButton:hover {
+  background: linear-gradient(to right, #f59e0b, #ea580c);
+  transform: scale(1.05);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.primaryButtonIcon {
+  margin-left: 0.5rem;
+  height: 1.25rem;
+  width: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.primaryButton:hover .primaryButtonIcon {
+  transform: translateX(0.25rem);
+}
+
+.secondaryButton {
+  border: 2px solid white;
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 0.5rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  background: transparent;
+  cursor: pointer;
+}
+
+.secondaryButton:hover {
+  background: white;
+  color: #1e3a8a;
+}
+
+.stats {
+  display: flex;
+  align-items: center;
+  margin-top: 3rem;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.statItem {
+  text-align: center;
+}
+
+.statNumber {
+  font-size: 1.875rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.statLabel {
+  color: #dbeafe;
+  font-size: 0.875rem;
+}
+
+.imageContainer {
+  position: relative;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.heroImage {
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  transform: rotate(3deg);
+  transition: transform 0.5s ease;
+  width: 100%;
+  height: auto;
+}
+
+.heroImage:hover {
+  transform: rotate(0deg);
+}
+
+.shippingBadge {
+  position: absolute;
+  bottom: -1.5rem;
+  left: -1.5rem;
+  background: white;
+  color: #1f2937;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+}
+
+.shippingTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+
+.shippingText {
+  color: #6b7280;
+}
+
+.newBadge {
+  position: absolute;
+  top: -1.5rem;
+  right: -1.5rem;
+  background: linear-gradient(to right, #ec4899, #8b5cf6);
+  color: white;
+  padding: 1rem;
+  border-radius: 50%;
+  box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1);
+  animation: bounce 1s infinite;
+}
+
+.newBadgeText {
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.floatingElements {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.floatingElement1 {
+  position: absolute;
+  top: 5rem;
+  left: 2.5rem;
+  width: 5rem;
+  height: 5rem;
+  background: #fbbf24;
+  border-radius: 50%;
+  opacity: 0.2;
+  animation: pulse 2s infinite;
+}
+
+.floatingElement2 {
+  position: absolute;
+  bottom: 5rem;
+  right: 2.5rem;
+  width: 4rem;
+  height: 4rem;
+  background: #ec4899;
+  border-radius: 50%;
+  opacity: 0.2;
+  animation: pulse 2s infinite 0.2s;
+}
+
+.floatingElement3 {
+  position: absolute;
+  top: 50%;
+  left: 25%;
+  width: 3rem;
+  height: 3rem;
+  background: #a855f7;
+  border-radius: 50%;
+  opacity: 0.2;
+  animation: pulse 2s infinite 0.4s;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.3;
+  }
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -30px, 0);
+  }
+  70% {
+    transform: translate3d(0, -15px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 3rem 1rem;
+  }
+  
+  .title {
+    font-size: 2.5rem;
+  }
+  
+  .description {
+    font-size: 1.125rem;
+  }
+  
+  .stats {
+    gap: 1rem;
+  }
+  
+  .shippingBadge {
+    bottom: -1rem;
+    left: -1rem;
+    padding: 1rem;
+  }
+  
+  .newBadge {
+    top: -1rem;
+    right: -1rem;
+    padding: 0.75rem;
+  }
+}
