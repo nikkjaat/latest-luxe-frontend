@@ -631,6 +631,7 @@ const UserManagement = () => {
             setShowUserDetails={setShowUserDetails}
             fetchUsers={fetchUsers}
             setSelectedUser={setSelectedUser}
+            onUserAction={handleUserAction}
           />
         )}
       </div>

@@ -11,7 +11,6 @@ import {
   Eye,
   Edit,
   Trash2,
-  Ban,
   CheckCircle,
   XCircle,
   Calendar,
@@ -22,6 +21,8 @@ import {
   Bell,
   FileText,
   Zap,
+  RefreshCw,
+  Ban,
 } from "lucide-react";
 import { useVendors } from "../../../context/VendorContext";
 import { useProducts } from "../../../context/ProductContext";
@@ -61,19 +62,20 @@ const AdminDashboard = () => {
   }, []);
 
   useEffect(() => {
-    const getAllUsers = async () => {
-      const response = await apiService.getAllUsers();
-      const filterUsers = response.users.filter(
-        (user) => user.role === "customer"
-      );
-      const filterVendors = response.users.filter(
-        (user) => user.role === "vendor"
-      );
-      setAllUsers(filterUsers);
-      setAllVendors(filterVendors);
-    };
     getAllUsers();
   }, []);
+
+  const getAllUsers = async () => {
+    const response = await apiService.getAllUsers();
+    const filterUsers = response.users.filter(
+      (user) => user.role === "customer"
+    );
+    const filterVendors = response.users.filter(
+      (user) => user.role === "vendor"
+    );
+    setAllUsers(filterUsers);
+    setAllVendors(filterVendors);
+  };
 
   // Add user action handler
 
@@ -93,9 +95,9 @@ const AdminDashboard = () => {
         }
       }
 
-      // Refresh ALL data, including vendors from context
+      // Refresh ALL data
       await Promise.all([
-        // Refresh users list
+        // Refresh users and vendors lists
         (async () => {
           const response = await apiService.getAllUsers();
           const filterUsers = response.users.filter(
@@ -112,12 +114,12 @@ const AdminDashboard = () => {
         getVendorApplications(),
       ]);
 
-      // If we're in the user details modal, update the selected user
+      // CRITICAL: Update the selectedUser if it's the same user
       if (selectedUser && selectedUser._id === userId) {
         const response = await apiService.getAllUsers();
         const updatedUser = response.users.find((user) => user._id === userId);
         if (updatedUser) {
-          setSelectedUser(updatedUser);
+          setSelectedUser(updatedUser); // This updates the modal
         }
       }
     } catch (error) {
@@ -577,11 +579,38 @@ const AdminDashboard = () => {
                             >
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button className="text-green-600 hover:text-green-900">
-                              <Edit className="h-4 w-4" />
+                            <button
+                              onClick={() =>
+                                handleUserAction(
+                                  vendor._id,
+                                  vendor.vendorInfo?.status === "approved"
+                                    ? "suspend"
+                                    : "activate"
+                                )
+                              }
+                              disabled={actionLoading[vendor._id]}
+                              className="text-green-600 hover:text-green-900"
+                            >
+                              {actionLoading[vendor._id] ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : vendor.vendorInfo?.status === "approved" ? (
+                                <Ban className={styles.actionIcon} />
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
                             </button>
-                            <button className="text-red-600 hover:text-red-900">
-                              <Ban className="h-4 w-4" />
+                            <button
+                              onClick={() =>
+                                handleUserAction(vendor._id, "delete")
+                              }
+                              disabled={actionLoading[vendor._id]}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              {actionLoading[vendor._id] === "delete" ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
                             </button>
                           </div>
                         </td>
@@ -942,27 +971,9 @@ const AdminDashboard = () => {
             selectedUser={selectedUser}
             users={allUsers.concat(allVendors)}
             setShowUserDetails={setShowUserDetails}
-            fetchUsers={async () => {
-              // Refresh ALL data
-              await Promise.all([
-                // Refresh users
-                (async () => {
-                  const response = await apiService.getAllUsers();
-                  const filterUsers = response.users.filter(
-                    (user) => user.role === "customer"
-                  );
-                  const filterVendors = response.users.filter(
-                    (user) => user.role === "vendor"
-                  );
-                  setAllUsers(filterUsers);
-                  setAllVendors(filterVendors);
-                })(),
-                // Refresh vendors from context
-                getVendors(),
-                getVendorApplications(),
-              ]);
-            }}
+            fetchUsers={getAllUsers}
             setSelectedUser={setSelectedUser}
+            onUserAction={handleUserAction}
           />
         )}
       </div>

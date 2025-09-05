@@ -24,6 +24,10 @@
   }
 }
 
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
 .loadingContainer {
   min-height: 100vh;
   background-color: #f9fafb;

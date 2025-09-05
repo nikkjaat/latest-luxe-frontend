@@ -13,47 +13,16 @@ import apiService from "../../services/api";
 
 export default function UserDetails({
   selectedUser,
-  users,
   setShowUserDetails,
-  fetchUsers,
-  setSelectedUser,
+  onUserAction,
 }) {
   const [actionLoading, setActionLoading] = useState({});
 
   // Also update the handleUserAction function to ensure it refreshes the data
-  const handleUserAction = async (userId, action) => {
-    console.log(userId, action);
-    try {
-      setActionLoading((prev) => ({ ...prev, [userId]: action }));
-
-      if (action === "activate") {
-        await apiService.adminActivateUser(userId);
-      } else if (action === "suspend") {
-        await apiService.adminSuspendUser(userId);
-      } else if (action === "delete") {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-          await apiService.adminDeleteUser(userId);
-        } else {
-          return;
-        }
-      }
-
-      // Refresh users list
-      await fetchUsers();
-
-      // If we're in the user details modal, update the selected user
-      if (selectedUser && selectedUser._id === userId) {
-        const updatedUser = users.find((user) => user._id === userId);
-        if (updatedUser) {
-          setSelectedUser(updatedUser);
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user`);
-    } finally {
-      setActionLoading((prev) => ({ ...prev, [userId]: null }));
-    }
+  const handleAction = async (userId, action) => {
+    setActionLoading((prev) => ({ ...prev, [userId]: action }));
+    await onUserAction(userId, action);
+    setActionLoading((prev) => ({ ...prev, [userId]: null }));
   };
 
   const getStatusBadge = (isActive) => {
@@ -205,7 +174,7 @@ export default function UserDetails({
               <div className={styles.modalActions}>
                 <button
                   onClick={() =>
-                    handleUserAction(
+                    handleAction(
                       selectedUser._id,
                       selectedUser.isActive ? "suspend" : "activate"
                     )
@@ -229,7 +198,7 @@ export default function UserDetails({
                   {selectedUser.isActive ? "Suspend User" : "Activate User"}
                 </button>
                 <button
-                  onClick={() => handleUserAction(selectedUser._id, "delete")}
+                  onClick={() => handleAction(selectedUser._id, "delete")}
                   disabled={actionLoading[selectedUser._id]}
                   className={`${styles.modalButton} ${styles.deleteModalButton}`}
                 >
