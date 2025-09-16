@@ -52,6 +52,7 @@ import { AIProvider } from "./context/AIContext";
 import { SocialProvider } from "./context/SocialContext";
 import { ARProvider } from "./context/ARContext";
 import { AuthProvider } from "./context/AuthContext";
+import { CategoryProvider } from "./context/CategoryContext";
 
 function HomePage() {
   return (
@@ -81,18 +82,18 @@ function AppContent() {
   }
 
   return (
-    <AIProvider>
-      <SocialProvider>
-        <ARProvider>
-          <NotificationProvider>
-            <PromotionProvider>
-              <ReviewProvider>
-                <AnalyticsProvider>
-                  <ProductProvider>
+    <Router>
+      <AIProvider>
+        <SocialProvider>
+          <ARProvider>
+            <NotificationProvider>
+              <PromotionProvider>
+                <ReviewProvider>
+                  <AnalyticsProvider>
                     <VendorProvider>
                       <CartProvider>
                         <WishlistProvider>
-                          <Router>
+                          <CategoryProvider>
                             <div className="min-h-screen bg-white">
                               <PromotionBanner />
                               <Header />
@@ -233,6 +234,22 @@ function AppContent() {
                                     </RoleBasedRoute>
                                   }
                                 />
+                                <Route
+                                  path="/admin/notifications"
+                                  element={
+                                    <RoleBasedRoute allowedRoles={["admin"]}>
+                                      <NotificationCenter />
+                                    </RoleBasedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/admin/reports"
+                                  element={
+                                    <RoleBasedRoute allowedRoles={["admin"]}>
+                                      <ReportsCenter />
+                                    </RoleBasedRoute>
+                                  }
+                                />
 
                                 {/* Vendor Routes */}
                                 <Route
@@ -253,24 +270,49 @@ function AppContent() {
                                     </RoleBasedRoute>
                                   }
                                 />
+                                <Route
+                                  path="/vendor/orders"
+                                  element={
+                                    <RoleBasedRoute allowedRoles={["vendor"]}>
+                                      <VendorOrders />
+                                    </RoleBasedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/vendor/analytics"
+                                  element={
+                                    <RoleBasedRoute allowedRoles={["vendor"]}>
+                                      <VendorAnalytics />
+                                    </RoleBasedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/vendor/profile"
+                                  element={
+                                    <RoleBasedRoute allowedRoles={["vendor"]}>
+                                      <VendorProfile />
+                                    </RoleBasedRoute>
+                                  }
+                                />
                               </Routes>
                               <Footer />
                               <LiveChat />
                             </div>
-                          </Router>
+                          </CategoryProvider>
                         </WishlistProvider>
                       </CartProvider>
                     </VendorProvider>
-                  </ProductProvider>
-                </AnalyticsProvider>
-              </ReviewProvider>
-            </PromotionProvider>
-          </NotificationProvider>
-        </ARProvider>
-      </SocialProvider>
-    </AIProvider>
+                  </AnalyticsProvider>
+                </ReviewProvider>
+              </PromotionProvider>
+            </NotificationProvider>
+          </ARProvider>
+        </SocialProvider>
+      </AIProvider>
+    </Router>
   );
 }
+
 function App() {
   return (
     <AuthProvider>

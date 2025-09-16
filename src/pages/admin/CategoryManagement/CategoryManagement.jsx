@@ -13,23 +13,35 @@ import {
   RefreshCw,
   Package,
   TrendingUp,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import apiService from "../../../services/api";
+import { useCategory } from "../../../context/CategoryContext";
 import styles from "./CategoryManagement.module.css";
 
 const CategoryManagement = () => {
+  const {
+    adminGetCategories,
+    adminCreateCategory,
+    adminUpdateCategory,
+    adminDeleteCategory,
+  } = useCategory();
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoading, setActionLoading] = useState({});
+  const [imageUploadMethod, setImageUploadMethod] = useState("url"); // 'url' or 'file'
+  const [imagePreview, setImagePreview] = useState(null);
+  const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
     description: "",
     image: "",
+    imageFile: null,
     isActive: true,
     sortOrder: 0,
   });
@@ -41,102 +53,109 @@ const CategoryManagement = () => {
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await apiService.adminGetCategories();
-      setCategories(response.categories || []);
+      await adminGetCategories();
     } catch (error) {
       console.error("Failed to fetch categories:", error);
-      // Use default categories as fallback
-      const defaultCategories = [
-        {
-          _id: "1",
-          name: "Women's Fashion",
-          slug: "women",
-          description: "Latest trends in women's clothing and accessories",
-          image:
-            "https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 45,
-          sortOrder: 1,
-        },
-        {
-          _id: "2",
-          name: "Men's Collection",
-          slug: "men",
-          description: "Premium men's fashion and accessories",
-          image:
-            "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 32,
-          sortOrder: 2,
-        },
-        {
-          _id: "3",
-          name: "Accessories",
-          slug: "accessories",
-          description: "Complete your look with luxury accessories",
-          image:
-            "https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 28,
-          sortOrder: 3,
-        },
-        {
-          _id: "4",
-          name: "Home & Living",
-          slug: "home",
-          description: "Transform your space with elegant home decor",
-          image:
-            "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 19,
-          sortOrder: 4,
-        },
-        {
-          _id: "5",
-          name: "Electronics",
-          slug: "electronics",
-          description: "Latest technology and gadgets",
-          image:
-            "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 15,
-          sortOrder: 5,
-        },
-        {
-          _id: "6",
-          name: "Beauty & Care",
-          slug: "beauty",
-          description: "Premium beauty products and personal care",
-          image:
-            "https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=600",
-          isActive: true,
-          productCount: 22,
-          sortOrder: 6,
-        },
-      ];
-      setCategories(defaultCategories);
     } finally {
       setLoading(false);
     }
   };
 
+  // Get categories from context
+  const { categories: contextCategories } = useCategory();
+
+  useEffect(() => {
+    if (contextCategories && contextCategories.length > 0) {
+      setCategories(contextCategories);
+    }
+  }, [contextCategories]);
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.name.trim()) {
+      newErrors.name = "Category name is required";
+    }
+
+    if (!formData.slug.trim()) {
+      newErrors.slug = "URL slug is required";
+    }
+
+    if (!formData.description.trim()) {
+      newErrors.description = "Description is required";
+    }
+
+    // Image validation
+    if (imageUploadMethod === "url" && !formData.image.trim()) {
+      newErrors.image = "Image URL is required";
+    } else if (
+      imageUploadMethod === "file" &&
+      !formData.imageFile &&
+      !editingCategory?.image
+    ) {
+      newErrors.image = "Please select an image file";
+    }
+
+    // Check for duplicate slug
+    const existingCategory = categories.find(
+      (cat) =>
+        cat.slug === formData.slug &&
+        (!editingCategory || cat._id !== editingCategory._id)
+    );
+    if (existingCategory) {
+      newErrors.slug = "This URL slug is already in use";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
 
     try {
       setActionLoading((prev) => ({ ...prev, form: "saving" }));
 
-      if (editingCategory) {
-        await apiService.adminUpdateCategory(editingCategory._id, formData);
+      let dataToSend;
+
+      if (imageUploadMethod === "file" && formData.imageFile) {
+        // Use FormData for file uploads
+        const formDataToSend = new FormData();
+        formDataToSend.append("name", formData.name);
+        formDataToSend.append("slug", formData.slug);
+        formDataToSend.append("description", formData.description);
+        formDataToSend.append("isActive", formData.isActive);
+        formDataToSend.append("sortOrder", formData.sortOrder);
+        formDataToSend.append("imageSource", "file");
+        formDataToSend.append("imageFile", formData.imageFile);
+        dataToSend = formDataToSend;
       } else {
-        await apiService.adminCreateCategory(formData);
+        // Use JSON for URL-based images
+        dataToSend = {
+          name: formData.name,
+          slug: formData.slug,
+          description: formData.description,
+          image: formData.image,
+          isActive: formData.isActive,
+          sortOrder: formData.sortOrder,
+          imageSource: "url",
+        };
       }
 
-      await fetchCategories();
+      if (editingCategory) {
+        await adminUpdateCategory(editingCategory._id, dataToSend);
+      } else {
+        await adminCreateCategory(dataToSend);
+      }
+
       resetForm();
     } catch (error) {
       console.error("Failed to save category:", error);
-      alert("Failed to save category");
+      setErrors({ submit: error.message || "Failed to save category" });
     } finally {
       setActionLoading((prev) => ({ ...prev, form: null }));
     }
@@ -148,9 +167,13 @@ const CategoryManagement = () => {
       slug: "",
       description: "",
       image: "",
+      imageFile: null,
       isActive: true,
       sortOrder: 0,
     });
+    setImageUploadMethod("url");
+    setImagePreview(null);
+    setErrors({});
     setShowForm(false);
     setEditingCategory(null);
   };
@@ -161,10 +184,14 @@ const CategoryManagement = () => {
       slug: category.slug || "",
       description: category.description || "",
       image: category.image || "",
+      imageFile: null,
       isActive: category.isActive !== false,
       sortOrder: category.sortOrder || 0,
     });
     setEditingCategory(category);
+    setImageUploadMethod("url");
+    setImagePreview(null);
+    setErrors({});
     setShowForm(true);
   };
 
@@ -176,8 +203,7 @@ const CategoryManagement = () => {
     ) {
       try {
         setActionLoading((prev) => ({ ...prev, [categoryId]: "deleting" }));
-        await apiService.adminDeleteCategory(categoryId);
-        setCategories((prev) => prev.filter((cat) => cat._id !== categoryId));
+        await adminDeleteCategory(categoryId);
       } catch (error) {
         console.error("Failed to delete category:", error);
         alert("Failed to delete category");
@@ -187,27 +213,86 @@ const CategoryManagement = () => {
     }
   };
 
-  const toggleCategoryStatus = async (category) => {
-    try {
-      setActionLoading((prev) => ({ ...prev, [category._id]: "updating" }));
-      const updatedCategory = { ...category, isActive: !category.isActive };
-      await apiService.adminUpdateCategory(category._id, updatedCategory);
-      setCategories((prev) =>
-        prev.map((cat) => (cat._id === category._id ? updatedCategory : cat))
-      );
-    } catch (error) {
-      console.error("Failed to update category status:", error);
-      alert("Failed to update category status");
-    } finally {
-      setActionLoading((prev) => ({ ...prev, [category._id]: null }));
-    }
-  };
-
   const generateSlug = (name) => {
     return name
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)/g, "");
+  };
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setErrors((prev) => ({
+          ...prev,
+          image: "Please select a valid image file",
+        }));
+        return;
+      }
+
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors((prev) => ({
+          ...prev,
+          image: "Image file must be less than 5MB",
+        }));
+        return;
+      }
+
+      // Create a preview URL for the image
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreview(previewUrl);
+
+      // Store the file in formData
+      setFormData((prev) => ({
+        ...prev,
+        imageFile: file,
+      }));
+
+      // Clear any previous image errors
+      setErrors((prev) => ({ ...prev, image: "" }));
+    }
+  };
+
+  const handleFormChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const newValue = type === "checkbox" ? checked : value;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: newValue,
+    }));
+
+    // Auto-generate slug when name changes
+    if (name === "name") {
+      setFormData((prev) => ({
+        ...prev,
+        slug: generateSlug(value),
+      }));
+    }
+
+    // Clear errors for this field
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleImageUrlChange = (e) => {
+    const url = e.target.value;
+    setFormData((prev) => ({ ...prev, image: url }));
+
+    // Clear image preview when switching to URL
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+      setImagePreview(null);
+    }
+
+    // Clear errors
+    if (errors.image) {
+      setErrors((prev) => ({ ...prev, image: "" }));
+    }
   };
 
   const filteredCategories = categories
@@ -383,28 +468,12 @@ const CategoryManagement = () => {
                     Edit
                   </button>
                   <button
-                    onClick={() => toggleCategoryStatus(category)}
-                    disabled={actionLoading[category._id]}
-                    className={`${styles.toggleButton} ${
-                      category.isActive
-                        ? styles.toggleButtonActive
-                        : styles.toggleButtonInactive
-                    }`}
-                  >
-                    {actionLoading[category._id] ? (
-                      <RefreshCw size={16} className={styles.actionIcon} />
-                    ) : category.isActive ? (
-                      "Hide"
-                    ) : (
-                      "Show"
-                    )}
-                  </button>
-                  <button
-                    onClick={() => handleDelete(category._id)}
-                    disabled={actionLoading[category._id]}
+                    onClick={() => handleDelete(category._id || category.id)}
+                    disabled={actionLoading[category._id || category.id]}
                     className={styles.deleteButton}
                   >
-                    {actionLoading[category._id] === "deleting" ? (
+                    {actionLoading[category._id || category.id] ===
+                    "deleting" ? (
                       <RefreshCw size={16} className={styles.actionIcon} />
                     ) : (
                       <Trash2 size={16} />
@@ -442,39 +511,43 @@ const CategoryManagement = () => {
               </div>
 
               <form onSubmit={handleSubmit} className={styles.modalForm}>
+                {errors.submit && (
+                  <div className={styles.errorMessage}>{errors.submit}</div>
+                )}
+
                 <div className={styles.formGrid}>
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>Category Name *</label>
                     <input
                       type="text"
+                      name="name"
                       value={formData.name}
-                      onChange={(e) => {
-                        const name = e.target.value;
-                        setFormData((prev) => ({
-                          ...prev,
-                          name,
-                          slug: generateSlug(name),
-                        }));
-                      }}
-                      className={styles.formInput}
+                      onChange={handleFormChange}
+                      className={`${styles.formInput} ${
+                        errors.name ? styles.formInputError : ""
+                      }`}
                       required
                     />
+                    {errors.name && (
+                      <p className={styles.errorText}>{errors.name}</p>
+                    )}
                   </div>
 
                   <div className={styles.formField}>
                     <label className={styles.formLabel}>URL Slug *</label>
                     <input
                       type="text"
+                      name="slug"
                       value={formData.slug}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          slug: e.target.value,
-                        }))
-                      }
-                      className={styles.formInput}
+                      onChange={handleFormChange}
+                      className={`${styles.formInput} ${
+                        errors.slug ? styles.formInputError : ""
+                      }`}
                       required
                     />
+                    {errors.slug && (
+                      <p className={styles.errorText}>{errors.slug}</p>
+                    )}
                     <p className={styles.formHelper}>
                       URL: /category/{formData.slug}
                     </p>
@@ -484,44 +557,122 @@ const CategoryManagement = () => {
                 <div className={styles.formField}>
                   <label className={styles.formLabel}>Description *</label>
                   <textarea
+                    name="description"
                     value={formData.description}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        description: e.target.value,
-                      }))
-                    }
-                    className={styles.formTextarea}
+                    onChange={handleFormChange}
+                    className={`${styles.formTextarea} ${
+                      errors.description ? styles.formInputError : ""
+                    }`}
                     rows={3}
                     required
                   />
+                  {errors.description && (
+                    <p className={styles.errorText}>{errors.description}</p>
+                  )}
                 </div>
 
                 <div className={styles.formField}>
-                  <label className={styles.formLabel}>Category Image URL</label>
-                  <input
-                    type="url"
-                    value={formData.image}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        image: e.target.value,
-                      }))
-                    }
-                    className={styles.formInput}
-                    placeholder="https://example.com/image.jpg"
-                  />
-                  {formData.image && (
-                    <div>
-                      <img
-                        src={formData.image}
-                        alt="Preview"
-                        className={styles.imagePreview}
-                        onError={(e) => {
-                          e.target.style.display = "none";
-                        }}
+                  <label className={styles.formLabel}>Category Image</label>
+
+                  {/* Upload method selector */}
+                  <div className={styles.uploadMethodSelector}>
+                    <button
+                      type="button"
+                      className={`${styles.uploadMethodButton} ${
+                        imageUploadMethod === "url" ? styles.active : ""
+                      }`}
+                      onClick={() => setImageUploadMethod("url")}
+                    >
+                      <LinkIcon size={16} />
+                      Use URL
+                    </button>
+                    <button
+                      type="button"
+                      className={`${styles.uploadMethodButton} ${
+                        imageUploadMethod === "file" ? styles.active : ""
+                      }`}
+                      onClick={() => setImageUploadMethod("file")}
+                    >
+                      <Upload size={16} />
+                      Upload File
+                    </button>
+                  </div>
+
+                  {/* URL input */}
+                  {imageUploadMethod === "url" && (
+                    <>
+                      <input
+                        type="url"
+                        name="image"
+                        value={formData.image}
+                        onChange={handleImageUrlChange}
+                        className={`${styles.formInput} ${
+                          errors.image ? styles.formInputError : ""
+                        }`}
+                        placeholder="https://example.com/image.jpg"
                       />
+                      {formData.image && (
+                        <div className={styles.imagePreviewContainer}>
+                          <img
+                            src={formData.image}
+                            alt="Preview"
+                            className={styles.imagePreview}
+                            onError={(e) => {
+                              setErrors((prev) => ({
+                                ...prev,
+                                image: "Invalid image URL",
+                              }));
+                            }}
+                            onLoad={() => {
+                              setErrors((prev) => ({ ...prev, image: "" }));
+                            }}
+                          />
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* File upload */}
+                  {imageUploadMethod === "file" && (
+                    <div className={styles.fileUploadContainer}>
+                      <label className={styles.fileUploadLabel}>
+                        <Upload size={16} />
+                        <span>
+                          {imagePreview ? "Change Image" : "Choose Image"}
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className={styles.fileInput}
+                        />
+                      </label>
+                      {imagePreview && (
+                        <div className={styles.imagePreviewContainer}>
+                          <img
+                            src={imagePreview}
+                            alt="Preview"
+                            className={styles.imagePreview}
+                          />
+                        </div>
+                      )}
+                      {editingCategory?.image && !imagePreview && (
+                        <div className={styles.imagePreviewContainer}>
+                          <p className={styles.currentImageLabel}>
+                            Current image:
+                          </p>
+                          <img
+                            src={editingCategory.image}
+                            alt="Current"
+                            className={styles.imagePreview}
+                          />
+                        </div>
+                      )}
                     </div>
+                  )}
+
+                  {errors.image && (
+                    <p className={styles.errorText}>{errors.image}</p>
                   )}
                 </div>
 
@@ -530,13 +681,9 @@ const CategoryManagement = () => {
                     <label className={styles.formLabel}>Sort Order</label>
                     <input
                       type="number"
+                      name="sortOrder"
                       value={formData.sortOrder}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          sortOrder: parseInt(e.target.value) || 0,
-                        }))
-                      }
+                      onChange={handleFormChange}
                       className={styles.formInput}
                       min="0"
                     />
@@ -549,13 +696,9 @@ const CategoryManagement = () => {
                     <input
                       type="checkbox"
                       id="isActive"
+                      name="isActive"
                       checked={formData.isActive}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          isActive: e.target.checked,
-                        }))
-                      }
+                      onChange={handleFormChange}
                       className={styles.checkbox}
                     />
                     <label htmlFor="isActive" className={styles.checkboxLabel}>

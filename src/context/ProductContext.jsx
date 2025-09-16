@@ -17,9 +17,9 @@ export const ProductProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [hasFetched, setHasFetched] = useState(false);
 
-  const getProducts = async (params = {}) => {
-    // Don't fetch if already loading or already fetched
-    if (isLoading || hasFetched) return products;
+  const getProducts = async (params = {}, forceReload = false) => {
+    // Skip fetch if already loading or already fetched (unless forced)
+    if (!forceReload && (isLoading || hasFetched)) return products;
 
     setIsLoading(true);
     setError(null);
@@ -56,26 +56,26 @@ export const ProductProvider = ({ children }) => {
   };
 
   const addProduct = async (product) => {
+    console.log(product);
     const response = await apiService.createProduct(product);
     if (!response.success) {
       throw new Error("Failed to create product");
     }
-    getProducts();
 
-    setProducts((prev) => [
-      ...prev,
-      {
-        ...response.product,
-        id: response.product._id,
-      },
-    ]);
+    await getProducts({}, true);
 
     return response;
   };
 
   const updateProduct = async (id, updates) => {
     const response = await apiService.updateProduct(id, updates);
-    // After updating, you might want to refresh the products list
+    if (!response.success) {
+      throw new Error("Failed to update product");
+    }
+
+    // Force refresh the product list from backend
+    await getProducts({}, true);
+
     return response;
   };
 

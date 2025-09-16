@@ -86,9 +86,14 @@ const SystemSettings = () => {
   const fetchSettings = async () => {
     try {
       setLoading(true);
-      const response = await apiService.adminGetSettings();
-      if (response.settings) {
-        setSettings(response.settings);
+      try {
+        const response = await apiService.adminGetSettings();
+        if (response.settings) {
+          setSettings(response.settings);
+        }
+      } catch (apiError) {
+        console.error("API call failed, using default settings:", apiError);
+        // Keep default settings if API fails
       }
     } catch (error) {
       console.error("Failed to fetch settings:", error);

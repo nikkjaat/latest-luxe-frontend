@@ -113,6 +113,21 @@
   background: linear-gradient(to top, #f59e0b, #eab308);
 }
 
+.overlayGreen {
+  background: linear-gradient(to top, #10b981, #059669);
+}
+
+.overlayCyan {
+  background: linear-gradient(to top, #06b6d4, #0891b2);
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+  font-size: 1.125rem;
+}
+
 .content {
   position: absolute;
   inset: 0;
@@ -184,19 +199,19 @@
   .section {
     padding: 3rem 0;
   }
-  
+
   .title {
     font-size: 2rem;
   }
-  
+
   .description {
     font-size: 1rem;
   }
-  
+
   .grid {
     gap: 1.5rem;
   }
-  
+
   .imageContainer {
     height: 12rem;
   }

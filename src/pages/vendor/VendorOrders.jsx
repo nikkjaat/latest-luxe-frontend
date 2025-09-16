@@ -44,80 +44,86 @@ const VendorOrders = () => {
   const fetchVendorOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getVendorOrders();
-      setOrders(response.orders || []);
+      try {
+        const response = await apiService.getVendorOrders();
+        setOrders(response.orders || []);
+      } catch (apiError) {
+        console.error("API call failed, using mock data:", apiError);
+        // Use mock data as fallback
+        const mockOrders = generateMockOrders();
+        setOrders(mockOrders);
+      }
     } catch (error) {
       console.error("Failed to fetch vendor orders:", error);
-      // Mock data for demonstration
-      const mockOrders = [
-        {
-          _id: "ORD-V001",
-          orderNumber: "ORD-V001",
-          customer: {
-            name: "Sarah Johnson",
-            email: "sarah@example.com",
-            phone: "+1 (555) 123-4567",
-          },
-          status: "processing",
-          total: 299.99,
-          vendorTotal: 299.99,
-          items: [
-            {
-              productId: "1",
-              name: "Premium Leather Handbag",
-              quantity: 1,
-              price: 299.99,
-              vendorId: user._id,
-            },
-          ],
-          shippingAddress: {
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zipCode: "10001",
-            country: "USA",
-          },
-          createdAt: "2025-01-20T10:30:00Z",
-          estimatedDelivery: "2025-01-25",
-        },
-        {
-          _id: "ORD-V002",
-          orderNumber: "ORD-V002",
-          customer: {
-            name: "Michael Chen",
-            email: "michael@example.com",
-            phone: "+1 (555) 987-6543",
-          },
-          status: "shipped",
-          total: 599.99,
-          vendorTotal: 599.99,
-          items: [
-            {
-              productId: "2",
-              name: "Designer Watch Collection",
-              quantity: 1,
-              price: 599.99,
-              vendorId: user._id,
-            },
-          ],
-          shippingAddress: {
-            street: "456 Oak Ave",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90210",
-            country: "USA",
-          },
-          createdAt: "2025-01-19T14:20:00Z",
-          trackingNumber: "TRK123456789",
-          estimatedDelivery: "2025-01-24",
-        },
-      ];
-      setOrders(mockOrders);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const generateMockOrders = () => [
+    {
+      _id: "ORD-V001",
+      orderNumber: "ORD-V001",
+      customer: {
+        name: "Sarah Johnson",
+        email: "sarah@example.com",
+        phone: "+1 (555) 123-4567",
+      },
+      status: "processing",
+      total: 299.99,
+      vendorTotal: 299.99,
+      items: [
+        {
+          productId: "1",
+          name: "Premium Leather Handbag",
+          quantity: 1,
+          price: 299.99,
+          vendorId: user?._id,
+        },
+      ],
+      shippingAddress: {
+        street: "123 Main St",
+        city: "New York",
+        state: "NY",
+        zipCode: "10001",
+        country: "USA",
+      },
+      createdAt: "2025-01-20T10:30:00Z",
+      estimatedDelivery: "2025-01-25",
+    },
+    {
+      _id: "ORD-V002",
+      orderNumber: "ORD-V002",
+      customer: {
+        name: "Michael Chen",
+        email: "michael@example.com",
+        phone: "+1 (555) 987-6543",
+      },
+      status: "shipped",
+      total: 599.99,
+      vendorTotal: 599.99,
+      items: [
+        {
+          productId: "2",
+          name: "Designer Watch Collection",
+          quantity: 1,
+          price: 599.99,
+          vendorId: user?._id,
+        },
+      ],
+      shippingAddress: {
+        street: "456 Oak Ave",
+        city: "Los Angeles",
+        state: "CA",
+        zipCode: "90210",
+        country: "USA",
+      },
+      createdAt: "2025-01-19T14:20:00Z",
+      trackingNumber: "TRK123456789",
+      estimatedDelivery: "2025-01-24",
+    },
+  ];
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setActionLoading((prev) => ({ ...prev, [orderId]: "updating" }));

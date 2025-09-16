@@ -71,7 +71,12 @@ const NotificationCenter = () => {
         scheduledFor: formData.scheduledFor || new Date().toISOString(),
       };
 
-      await apiService.adminSendNotification(notificationData);
+      try {
+        await apiService.adminSendNotification(notificationData);
+      } catch (apiError) {
+        console.error("API call failed, adding to local state:", apiError);
+      }
+
       addNotification(notificationData);
 
       setFormData({
@@ -95,7 +100,11 @@ const NotificationCenter = () => {
     if (window.confirm("Are you sure you want to delete this notification?")) {
       try {
         setActionLoading((prev) => ({ ...prev, [notificationId]: "deleting" }));
-        await apiService.adminDeleteNotification(notificationId);
+        try {
+          await apiService.adminDeleteNotification(notificationId);
+        } catch (apiError) {
+          console.error("API call failed:", apiError);
+        }
         // Remove from local state
       } catch (error) {
         console.error("Failed to delete notification:", error);

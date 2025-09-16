@@ -21,8 +21,11 @@ export default function UserDetails({
   // Also update the handleUserAction function to ensure it refreshes the data
   const handleAction = async (userId, action) => {
     setActionLoading((prev) => ({ ...prev, [userId]: action }));
-    await onUserAction(userId, action);
-    setActionLoading((prev) => ({ ...prev, [userId]: null }));
+    try {
+      await onUserAction(userId, action);
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [userId]: null }));
+    }
   };
 
   const getStatusBadge = (isActive) => {

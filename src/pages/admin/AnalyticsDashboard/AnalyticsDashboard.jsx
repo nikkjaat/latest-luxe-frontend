@@ -33,10 +33,15 @@ const AnalyticsDashboard = () => {
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await apiService.adminGetAnalytics({
-        timeframe: selectedTimeframe,
-      });
-      setAnalyticsData(response.analytics || analytics);
+      try {
+        const response = await apiService.adminGetAnalytics({
+          timeframe: selectedTimeframe,
+        });
+        setAnalyticsData(response.analytics || analytics);
+      } catch (apiError) {
+        console.error("API call failed, using context analytics:", apiError);
+        setAnalyticsData(analytics);
+      }
     } catch (error) {
       console.error("Failed to fetch analytics:", error);
       // Use context analytics as fallback

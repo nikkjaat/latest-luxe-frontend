@@ -47,13 +47,18 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      // setLoading(true);
-      const response = await apiService.getAllUsers();
-      // Filter out admin users for security
-      const filteredUsers = response.users.filter(
-        (user) => user.role !== "admin"
-      );
-      setUsers(filteredUsers);
+      setLoading(true);
+      try {
+        const response = await apiService.getAllUsers();
+        // Filter out admin users for security
+        const filteredUsers = response.users.filter(
+          (user) => user.role !== "admin"
+        );
+        setUsers(filteredUsers);
+      } catch (apiError) {
+        console.error("API call failed:", apiError);
+        setUsers([]);
+      }
     } catch (error) {
       console.error("Error fetching users:", error);
       setUsers([]);
@@ -106,6 +111,7 @@ const UserManagement = () => {
         if (window.confirm("Are you sure you want to delete this user?")) {
           await apiService.adminDeleteUser(userId);
         } else {
+          setActionLoading((prev) => ({ ...prev, [userId]: null }));
           return;
         }
       }

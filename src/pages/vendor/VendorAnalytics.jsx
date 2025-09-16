@@ -37,10 +37,15 @@ const VendorAnalytics = () => {
   const fetchVendorAnalytics = async () => {
     try {
       setLoading(true);
-      const response = await apiService.getVendorAnalytics({
-        timeframe: selectedTimeframe,
-      });
-      setAnalytics(response.analytics || generateMockAnalytics());
+      try {
+        const response = await apiService.getVendorAnalytics({
+          timeframe: selectedTimeframe,
+        });
+        setAnalytics(response.analytics || generateMockAnalytics());
+      } catch (apiError) {
+        console.error("API call failed, using mock data:", apiError);
+        setAnalytics(generateMockAnalytics());
+      }
     } catch (error) {
       console.error("Failed to fetch vendor analytics:", error);
       setAnalytics(generateMockAnalytics());

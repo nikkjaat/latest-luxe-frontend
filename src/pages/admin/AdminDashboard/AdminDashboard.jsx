@@ -30,26 +30,117 @@ import { useAnalytics } from "../../../context/AnalyticsContext";
 import { Link } from "react-router-dom";
 import apiService from "../../../services/api";
 import UserDetails from "../UserDetails";
+import EditProductModal from "../EditProductModal "; // Import the EditProductModal
 
 const AdminDashboard = () => {
   const { vendors, vendorApplications, getVendors, getVendorApplications } =
     useVendors();
-  const { products, getProducts } = useProducts();
   const { analytics, getRevenueGrowth, getVisitorGrowth } = useAnalytics();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState("monthly");
   const [allUsers, setAllUsers] = useState([]);
   const [allVendors, setAllVendors] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [products, setProducts] = useState([]);
 
   // Add user management state
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
 
+  // Add product edit modal state
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [activeUserCount, setActiveUserCount] = useState(0);
+  const [isActive, setIsActive] = useState(0);
+
+  useEffect(() => {
+    fetchProducts();
+    fetchVendors();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      setLoading(true);
+      try {
+        const response = await apiService.adminGetProducts();
+        if (response.success && response.data) {
+          setProducts(response.data);
+        } else {
+          setProducts([]);
+        }
+      } catch (apiError) {
+        console.error("API call failed:", apiError);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      try {
+        const response = await apiService.getAllUsers();
+        const vendorUsers = response.users.filter(
+          (user) => user.role === "vendor"
+        );
+      } catch (apiError) {
+        console.error("API call failed:", apiError);
+      }
+    } catch (error) {
+      console.error("Failed to fetch vendors:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const fetchUsers = async () => {
+    try {
+      // setLoading(true);
+      const response = await apiService.getAllUsers();
+      // Filter out admin users for security
+      const filteredUsers = response.users.filter(
+        (user) => user.role !== "admin"
+      );
+      setUsers(filteredUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const activeUsers = users.filter((user) => user.isActive === true);
+    setIsActive(activeUsers.length);
+
+    const thisMonthUsers = users.filter((user) => {
+      const createdAt = new Date(user.createdAt); // assuming this field exists
+      const now = new Date();
+      return (
+        createdAt.getMonth() === now.getMonth() &&
+        createdAt.getFullYear() === now.getFullYear()
+      );
+    });
+
+    setActiveUserCount(thisMonthUsers.length);
+  }, [users]);
+
   const loadData = async () => {
     try {
-      await Promise.all([getVendors(), getVendorApplications(), getProducts()]);
+      await Promise.all([
+        getVendors(),
+        getVendorApplications(),
+        fetchProducts(),
+      ]);
     } catch (error) {
       console.error("Failed to load admin data:", error);
     } finally {
@@ -66,19 +157,49 @@ const AdminDashboard = () => {
   }, []);
 
   const getAllUsers = async () => {
-    const response = await apiService.getAllUsers();
-    const filterUsers = response.users.filter(
-      (user) => user.role === "customer"
-    );
-    const filterVendors = response.users.filter(
-      (user) => user.role === "vendor"
-    );
-    setAllUsers(filterUsers);
-    setAllVendors(filterVendors);
+    try {
+      const response = await apiService.getAllUsers();
+      const filterUsers = response.users.filter(
+        (user) => user.role === "customer"
+      );
+      const filterVendors = response.users.filter(
+        (user) => user.role === "vendor"
+      );
+      setAllUsers(filterUsers);
+      setAllVendors(filterVendors);
+      setUsers([...filterUsers, ...filterVendors]); // Set combined users for stats
+    } catch (error) {
+      console.error("Failed to fetch users:", error);
+      setAllUsers([]);
+      setAllVendors([]);
+      setUsers([]);
+    }
+  };
+
+  // Add product edit handler
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setShowEditProductModal(true);
+  };
+
+  // Add product delete handler
+  const handleDeleteProduct = async (productId) => {
+    if (window.confirm("Are you sure you want to delete this product?")) {
+      try {
+        setActionLoading((prev) => ({ ...prev, [productId]: "deleting" }));
+        await apiService.deleteProduct(productId);
+        // Refresh products after deletion
+        await fetchProducts();
+      } catch (error) {
+        console.error("Failed to delete product:", error);
+        alert("Failed to delete product");
+      } finally {
+        setActionLoading((prev) => ({ ...prev, [productId]: null }));
+      }
+    }
   };
 
   // Add user action handler
-
   const handleUserAction = async (userId, action) => {
     try {
       setActionLoading((prev) => ({ ...prev, [userId]: action }));
@@ -91,6 +212,7 @@ const AdminDashboard = () => {
         if (window.confirm("Are you sure you want to delete this user?")) {
           await apiService.adminDeleteUser(userId);
         } else {
+          setActionLoading((prev) => ({ ...prev, [userId]: null }));
           return;
         }
       }
@@ -108,6 +230,7 @@ const AdminDashboard = () => {
           );
           setAllUsers(filterUsers);
           setAllVendors(filterVendors);
+          setUsers([...filterUsers, ...filterVendors]);
         })(),
         // Refresh vendors from context
         getVendors(),
@@ -594,7 +717,7 @@ const AdminDashboard = () => {
                               {actionLoading[vendor._id] ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                               ) : vendor.vendorInfo?.status === "approved" ? (
-                                <Ban className={styles.actionIcon} />
+                                <Ban className="h-4 w-4" />
                               ) : (
                                 <CheckCircle className="h-4 w-4" />
                               )}
@@ -685,12 +808,23 @@ const AdminDashboard = () => {
                           <Eye className="h-4 w-4 inline mr-1" />
                           View
                         </button>
-                        <button className="flex-1 text-green-600 hover:text-green-800 text-sm font-medium">
+                        <button
+                          onClick={() => handleEditProduct(product)}
+                          className="flex-1 text-green-600 hover:text-green-800 text-sm font-medium"
+                        >
                           <Edit className="h-4 w-4 inline mr-1" />
                           Edit
                         </button>
-                        <button className="flex-1 text-red-600 hover:text-red-800 text-sm font-medium">
-                          <Trash2 className="h-4 w-4 inline mr-1" />
+                        <button
+                          onClick={() => handleDeleteProduct(product._id)}
+                          disabled={actionLoading[product._id] === "deleting"}
+                          className="flex-1 text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                        >
+                          {actionLoading[product._id] === "deleting" ? (
+                            <RefreshCw className="h-4 w-4 inline mr-1 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4 inline mr-1" />
+                          )}
                           Remove
                         </button>
                       </div>
@@ -719,7 +853,9 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-blue-900">
                         Total Users
                       </p>
-                      <p className="text-2xl font-bold text-blue-600">2,543</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        {users.length}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -730,7 +866,9 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-green-900">
                         Active Users
                       </p>
-                      <p className="text-2xl font-bold text-green-600">2,156</p>
+                      <p className="text-2xl font-bold text-green-600">
+                        {isActive}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -741,7 +879,9 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-purple-900">
                         New This Month
                       </p>
-                      <p className="text-2xl font-bold text-purple-600">387</p>
+                      <p className="text-2xl font-bold text-purple-600">
+                        {activeUserCount}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -879,7 +1019,7 @@ const AdminDashboard = () => {
               <Package className="h-8 w-8 text-green-600 mr-3" />
               <div>
                 <p className="font-medium text-gray-900">Product Management</p>
-                <p className="text-sm text gray-500">Manage all products</p>
+                <p className="text-sm text-gray-500">Manage all products</p>
               </div>
             </Link>
             <Link
@@ -924,7 +1064,7 @@ const AdminDashboard = () => {
             </Link>
             <Link
               to="/admin/promotions"
-              className="flex itemsCenter p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all transform hover:scale-105"
+              className="flex items-center p-6 bg-gradient-to-br from-yellow-50 to-yellow-100 border border-yellow-200 rounded-xl hover:from-yellow-100 hover:to-yellow-200 transition-all transform hover:scale-105"
             >
               <Gift className="h-8 w-8 text-yellow-600 mr-3" />
               <div>
@@ -974,6 +1114,16 @@ const AdminDashboard = () => {
             fetchUsers={getAllUsers}
             setSelectedUser={setSelectedUser}
             onUserAction={handleUserAction}
+          />
+        )}
+
+        {/* Edit Product Modal */}
+        {showEditProductModal && editingProduct && (
+          <EditProductModal
+            product={editingProduct}
+            onClose={() => setShowEditProductModal(false)}
+            onUpdate={fetchProducts}
+            loading={actionLoading[editingProduct._id] === "updating"}
           />
         )}
       </div>

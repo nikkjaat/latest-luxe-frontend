@@ -67,11 +67,16 @@ const ReportsCenter = () => {
   const generateReport = async () => {
     try {
       setLoading(true);
-      const response = await apiService.adminGenerateReport(selectedReport, {
-        startDate: dateRange.startDate,
-        endDate: dateRange.endDate,
-      });
-      setReportData(response.data || generateMockReportData(selectedReport));
+      try {
+        const response = await apiService.adminGenerateReport(selectedReport, {
+          startDate: dateRange.startDate,
+          endDate: dateRange.endDate,
+        });
+        setReportData(response.data || generateMockReportData(selectedReport));
+      } catch (apiError) {
+        console.error("API call failed, using mock data:", apiError);
+        setReportData(generateMockReportData(selectedReport));
+      }
     } catch (error) {
       console.error("Failed to generate report:", error);
       setReportData(generateMockReportData(selectedReport));

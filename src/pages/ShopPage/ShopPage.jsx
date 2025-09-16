@@ -16,18 +16,25 @@ import { useWishlist } from "../../context/WishlistContext";
 import { useProducts } from "../../context/ProductContext";
 import styles from "./ShopPage.module.css";
 import { Link } from "react-router-dom";
+import { Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ProductImageSlider = ({
-  images,
+  product,
   name,
   badge,
   onWishlistToggle,
   isInWishlist,
 }) => {
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [isPaused, setIsPaused] = useState(false);
+
+  // Get current variant and its images
+  const currentVariant = product.colorVariants?.[selectedVariantIndex];
+  const images = currentVariant?.images || product.images || [];
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -175,6 +182,7 @@ const ShopPage = () => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { getProducts, products } = useProducts();
+  const navigate = useNavigate();
 
   const getNextHundred = (price) => {
     return Math.ceil(price / 100) * 100;
@@ -245,6 +253,16 @@ const ShopPage = () => {
       price: product.price,
       image: product.images[0]?.url,
     });
+  };
+
+  const handleBuyNow = (product) => {
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0]?.url,
+    });
+    navigate("/cart");
   };
 
   const handleWishlistToggle = (product) => {
@@ -438,9 +456,12 @@ const ShopPage = () => {
               <div className={styles.productsGrid}>
                 {sortedProducts.map((product) => (
                   <div key={product._id} className={styles.productCard}>
-                    <Link to={`/product/${product._id}`} className={styles.productLink}>
+                    <Link
+                      to={`/product/${product._id}`}
+                      className={styles.productLink}
+                    >
                       <ProductImageSlider
-                        images={product.images}
+                        product={product}
                         name={product.name}
                         badge={product.badge}
                         onWishlistToggle={() => handleWishlistToggle(product)}
@@ -467,7 +488,10 @@ const ShopPage = () => {
                         </span>
                       </div>
 
-                      <Link to={`/product/${product._id}`} className={styles.productLink}>
+                      <Link
+                        to={`/product/${product._id}`}
+                        className={styles.productLink}
+                      >
                         <h3 className={styles.productName}>{product.name}</h3>
                       </Link>
 
@@ -479,19 +503,37 @@ const ShopPage = () => {
                               ${product.originalPrice}
                             </span>
                           )}
+                          {product.colorVariants &&
+                            product.colorVariants.length > 1 && (
+                              <span className={styles.colorCount}>
+                                {product.colorVariants.length} colors
+                              </span>
+                            )}
                         </div>
                       </div>
 
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(product);
-                        }}
-                        className={styles.addToCartButton}
-                      >
-                        <ShoppingCart className={styles.cartIcon} />
-                        Add to Cart
-                      </button>
+                      <div className={styles.buttonGroup}>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAddToCart(product);
+                          }}
+                          className={styles.addToCartButton}
+                        >
+                          <ShoppingCart className={styles.cartIcon} />
+                          Add to Cart
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBuyNow(product);
+                          }}
+                          className={styles.buyNowButton}
+                        >
+                          <Zap className={styles.buyNowIcon} />
+                          Buy Now
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}
@@ -501,20 +543,28 @@ const ShopPage = () => {
                 {sortedProducts.map((product) => (
                   <div key={product._id} className={styles.listCard}>
                     <div className={styles.listContent}>
-                      <Link to={`/product/${product._id}`} className={styles.listImageLink}>
+                      <Link
+                        to={`/product/${product._id}`}
+                        className={styles.listImageLink}
+                      >
                         <div className={styles.listImageContainer}>
                           <ProductImageSlider
-                            images={product.images}
+                            product={product}
                             name={product.name}
                             badge={product.badge}
-                            onWishlistToggle={() => handleWishlistToggle(product)}
+                            onWishlistToggle={() =>
+                              handleWishlistToggle(product)
+                            }
                             isInWishlist={isInWishlist(product._id)}
                           />
                         </div>
                       </Link>
 
                       <div className={styles.listInfo}>
-                        <Link to={`/product/${product._id}`} className={styles.productLink}>
+                        <Link
+                          to={`/product/${product._id}`}
+                          className={styles.productLink}
+                        >
                           <div className={styles.listRating}>
                             <div className={styles.listStars}>
                               {[...Array(5)].map((_, i) => (
@@ -545,10 +595,16 @@ const ShopPage = () => {
                               ${product.originalPrice}
                             </span>
                           )}
+                          {product.colorVariants &&
+                            product.colorVariants.length > 1 && (
+                              <div className={styles.listColorInfo}>
+                                {product.colorVariants.length} colors available
+                              </div>
+                            )}
                         </div>
                       </div>
 
-                      <div className={styles.listActions}>
+                      <div className={styles.listButtonGroup}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -558,6 +614,16 @@ const ShopPage = () => {
                         >
                           <ShoppingCart className={styles.listCartIcon} />
                           Add to Cart
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleBuyNow(product);
+                          }}
+                          className={styles.listBuyNowButton}
+                        >
+                          <Zap className={styles.listBuyNowIcon} />
+                          Buy Now
                         </button>
                       </div>
                     </div>

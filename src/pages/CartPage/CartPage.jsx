@@ -80,91 +80,154 @@ const CartPage = () => {
             <div className={styles.itemsCard}>
               <div className={styles.itemsContent}>
                 <div className={styles.itemsList}>
-                  {items.map((item) => (
-                    <div key={item._id} className={styles.cartItem}>
-                      <Link
-                        to={`/product/${item.productId._id}`}
-                        className={styles.itemLink}
-                      >
-                        <div className={styles.itemImage}>
-                          <img
-                            src={item.productId?.images?.[0]?.url}
-                            alt={item.productId.name}
-                            className={styles.productImage}
-                          />
-                        </div>
-                      </Link>
+                  {items.map((item) => {
+                    // Calculate the final price with adjustments
+                    const basePrice = parseFloat(item.productId?.price || 0);
+                    const colorAdjustment = parseFloat(
+                      item.colorVariant?.priceAdjustment || 0
+                    );
+                    const sizeAdjustment = parseFloat(
+                      item.sizeVariant?.priceAdjustment || 0
+                    );
+                    const finalPrice =
+                      basePrice + colorAdjustment + sizeAdjustment;
+                    const itemTotal = finalPrice * item.quantity;
 
-                      <div className={styles.itemInfo}>
-                        <Link to={`/product/${item.productId._id}`}>
-                          <h3 className={styles.productName}>
-                            {item.productId.name}
-                          </h3>
+                    return (
+                      <div key={item._id} className={styles.cartItem}>
+                        <Link
+                          to={`/product/${item.productId._id}`}
+                          className={styles.itemLink}
+                        >
+                          <div className={styles.itemImage}>
+                            <img
+                              src={
+                                item.productId.colorVariants[0].images?.[0]
+                                  ?.url || item.productId?.images?.[0]?.url
+                              }
+                              alt={item.productId.name}
+                              className={styles.productImage}
+                            />
+                          </div>
+                        </Link>
+
+                        <div className={styles.itemInfo}>
+                          <Link to={`/product/${item.productId._id}`}>
+                            <h3 className={styles.productName}>
+                              {item.productId.name}
+                            </h3>
+                          </Link>
+
+                          {/* Display selected options */}
                           <div className={styles.productOptions}>
-                            {item.size && (
-                              <span className={styles.optionText}>
-                                Size: Medium
-                              </span>
-                            )}
+                            {/* Color option */}
                             {item.color && (
-                              <span className={styles.optionText}>
-                                Color: {item.color}
-                              </span>
+                              <div className={styles.optionRow}>
+                                <span className={styles.optionLabel}>
+                                  Color:
+                                </span>
+                                <span className={styles.optionValue}>
+                                  {item.color}
+                                  {colorAdjustment > 0 && (
+                                    <span className={styles.priceAdjustment}>
+                                      (+${colorAdjustment})
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Size option */}
+                            {item.size && (
+                              <div className={styles.optionRow}>
+                                <span className={styles.optionLabel}>
+                                  Size:
+                                </span>
+                                <span className={styles.optionValue}>
+                                  {item.size}
+                                  {sizeAdjustment > 0 && (
+                                    <span className={styles.priceAdjustment}>
+                                      (+${sizeAdjustment})
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                            )}
+
+                            {/* Display color code if available */}
+                            {item.colorVariant?.colorCode && (
+                              <div className={styles.colorPreview}>
+                                <span
+                                  className={styles.colorSwatch}
+                                  style={{
+                                    backgroundColor:
+                                      item.colorVariant.colorCode,
+                                  }}
+                                  title={item.color}
+                                />
+                              </div>
                             )}
                           </div>
+
                           <p className={styles.productPrice}>
-                            ${item.productId.price}
+                            ${finalPrice.toFixed(2)} each
                           </p>
-                        </Link>
-                      </div>
+                        </div>
 
-                      <div className={styles.quantityControls}>
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item._id, item.quantity - 1)
-                          }
-                          className={styles.quantityButton}
-                          disabled={
-                            loadingItems[item._id] || item.quantity <= 1
-                          }
-                        >
-                          <Minus className={styles.quantityIcon} />
-                        </button>
-                        <span className={styles.quantityDisplay}>
-                          {loadingItems[item._id] ? (
-                            <Loader
-                              className={`${styles.quantityLoader} ${styles.spinning}`}
-                            />
-                          ) : (
-                            item.quantity
-                          )}
-                        </span>
-                        <button
-                          onClick={() =>
-                            handleQuantityChange(item._id, item.quantity + 1)
-                          }
-                          className={styles.quantityButton}
-                          disabled={loadingItems[item._id]}
-                        >
-                          <Plus className={styles.quantityIcon} />
-                        </button>
+                        <div className={styles.quantityControls}>
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId._id,
+                                item.quantity - 1
+                              )
+                            }
+                            className={styles.quantityButton}
+                            disabled={
+                              loadingItems[item.productId._id] ||
+                              item.quantity <= 1
+                            }
+                          >
+                            <Minus className={styles.quantityIcon} />
+                          </button>
+                          <span className={styles.quantityDisplay}>
+                            {loadingItems[item.productId._id] ? (
+                              <Loader
+                                className={`${styles.quantityLoader} ${styles.spinning}`}
+                              />
+                            ) : (
+                              item.quantity
+                            )}
+                          </span>
+                          <button
+                            onClick={() =>
+                              handleQuantityChange(
+                                item.productId._id,
+                                item.quantity + 1
+                              )
+                            }
+                            className={styles.quantityButton}
+                            disabled={loadingItems[item.productId._id]}
+                          >
+                            <Plus className={styles.quantityIcon} />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveItem(item.productId._id)}
+                            className={styles.removeButton}
+                            disabled={deletingItems[item._id]}
+                          >
+                            {deletingItems[item.productId._id] ? (
+                              <Loader
+                                className={`${styles.removeIcon} ${styles.spinning}`}
+                              />
+                            ) : (
+                              <Trash2 className={styles.removeIcon} />
+                            )}
+                          </button>
+                        </div>
                       </div>
-
-                      <button
-                        onClick={() => handleRemoveItem(item._id)}
-                        className={styles.removeButton}
-                        disabled={deletingItems[item._id]}
-                      >
-                        {deletingItems[item._id] ? (
-                          <Loader
-                            className={`${styles.removeIcon} ${styles.spinning}`}
-                          />
-                        ) : (
-                          <Trash2 className={styles.removeIcon} />
-                        )}
-                      </button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

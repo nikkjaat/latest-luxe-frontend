@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { Star, Heart, ShoppingCart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Star, Heart, ShoppingCart, Zap } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useProducts } from "../../context/ProductContext";
 import styles from "./FeaturedProducts.module.css";
 
 const FeaturedProducts = () => {
-  const { addToCart } = useCart();
+  const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const { items, addToWishlist, removeFromWishlist, isInWishlist } =
     useWishlist();
   const { products, getProducts } = useProducts();
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -23,7 +24,7 @@ const FeaturedProducts = () => {
       }
     };
     fetchProducts();
-  }, []);
+  }, [products]);
 
   // Filter and limit to top 8 featured products
   useEffect(() => {
@@ -51,6 +52,16 @@ const FeaturedProducts = () => {
       price: product.price,
       image: product.images[0].url,
     });
+  };
+
+  const handleBuyNow = (product) => {
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.images[0].url,
+    });
+    navigate("/cart");
   };
 
   const handleWishlistToggle = (product) => {
@@ -188,7 +199,7 @@ const FeaturedProducts = () => {
                 <div key={product._id} className={styles.productCard}>
                   <Link to={`/product/${product._id}`}>
                     <ProductImageSlider
-                      images={product.images}
+                      images={product.colorVariants[0].images || []}
                       name={product.name}
                       badge={product.badge}
                     />
@@ -233,19 +244,36 @@ const FeaturedProducts = () => {
                     <div className={styles.priceContainer}>
                       <div className={styles.priceGroup}>
                         <span className={styles.price}>${product.price}</span>
-                        <span className={styles.originalPrice}>
-                          ${product.originalPrice}
-                        </span>
+                        {product.originalPrice && (
+                          <span className={styles.originalPrice}>
+                            ${product.originalPrice}
+                          </span>
+                        )}
+                        {product.colorVariants &&
+                          product.colorVariants.length > 1 && (
+                            <span className={styles.colorCount}>
+                              {product.colorVariants.length} colors
+                            </span>
+                          )}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className={styles.addToCartButton}
-                    >
-                      <ShoppingCart className={styles.cartIcon} />
-                      Add to Cart
-                    </button>
+                    <div className={styles.buttonGroup}>
+                      <button
+                        onClick={() => handleAddToCart(product)}
+                        className={styles.addToCartButton}
+                      >
+                        <ShoppingCart className={styles.cartIcon} />
+                        Add to Cart
+                      </button>
+                      <button
+                        onClick={() => handleBuyNow(product)}
+                        className={styles.buyNowButton}
+                      >
+                        <Zap className={styles.buyNowIcon} />
+                        Buy Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

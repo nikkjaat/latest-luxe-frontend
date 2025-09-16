@@ -43,90 +43,96 @@ const OrderManagement = () => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await apiService.adminGetOrders();
-      setOrders(response.orders || []);
+      try {
+        const response = await apiService.adminGetOrders();
+        setOrders(response.orders || []);
+      } catch (apiError) {
+        console.error("API call failed, using mock data:", apiError);
+        // Use mock data as fallback for demonstration
+        const mockOrders = generateMockOrders();
+        setOrders(mockOrders);
+      }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
-      // Use mock data as fallback for demonstration
-      const mockOrders = [
-        {
-          _id: "ORD-001",
-          orderNumber: "ORD-001",
-          customer: {
-            name: "John Doe",
-            email: "john@example.com",
-            avatar:
-              "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150",
-          },
-          status: "delivered",
-          total: 299.99,
-          items: [
-            { name: "Premium Leather Handbag", quantity: 1, price: 199.99 },
-            { name: "Silk Scarf", quantity: 2, price: 50.0 },
-          ],
-          createdAt: "2025-01-20",
-          shippingAddress: {
-            street: "123 Main St",
-            city: "New York",
-            state: "NY",
-            zipCode: "10001",
-            country: "USA",
-          },
-          paymentMethod: "Credit Card",
-          trackingNumber: "TRK123456789",
-        },
-        {
-          _id: "ORD-002",
-          orderNumber: "ORD-002",
-          customer: {
-            name: "Sarah Johnson",
-            email: "sarah@example.com",
-            avatar:
-              "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150",
-          },
-          status: "processing",
-          total: 599.99,
-          items: [{ name: "Designer Watch", quantity: 1, price: 599.99 }],
-          createdAt: "2025-01-19",
-          shippingAddress: {
-            street: "456 Oak Ave",
-            city: "Los Angeles",
-            state: "CA",
-            zipCode: "90210",
-            country: "USA",
-          },
-          paymentMethod: "PayPal",
-        },
-        {
-          _id: "ORD-003",
-          orderNumber: "ORD-003",
-          customer: {
-            name: "Michael Chen",
-            email: "michael@example.com",
-            avatar:
-              "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150",
-          },
-          status: "shipped",
-          total: 149.99,
-          items: [{ name: "Wireless Headphones", quantity: 1, price: 149.99 }],
-          createdAt: "2025-01-18",
-          shippingAddress: {
-            street: "789 Pine St",
-            city: "Chicago",
-            state: "IL",
-            zipCode: "60601",
-            country: "USA",
-          },
-          paymentMethod: "Credit Card",
-          trackingNumber: "TRK987654321",
-        },
-      ];
-      setOrders(mockOrders);
+      setOrders([]);
     } finally {
       setLoading(false);
     }
   };
 
+  const generateMockOrders = () => [
+    {
+      _id: "ORD-001",
+      orderNumber: "ORD-001",
+      customer: {
+        name: "John Doe",
+        email: "john@example.com",
+        avatar:
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150",
+      },
+      status: "delivered",
+      total: 299.99,
+      items: [
+        { name: "Premium Leather Handbag", quantity: 1, price: 199.99 },
+        { name: "Silk Scarf", quantity: 2, price: 50.0 },
+      ],
+      createdAt: "2025-01-20",
+      shippingAddress: {
+        street: "123 Main St",
+        city: "New York",
+        state: "NY",
+        zipCode: "10001",
+        country: "USA",
+      },
+      paymentMethod: "Credit Card",
+      trackingNumber: "TRK123456789",
+    },
+    {
+      _id: "ORD-002",
+      orderNumber: "ORD-002",
+      customer: {
+        name: "Sarah Johnson",
+        email: "sarah@example.com",
+        avatar:
+          "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150",
+      },
+      status: "processing",
+      total: 599.99,
+      items: [{ name: "Designer Watch", quantity: 1, price: 599.99 }],
+      createdAt: "2025-01-19",
+      shippingAddress: {
+        street: "456 Oak Ave",
+        city: "Los Angeles",
+        state: "CA",
+        zipCode: "90210",
+        country: "USA",
+      },
+      paymentMethod: "PayPal",
+    },
+    {
+      _id: "ORD-003",
+      orderNumber: "ORD-003",
+      customer: {
+        name: "Michael Chen",
+        email: "michael@example.com",
+        avatar:
+          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150",
+      },
+      status: "shipped",
+      total: 149.99,
+      items: [{ name: "Wireless Headphones", quantity: 1, price: 149.99 }],
+      createdAt: "2025-01-18",
+      shippingAddress: {
+        street: "789 Pine St",
+        city: "Chicago",
+        state: "IL",
+        zipCode: "60601",
+        country: "USA",
+      },
+      paymentMethod: "Credit Card",
+      trackingNumber: "TRK987654321",
+    },
+  ];
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setActionLoading((prev) => ({ ...prev, [orderId]: "updating" }));

@@ -32,12 +32,12 @@ const VendorSignupPage = () => {
   const location = useLocation();
 
   // Redirect if already authenticated
-  // React.useEffect(() => {
-  //   if (isAuthenticated) {
-  //     const from = location.state?.from?.pathname || "/vendor/dashboard";
-  //     navigate(from, { replace: true });
-  //   }
-  // }, [isAuthenticated, navigate, location]);
+  React.useEffect(() => {
+    if (isAuthenticated && user?.role === "vendor") {
+      const from = location.state?.from?.pathname || "/vendor/dashboard";
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location]);
 
   const businessTypes = [
     "Fashion & Accessories",
@@ -107,19 +107,20 @@ const VendorSignupPage = () => {
             <Store className="h-8 w-8 text-white" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-            {user.vendorInfo.status === "pending"
+            {user?.vendorInfo?.status === "pending"
               ? "Your application is under review."
               : "Become a Vendor"}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {user.vendorInfo.status === "pending"
+            {user?.vendorInfo?.status === "pending"
               ? "Thank you for your interest! Our team will review your application and get back to you soon."
               : "Join our marketplace and start selling your products"}
           </p>
         </div>
 
         {/* Form */}
-        {!user.vendorInfo.status && (
+        {(!user?.vendorInfo?.status ||
+          user?.vendorInfo?.status !== "pending") && (
           <>
             <form
               className="mt-8 space-y-6 bg-white p-8 rounded-xl shadow-lg"

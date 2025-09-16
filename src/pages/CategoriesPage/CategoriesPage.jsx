@@ -3,6 +3,7 @@ import { Search, Filter, Grid, List, ArrowRight, Loader } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./CategoriesPage.module.css";
 import { useProducts } from "../../context/ProductContext";
+import { useCategory } from "../../context/CategoryContext";
 
 const CategoriesPage = () => {
   const [viewMode, setViewMode] = useState("grid");
@@ -10,120 +11,74 @@ const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const { products, loading: productsLoading, getProducts } = useProducts();
+  const { categories: contextCategories, adminGetCategories } = useCategory();
   const navigate = useNavigate();
 
   useEffect(() => {
     getProducts();
+    // Initialize with default categories and then fetch from API
+    const initializeCategories = async () => {
+      // Set default categories immediately
+      setIsLoading(false);
+
+      // Then try to fetch from API
+      try {
+        await adminGetCategories();
+      } catch (error) {
+        console.error("Failed to fetch categories from API:", error);
+      }
+    };
+
+    initializeCategories();
   }, []);
 
-  // Define all possible categories with their properties
-  const allCategories = [
-    {
-      id: "women",
-      name: "Women's Fashion",
-      image:
-        "https://images.pexels.com/photos/1926769/pexels-photo-1926769.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayPink,
-      description:
-        "Discover the latest trends in women's clothing, from casual wear to elegant evening dresses.",
-      subcategories: ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear"],
-    },
-    {
-      id: "men",
-      name: "Men's Collection",
-      image:
-        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayBlue,
-      description:
-        "Premium men's fashion featuring sophisticated styles for the modern gentleman.",
-      subcategories: ["Shirts", "Suits", "Casual Wear", "Accessories", "Shoes"],
-    },
-    {
-      id: "accessories",
-      name: "Accessories",
-      image:
-        "https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayPurple,
-      description:
-        "Complete your look with our curated selection of luxury accessories.",
-      subcategories: ["Jewelry", "Bags", "Watches", "Sunglasses", "Scarves"],
-    },
-    {
-      id: "home",
-      name: "Home & Living",
-      image:
-        "https://images.pexels.com/photos/1571460/pexels-photo-1571460.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayEmerald,
-      description:
-        "Transform your space with our elegant home decor and living essentials.",
-      subcategories: ["Furniture", "Decor", "Lighting", "Textiles", "Kitchen"],
-    },
-    {
-      id: "electronics",
-      name: "Electronics",
-      image:
-        "https://images.pexels.com/photos/356056/pexels-photo-356056.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayOrange,
-      description:
-        "Latest technology and gadgets to enhance your digital lifestyle.",
-      subcategories: [
-        "Smartphones",
-        "Laptops",
-        "Audio",
-        "Smart Home",
-        "Gaming",
-      ],
-    },
-    {
-      id: "beauty",
-      name: "Beauty & Care",
-      image:
-        "https://images.pexels.com/photos/3785147/pexels-photo-3785147.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayAmber,
-      description:
-        "Premium beauty products and personal care essentials for your daily routine.",
-      subcategories: [
-        "Skincare",
-        "Makeup",
-        "Fragrance",
-        "Hair Care",
-        "Wellness",
-      ],
-    },
-    {
-      id: "sports",
-      name: "Sports & Fitness",
-      image:
-        "https://images.pexels.com/photos/1552242/pexels-photo-1552242.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayGreen,
-      description:
-        "High-performance gear and apparel for your active lifestyle.",
-      subcategories: [
-        "Activewear",
-        "Equipment",
-        "Footwear",
-        "Outdoor",
-        "Fitness",
-      ],
-    },
-    {
-      id: "kids",
-      name: "Kids & Baby",
-      image:
-        "https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg?auto=compress&cs=tinysrgb&w=600",
-      overlayClass: styles.overlayCyan,
-      description:
-        "Safe, comfortable, and stylish products for children of all ages.",
-      subcategories: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
-    },
-  ];
+  // Define overlay classes for different categories
+  const overlayClasses = {
+    women: styles.overlayPink,
+    men: styles.overlayBlue,
+    accessories: styles.overlayPurple,
+    home: styles.overlayEmerald,
+    electronics: styles.overlayOrange,
+    beauty: styles.overlayAmber,
+    sports: styles.overlayGreen,
+    kids: styles.overlayCyan,
+  };
 
-  const getProductByCategory = (id, name, itemCount) => {
-    const keyword = id.split("-")[0];
-    const filterCategory = products.filter(
-      (product) => product.category === keyword
-    );
-    navigate(`/category/${id}`, {
+  // Default subcategories for fallback
+  const defaultSubcategories = {
+    women: ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear"],
+    men: ["Shirts", "Suits", "Casual Wear", "Accessories", "Shoes"],
+    accessories: ["Jewelry", "Bags", "Watches", "Sunglasses", "Scarves"],
+    home: ["Furniture", "Decor", "Lighting", "Textiles", "Kitchen"],
+    electronics: ["Smartphones", "Laptops", "Audio", "Smart Home", "Gaming"],
+    beauty: ["Skincare", "Makeup", "Fragrance", "Hair Care", "Wellness"],
+    sports: ["Activewear", "Equipment", "Footwear", "Outdoor", "Fitness"],
+    kids: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
+  };
+
+  const getProductByCategory = (id, name, itemCount, category) => {
+    const keyword =
+      category.slug?.toLowerCase() || category.name?.toLowerCase();
+
+    const filterCategory = products.filter((product) => {
+      const productCat = product.category;
+      if (!productCat) return false;
+
+      if (typeof productCat === "string") {
+        return productCat.toLowerCase() === keyword;
+      }
+
+      if (typeof productCat === "object") {
+        return (
+          productCat.slug?.toLowerCase() === keyword ||
+          productCat.name?.toLowerCase() === keyword
+        );
+      }
+
+      return false;
+    });
+
+    navigate(`/category/${category.slug}`, {
       state: {
         keyword,
         filterCategory,
@@ -135,48 +90,58 @@ const CategoriesPage = () => {
 
   // Count products in each category
   useEffect(() => {
-    if (products.length > 0 || !productsLoading) {
-      const categoriesWithCounts = allCategories.map((category) => {
-        // Extract the first part of the category ID to match with backend
-        const categoryKeyword = category.id.split("-")[0];
+    if (
+      (products.length > 0 || !productsLoading) &&
+      (contextCategories.length > 0 || categories.length > 0)
+    ) {
+      const categoriesToProcess =
+        contextCategories.length > 0 ? contextCategories : categories;
 
-        // Count products that match this category
+      const categoriesWithCounts = categoriesToProcess.map((category) => {
+        const slug = category.slug?.toLowerCase();
+
         const productCount = products.filter((product) => {
-          // Handle different category field structures
           const productCategory = product.category;
+
           if (!productCategory) return false;
 
-          // Check if category matches by the first part of the ID
           if (typeof productCategory === "string") {
-            return (
-              productCategory.toLowerCase() === categoryKeyword.toLowerCase()
-            );
-          } else if (typeof productCategory === "object") {
-            return (
-              productCategory._id === categoryKeyword ||
-              productCategory.name?.toLowerCase() ===
-                categoryKeyword.toLowerCase() ||
-              productCategory.slug === categoryKeyword
-            );
+            return productCategory.toLowerCase() === slug;
           }
+
+          if (typeof productCategory === "object") {
+            return productCategory.slug?.toLowerCase() === slug;
+          }
+
           return false;
         }).length;
 
+        const image =
+          category.image ||
+          (Array.isArray(category.images) && category.images.length > 0
+            ? category.images[0].url
+            : "");
+
         return {
           ...category,
+          id: category.slug || category._id,
+          image,
           itemCount: productCount,
+          overlayClass: overlayClasses[category.slug] || styles.overlayBlue,
+          subcategories:
+            category.subcategories || defaultSubcategories[category.slug] || [],
         };
       });
 
       setCategories(categoriesWithCounts);
       setIsLoading(false);
     }
-  }, [products, productsLoading]);
+  }, [products, productsLoading, contextCategories]);
 
   const filteredCategories = categories.filter(
     (category) =>
       category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      category.subcategories.some((sub) =>
+      (category.subcategories || []).some((sub) =>
         sub.toLowerCase().includes(searchTerm.toLowerCase())
       )
   );
@@ -290,14 +255,16 @@ const CategoriesPage = () => {
 
                   <div className={styles.cardContent}>
                     <div className={styles.subcategories}>
-                      {category.subcategories.slice(0, 3).map((sub, index) => (
-                        <span key={index} className={styles.subcategoryTag}>
-                          {sub}
-                        </span>
-                      ))}
-                      {category.subcategories.length > 3 && (
+                      {(category.subcategories || [])
+                        .slice(0, 3)
+                        .map((sub, index) => (
+                          <span key={index} className={styles.subcategoryTag}>
+                            {sub}
+                          </span>
+                        ))}
+                      {(category.subcategories || []).length > 3 && (
                         <span className={styles.moreCount}>
-                          +{category.subcategories.length - 3} more
+                          +{(category.subcategories || []).length - 3} more
                         </span>
                       )}
                     </div>
@@ -345,7 +312,7 @@ const CategoriesPage = () => {
                         {category.description}
                       </p>
                       <div className={styles.listSubcategories}>
-                        {category.subcategories.map((sub, index) => (
+                        {(category.subcategories || []).map((sub, index) => (
                           <span
                             key={index}
                             className={styles.listSubcategoryTag}

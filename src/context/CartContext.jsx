@@ -38,7 +38,13 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (item) => {
     console.log(item);
     try {
-      const response = await apiService.addToCart(item);
+      // Handle color variant information
+      const cartItem = {
+        ...item,
+        colorVariant: item.colorVariant || null,
+      };
+
+      const response = await apiService.addToCart(cartItem);
       if (response.success) {
         getCartItems();
       }
@@ -48,6 +54,7 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (id) => {
+    console.log(id);
     try {
       const response = await apiService.removeFromCart(id);
       if (response.success) {
@@ -74,11 +81,18 @@ export const CartProvider = ({ children }) => {
   const clearCart = () => {
     setItems([]);
   };
-  const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce(
-    (sum, item) => sum + item.productId.price * item.quantity,
-    0
-  );
+
+  // Safe calculation functions to handle null/undefined values
+  const totalItems = items.reduce((sum, item) => {
+    const quantity = item?.quantity || 0;
+    return sum + quantity;
+  }, 0);
+
+  const totalPrice = items.reduce((sum, item) => {
+    const price = item?.productId?.price || 0;
+    const quantity = item?.quantity || 0;
+    return sum + price * quantity;
+  }, 0);
 
   return (
     <CartContext.Provider

@@ -54,21 +54,18 @@ const VendorDashboard = () => {
       setLoading(true);
 
       // Fetch vendor products
-      const productsResponse = await apiService.getVendorProducts();
-      setVendorProducts(productsResponse.products || []);
-
-      // Fetch vendor orders
-      // const ordersResponse = await apiService.getVendorOrders();
-      // setVendorOrders(ordersResponse.orders || []);
-
-      // Fetch vendor analytics
-      // const analyticsResponse = await apiService.getVendorAnalytics();
-      // setVendorAnalytics(analyticsResponse.analytics || generateMockAnalytics());
+      try {
+        const productsResponse = await apiService.getVendorProducts();
+        setVendorProducts(productsResponse.products || []);
+      } catch (error) {
+        console.error("Failed to fetch vendor products:", error);
+        setVendorProducts([]);
+      }
     } catch (error) {
       console.error("Failed to fetch vendor data:", error);
 
       // Use filtered products from context as fallback
-      const filteredProducts = products.filter((p) => p.vendor === user._id);
+      const filteredProducts = products.filter((p) => p.vendor === user?._id);
       setVendorProducts(filteredProducts);
 
       // Generate mock data for demonstration
@@ -129,8 +126,12 @@ const VendorDashboard = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         setActionLoading((prev) => ({ ...prev, [productId]: "deleting" }));
-        await apiService.deleteProduct(productId);
-        setVendorProducts((prev) => prev.filter((p) => p._id !== productId));
+        const response = await apiService.deleteProduct(productId);
+        if (response.success) {
+          setVendorProducts((prev) => prev.filter((p) => p._id !== productId));
+        } else {
+          throw new Error(response.message || "Failed to delete product");
+        }
       } catch (error) {
         console.error("Failed to delete product:", error);
         alert("Failed to delete product");
@@ -489,7 +490,7 @@ const VendorDashboard = () => {
                     >
                       <img
                         src={
-                          product.images?.[0]?.url ||
+                          product.colorVariants[0].images?.[0]?.url ||
                           "https://via.placeholder.com/150"
                         }
                         alt={product.name}
@@ -592,7 +593,7 @@ const VendorDashboard = () => {
                       <div className="relative">
                         <img
                           src={
-                            product.images?.[0]?.url ||
+                            product.colorVariants[0]?.images?.[0]?.url ||
                             "https://via.placeholder.com/300"
                           }
                           alt={product.name}
