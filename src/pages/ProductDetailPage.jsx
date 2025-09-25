@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate, useLocation } from "react-router-dom";
 import { Zap } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Star,
@@ -40,11 +39,15 @@ const ProductDetailPage = () => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // State coming from navigate
+  const { keyword, filterCategory, name, itemCount } = location.state || {};
 
   const [product, setProduct] = useState();
   const [selectedColorVariant, setSelectedColorVariant] = useState(null);
   const [selectedSizeVariant, setSelectedSizeVariant] = useState(null);
-  const [currentPrice, setCurrentPrice] = useState(product?.price || 0);
+  const [currentPrice, setCurrentPrice] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showComparison, setShowComparison] = useState(false);
@@ -68,10 +71,7 @@ const ProductDetailPage = () => {
   const stickyBoundaryRef = useRef(null);
 
   useEffect(() => {
-    const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth < 768);
-    };
-
+    const checkScreenSize = () => setIsSmallScreen(window.innerWidth < 768);
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -83,89 +83,62 @@ const ProductDetailPage = () => {
         const productData = await getProduct(id);
         setProduct(productData.product);
 
-        // Set initial color and size variants
-        if (
-          productData.product.colorVariants &&
-          productData.product.colorVariants.length > 0
-        ) {
+        if (productData.product.colorVariants?.length > 0) {
           const firstColorVariant = productData.product.colorVariants[0];
           setSelectedColorVariant(firstColorVariant);
           setSelectedColor(firstColorVariant.colorName);
 
-          // Set initial images based on first color variant
-          if (firstColorVariant.images && firstColorVariant.images.length > 0) {
-            setSelectedImage(0);
-          }
-
-          // Set initial size variant
-          if (
-            firstColorVariant.sizeVariants &&
-            firstColorVariant.sizeVariants.length > 0
-          ) {
+          if (firstColorVariant.sizeVariants?.length > 0) {
             const firstSizeVariant = firstColorVariant.sizeVariants[0];
             setSelectedSizeVariant(firstSizeVariant);
             setSelectedSize(
               firstSizeVariant.size || firstSizeVariant.customSize
             );
-
-            // Calculate initial price with size adjustment
-            const adjustedPrice =
+            setCurrentPrice(
               productData.product.price +
-              (firstSizeVariant.priceAdjustment || 0);
-            setCurrentPrice(adjustedPrice);
+                (firstSizeVariant.priceAdjustment || 0)
+            );
+          } else {
+            setCurrentPrice(productData.product.price);
           }
+        } else {
+          setCurrentPrice(productData.product.price);
         }
       } catch (error) {
         console.error("Failed to fetch product:", error);
       }
     };
-
     fetchProduct();
-  }, [id]);
+  }, [id, getProduct]);
 
   useEffect(() => {
     if (!product || !selectedColor) return;
-
-    // Find the selected color variant
     const colorVariant = product.colorVariants.find(
       (variant) => variant.colorName === selectedColor
     );
-
     if (colorVariant) {
       setSelectedColorVariant(colorVariant);
-
-      // Reset selected image to first image of the new color
       setSelectedImage(0);
-
-      // Update size variants for the selected color
-      if (colorVariant.sizeVariants && colorVariant.sizeVariants.length > 0) {
+      if (colorVariant.sizeVariants?.length > 0) {
         const firstSizeVariant = colorVariant.sizeVariants[0];
         setSelectedSizeVariant(firstSizeVariant);
         setSelectedSize(firstSizeVariant.size || firstSizeVariant.customSize);
-
-        // Update price with size adjustment
-        const adjustedPrice =
-          product.price + (firstSizeVariant.priceAdjustment || 0);
-        setCurrentPrice(adjustedPrice);
+        setCurrentPrice(
+          product.price + (firstSizeVariant.priceAdjustment || 0)
+        );
       }
     }
   }, [selectedColor, product]);
 
   useEffect(() => {
     if (!product || !selectedSizeVariant || !selectedColorVariant) return;
-
-    // Find the selected size variant within the current color variant
     const sizeVariant = selectedColorVariant.sizeVariants.find(
       (variant) =>
         variant.size === selectedSize || variant.customSize === selectedSize
     );
-
     if (sizeVariant) {
       setSelectedSizeVariant(sizeVariant);
-
-      // Update price with size adjustment
-      const adjustedPrice = product.price + (sizeVariant.priceAdjustment || 0);
-      setCurrentPrice(adjustedPrice);
+      setCurrentPrice(product.price + (sizeVariant.priceAdjustment || 0));
     }
   }, [selectedSize, selectedColorVariant, product]);
 
@@ -173,20 +146,9 @@ const ProductDetailPage = () => {
     const foundProduct = products.find((p) => p._id === id);
     if (foundProduct) {
       setProduct(foundProduct);
-
-      if (foundProduct.specifications) {
-        const { color, size } = foundProduct.specifications;
-        if (color && color.length > 0 && !selectedColor) {
-          setSelectedColor(color[0]);
-        }
-        if (size && size.length > 0 && !selectedSize) {
-          setSelectedSize(size[0]);
-        }
-      }
     }
-  }, [products, id, selectedColor, selectedSize]);
+  }, [products, id]);
 
-  // Handle sticky behavior
   useEffect(() => {
     const handleScroll = () => {
       if (stickyBoundaryRef.current) {
@@ -194,39 +156,39 @@ const ProductDetailPage = () => {
         setIsSticky(boundary.top <= 100);
       }
     };
-
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Validate selection before adding to cart
   const validateSelection = () => {
     setSelectionError("");
-
-    if (hasColors && !selectedColor) {
+    if (
+      product.colorVariants &&
+      product.colorVariants.length > 0 &&
+      !selectedColor
+    ) {
       setSelectionError("Please select a color");
       return false;
     }
-
-    if (hasSizes && !selectedSize) {
+    if (
+      selectedColorVariant &&
+      selectedColorVariant.sizeVariants &&
+      selectedColorVariant.sizeVariants.length > 0 &&
+      !selectedSize
+    ) {
       setSelectionError("Please select a size");
       return false;
     }
-
     return true;
   };
 
-  // Start/stop camera when AR mode is toggled
   useEffect(() => {
     if (showAR && cameraActive) {
       startCamera();
     } else {
       stopCamera();
     }
-
-    return () => {
-      stopCamera();
-    };
+    return () => stopCamera();
   }, [showAR, cameraActive]);
 
   const startCamera = async () => {
@@ -235,14 +197,12 @@ const ProductDetailPage = () => {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: "user" },
       });
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
       }
     } catch (err) {
-      console.error("Error accessing camera:", err);
-      setCameraError("Unable to access camera. Please check permissions.");
+      setCameraError("Unable to access camera");
       setCameraActive(false);
     }
   };
@@ -252,73 +212,422 @@ const ProductDetailPage = () => {
       streamRef.current.getTracks().forEach((track) => track.stop());
       streamRef.current = null;
     }
-
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
   };
 
-  const toggleCamera = () => {
-    if (cameraActive) {
-      setCameraActive(false);
-      stopCamera();
-    } else {
-      setCameraActive(true);
-    }
-  };
+  const toggleCamera = () => setCameraActive((prev) => !prev);
+  const handleARButtonClick = () => setShowAR((prev) => !prev);
 
-  const handleARButtonClick = () => {
-    if (!showAR) {
-      setShowAR(true);
-      setCameraActive(true);
-    } else {
-      setShowAR(false);
-      setCameraActive(false);
-    }
-  };
-
-  const toggleSection = (section) => {
-    setExpandedSections((prev) => ({
-      ...prev,
-      [section]: !prev[section],
-    }));
-  };
+  const toggleSection = (section) =>
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
 
   const relatedProducts = products
-    .filter((p) => p?.category === product?.category && p?._id !== id)
+    .filter(
+      (p) => p?.category?.main === product?.category?.main && p?._id !== id
+    )
     .slice(0, 4);
 
-  // Auto-scroll images effect
   useEffect(() => {
-    if (!product?.images || product.images.length <= 1 || !autoScroll) return;
-
+    if (
+      !selectedColorVariant?.images ||
+      selectedColorVariant.images.length <= 1 ||
+      !autoScroll
+    )
+      return;
     const interval = setInterval(() => {
-      setSelectedImage((prev) => (prev + 1) % product.images.length);
+      setSelectedImage(
+        (prev) => (prev + 1) % selectedColorVariant.images.length
+      );
     }, 3000);
-
     return () => clearInterval(interval);
-  }, [product?.images, autoScroll]);
+  }, [selectedColorVariant?.images, autoScroll]);
+
+  // Function to render specifications based on category
+  const renderSpecifications = () => {
+    if (!product) return null;
+
+    const specs = [];
+
+    // Add common specifications
+    if (product.commonSpecs) {
+      if (product.commonSpecs.weight && product.commonSpecs.weight.value) {
+        specs.push({
+          name: "Weight",
+          value: `${product.commonSpecs.weight.value} ${
+            product.commonSpecs.weight.unit || "kg"
+          }`,
+          icon: <Dumbbell className={styles.specIcon} />,
+        });
+      }
+
+      if (product.commonSpecs.material) {
+        specs.push({
+          name: "Material",
+          value: product.commonSpecs.material,
+          icon: <Scissors className={styles.specIcon} />,
+        });
+      }
+
+      if (product.commonSpecs.warranty) {
+        specs.push({
+          name: "Warranty",
+          value: product.commonSpecs.warranty,
+          icon: <Shield className={styles.specIcon} />,
+        });
+      }
+
+      if (
+        product.commonSpecs.features &&
+        product.commonSpecs.features.length > 0
+      ) {
+        specs.push({
+          name: "Features",
+          value: product.commonSpecs.features.join(", "),
+          icon: <Sparkles className={styles.specIcon} />,
+        });
+      }
+    }
+
+    // Add category-specific fields
+    if (product.categoryFields) {
+      const category = product.category?.main;
+
+      // Electronics
+      if (category === "electronics") {
+        if (product.categoryFields.brand)
+          specs.push({
+            name: "Brand",
+            value: product.categoryFields.brand,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.model)
+          specs.push({
+            name: "Model",
+            value: product.categoryFields.model,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.screenSize)
+          specs.push({
+            name: "Screen Size",
+            value: product.categoryFields.screenSize,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.resolution)
+          specs.push({
+            name: "Resolution",
+            value: product.categoryFields.resolution,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.ram)
+          specs.push({
+            name: "RAM",
+            value: product.categoryFields.ram,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.storage)
+          specs.push({
+            name: "Storage",
+            value: product.categoryFields.storage,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.processor)
+          specs.push({
+            name: "Processor",
+            value: product.categoryFields.processor,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.battery)
+          specs.push({
+            name: "Battery",
+            value: product.categoryFields.battery,
+            icon: <Cpu className={styles.specIcon} />,
+          });
+      }
+
+      // Clothing (Men & Women)
+      if (category === "men" || category === "women") {
+        if (product.categoryFields.fabric)
+          specs.push({
+            name: "Fabric",
+            value: product.categoryFields.fabric,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+        if (product.categoryFields.fit)
+          specs.push({
+            name: "Fit",
+            value: product.categoryFields.fit,
+            icon: <Ruler className={styles.specIcon} />,
+          });
+        if (product.categoryFields.sleeveType)
+          specs.push({
+            name: "Sleeve Type",
+            value: product.categoryFields.sleeveType,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+        if (product.categoryFields.neckType)
+          specs.push({
+            name: "Neck Type",
+            value: product.categoryFields.neckType,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+        if (product.categoryFields.occasion)
+          specs.push({
+            name: "Occasion",
+            value: product.categoryFields.occasion,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.pattern)
+          specs.push({
+            name: "Pattern",
+            value: product.categoryFields.pattern,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+      }
+
+      // Books
+      if (category === "books") {
+        if (product.categoryFields.author)
+          specs.push({
+            name: "Author",
+            value: product.categoryFields.author,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.publisher)
+          specs.push({
+            name: "Publisher",
+            value: product.categoryFields.publisher,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.isbn)
+          specs.push({
+            name: "ISBN",
+            value: product.categoryFields.isbn,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.language)
+          specs.push({
+            name: "Language",
+            value: product.categoryFields.language,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.pages)
+          specs.push({
+            name: "Pages",
+            value: product.categoryFields.pages,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.genre)
+          specs.push({
+            name: "Genre",
+            value: product.categoryFields.genre,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+      }
+
+      // Furniture
+      if (category === "furniture") {
+        if (product.categoryFields.material)
+          specs.push({
+            name: "Material",
+            value: product.categoryFields.material,
+            icon: <Home className={styles.specIcon} />,
+          });
+        if (product.categoryFields.dimensions)
+          specs.push({
+            name: "Dimensions",
+            value: product.categoryFields.dimensions,
+            icon: <Ruler className={styles.specIcon} />,
+          });
+        if (product.categoryFields.roomType)
+          specs.push({
+            name: "Room Type",
+            value: product.categoryFields.roomType,
+            icon: <Home className={styles.specIcon} />,
+          });
+        if (product.categoryFields.assembly)
+          specs.push({
+            name: "Assembly",
+            value: product.categoryFields.assembly,
+            icon: <Home className={styles.specIcon} />,
+          });
+        if (product.categoryFields.weightCapacity)
+          specs.push({
+            name: "Weight Capacity",
+            value: product.categoryFields.weightCapacity,
+            icon: <Dumbbell className={styles.specIcon} />,
+          });
+      }
+
+      // Grocery
+      if (category === "grocery") {
+        if (product.categoryFields.expiryDate)
+          specs.push({
+            name: "Expiry Date",
+            value: new Date(
+              product.categoryFields.expiryDate
+            ).toLocaleDateString(),
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+        if (product.categoryFields.weight)
+          specs.push({
+            name: "Weight",
+            value: product.categoryFields.weight,
+            icon: <Dumbbell className={styles.specIcon} />,
+          });
+        if (product.categoryFields.ingredients)
+          specs.push({
+            name: "Ingredients",
+            value: product.categoryFields.ingredients,
+            icon: <Droplets className={styles.specIcon} />,
+          });
+        if (product.categoryFields.nutritionFacts)
+          specs.push({
+            name: "Nutrition Facts",
+            value: product.categoryFields.nutritionFacts,
+            icon: <Droplets className={styles.specIcon} />,
+          });
+      }
+
+      // Toys
+      if (category === "toys") {
+        if (product.categoryFields.ageRange)
+          specs.push({
+            name: "Age Range",
+            value: product.categoryFields.ageRange,
+            icon: <Baby className={styles.specIcon} />,
+          });
+        if (product.categoryFields.material)
+          specs.push({
+            name: "Material",
+            value: product.categoryFields.material,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+        if (product.categoryFields.batteryRequired !== undefined)
+          specs.push({
+            name: "Battery Required",
+            value: product.categoryFields.batteryRequired ? "Yes" : "No",
+            icon: <Cpu className={styles.specIcon} />,
+          });
+        if (product.categoryFields.safetyInfo)
+          specs.push({
+            name: "Safety Info",
+            value: product.categoryFields.safetyInfo,
+            icon: <Shield className={styles.specIcon} />,
+          });
+      }
+
+      // Sports
+      if (category === "sports") {
+        if (product.categoryFields.sportType)
+          specs.push({
+            name: "Sport Type",
+            value: product.categoryFields.sportType,
+            icon: <Dumbbell className={styles.specIcon} />,
+          });
+        if (product.categoryFields.material)
+          specs.push({
+            name: "Material",
+            value: product.categoryFields.material,
+            icon: <Scissors className={styles.specIcon} />,
+          });
+        if (product.categoryFields.size)
+          specs.push({
+            name: "Size",
+            value: product.categoryFields.size,
+            icon: <Ruler className={styles.specIcon} />,
+          });
+        if (product.categoryFields.weight)
+          specs.push({
+            name: "Weight",
+            value: product.categoryFields.weight,
+            icon: <Dumbbell className={styles.specIcon} />,
+          });
+      }
+
+      // Beauty
+      if (category === "beauty") {
+        if (product.categoryFields.skinType)
+          specs.push({
+            name: "Skin Type",
+            value: product.categoryFields.skinType,
+            icon: <Droplets className={styles.specIcon} />,
+          });
+        if (product.categoryFields.ingredients)
+          specs.push({
+            name: "Ingredients",
+            value: product.categoryFields.ingredients,
+            icon: <Droplets className={styles.specIcon} />,
+          });
+        if (product.categoryFields.volume)
+          specs.push({
+            name: "Volume",
+            value: product.categoryFields.volume,
+            icon: <Droplets className={styles.specIcon} />,
+          });
+        if (product.categoryFields.benefits)
+          specs.push({
+            name: "Benefits",
+            value: product.categoryFields.benefits,
+            icon: <Sparkles className={styles.specIcon} />,
+          });
+      }
+    }
+
+    return specs.map((spec, index) => (
+      <div key={index} className={styles.specItem}>
+        <div className={styles.specIconContainer}>{spec.icon}</div>
+        <div className={styles.specContent}>
+          <span className={styles.specName}>{spec.name}:</span>
+          <span className={styles.specValue}>{spec.value}</span>
+        </div>
+      </div>
+    ));
+  };
+
+  // Check if there are any specifications to show
+  const hasSpecifications = () => {
+    if (!product) return false;
+
+    // Check common specs
+    if (product.commonSpecs) {
+      if (product.commonSpecs.weight && product.commonSpecs.weight.value)
+        return true;
+      if (product.commonSpecs.material) return true;
+      if (product.commonSpecs.warranty) return true;
+      if (
+        product.commonSpecs.features &&
+        product.commonSpecs.features.length > 0
+      )
+        return true;
+    }
+
+    // Check category fields
+    if (product.categoryFields) {
+      return Object.values(product.categoryFields).some(
+        (value) =>
+          value !== null &&
+          value !== undefined &&
+          value !== "" &&
+          !(Array.isArray(value) && value.length === 0)
+      );
+    }
+
+    return false;
+  };
 
   if (!product) {
     return (
       <div className={styles.notFoundContainer}>
-        <div className={styles.notFoundContent}>
-          <h2 className={styles.notFoundTitle}>Product not found</h2>
-          <Link to="/shop" className={styles.notFoundLink}>
-            Return to shop
-          </Link>
-        </div>
+        <h2 className={styles.notFoundTitle}>Product not found</h2>
+        <Link to="/shop" className={styles.notFoundLink}>
+          Return to shop
+        </Link>
       </div>
     );
   }
 
-  // Check if product has colors and sizes
-  const hasColors =
-    product?.specifications?.color && product.specifications.color.length > 0;
-  const hasSizes =
-    product?.specifications?.size && product.specifications.size.length > 0;
-
-  // Ensure rating is properly formatted
   const rating =
     typeof product?.rating === "object"
       ? product.rating.average
@@ -334,130 +643,43 @@ const ProductDetailPage = () => {
     "watches",
     "eyewear",
     "hats",
-  ].includes(product?.category);
+  ].includes(product?.category?.main);
 
   const handleAddToCart = () => {
     if (!validateSelection()) return;
-
     addToCart({
       id: product._id,
       name: product.name,
-      price: currentPrice, // Use the adjusted price
-      image: selectedColorVariant?.images[0]?.url || product.images[0].url,
+      price: currentPrice,
+      image:
+        selectedColorVariant?.images?.[0]?.url ||
+        product.images?.[0]?.url ||
+        "",
       quantity,
       color: selectedColor,
       size: selectedSize,
-      colorVariant: selectedColorVariant,
-      sizeVariant: selectedSizeVariant,
     });
   };
 
   const handleBuyNow = () => {
     if (!validateSelection()) return;
-
     addToCart({
       id: product._id,
       name: product.name,
-      price: currentPrice, // Use the adjusted price
-      image: selectedColorVariant?.images[0]?.url || product.images[0].url,
+      price: currentPrice,
+      image:
+        selectedColorVariant?.images?.[0]?.url ||
+        product.images?.[0]?.url ||
+        "",
       quantity,
       color: selectedColor,
       size: selectedSize,
-      colorVariant: selectedColorVariant,
-      sizeVariant: selectedSizeVariant,
     });
     navigate("/cart");
   };
 
-  const handleWishlistToggle = () => {
-    if (isInWishlist(id)) {
-      removeFromWishlist(product._id);
-    } else {
-      addToWishlist(product);
-    }
-  };
-
-  // Helper function to get icon based on specification category
-  const getSpecIcon = (key) => {
-    const iconMap = {
-      size: <Ruler size={18} />,
-      color: <Palette size={18} />,
-      material: <Scissors size={18} />,
-      warranty: <Shield size={18} />,
-      connectivity: <Cpu size={18} />,
-      skinType: <Droplets size={18} />,
-      roomType: <Home size={18} />,
-      closure: <Watch size={18} />,
-      sportCategory: <Dumbbell size={18} />,
-      ageGroup: <Baby size={18} />,
-    };
-
-    return iconMap[key] || <Check size={18} />;
-  };
-
-  // Check if specifications exist and have values
-  const hasSpecifications =
-    product?.specifications &&
-    Object.keys(product.specifications).some((key) => {
-      const value = product.specifications[key];
-      return (
-        value !== undefined &&
-        value !== null &&
-        !(typeof value === "object" && Object.keys(value).length === 0) &&
-        !(Array.isArray(value) && value.length === 0) &&
-        value !== ""
-      );
-    });
-
-  // Render specification items
-  const renderSpecifications = () => {
-    if (!hasSpecifications) return null;
-
-    return Object.entries(product?.specifications || {}).map(([key, value]) => {
-      // Skip empty values
-      if (
-        value === undefined ||
-        value === null ||
-        value === "" ||
-        (typeof value === "object" && Object.keys(value).length === 0) ||
-        (Array.isArray(value) && value.length === 0)
-      ) {
-        return null;
-      }
-
-      // Format the key for display
-      const formattedKey = key
-        .replace(/([A-Z])/g, " $1")
-        .replace(/^./, (str) => str.toUpperCase());
-
-      // Render different value types appropriately
-      const renderValue = () => {
-        if (Array.isArray(value)) {
-          return value.join(", ");
-        } else if (typeof value === "object") {
-          if (key === "dimensions") {
-            return `${value.length || 0}"L x ${value.width || 0}"W x ${
-              value.height || 0
-            }"H`;
-          }
-          return JSON.stringify(value);
-        } else if (typeof value === "boolean") {
-          return value ? "Yes" : "No";
-        }
-        return value;
-      };
-
-      return (
-        <div key={key} className={styles.specItem}>
-          <div className={styles.specIcon}>{getSpecIcon(key)}</div>
-          <div className={styles.specContent}>
-            <span className={styles.specLabel}>{formattedKey}</span>
-            <span className={styles.specValue}>{renderValue()}</span>
-          </div>
-        </div>
-      );
-    });
-  };
+  const handleWishlistToggle = () =>
+    isInWishlist(id) ? removeFromWishlist(product._id) : addToWishlist(product);
 
   return (
     <div className={styles.pageContainer}>
@@ -483,60 +705,68 @@ const ProductDetailPage = () => {
               onMouseLeave={() => setAutoScroll(true)}
             >
               {selectedColorVariant &&
+              selectedColorVariant.images &&
               selectedColorVariant.images.length > 0 ? (
                 <img
-                  src={selectedColorVariant.images[selectedImage].url}
+                  src={selectedColorVariant.images[selectedImage]?.url}
+                  alt={product.name}
+                  className={styles.mainImage}
+                />
+              ) : product.images && product.images.length > 0 ? (
+                <img
+                  src={product.images[selectedImage]?.url}
                   alt={product.name}
                   className={styles.mainImage}
                 />
               ) : (
-                <img
-                  src={product.colorVariants[0].images[selectedImage].url}
-                  alt={product.name}
-                  className={styles.mainImage}
-                />
+                <div className={styles.noImage}>No Image Available</div>
               )}
+
               {/* Image indicators */}
-              {product.colorVariants[0].images.length > 1 && (
-                <div className={styles.imageIndicators}>
-                  {product.colorVariants[0].images.map((_, index) => (
+              {selectedColorVariant &&
+                selectedColorVariant.images &&
+                selectedColorVariant.images.length > 1 && (
+                  <div className={styles.imageIndicators}>
+                    {selectedColorVariant.images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={
+                          selectedImage === index
+                            ? `${styles.indicator} ${styles.indicatorActive}`
+                            : `${styles.indicator} ${styles.indicatorInactive}`
+                        }
+                        aria-label={`Go to image ${index + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+            </div>
+
+            {/* Thumbnail images */}
+            {selectedColorVariant &&
+              selectedColorVariant.images &&
+              selectedColorVariant.images.length > 1 && (
+                <div className={styles.thumbnailContainer}>
+                  {selectedColorVariant.images.map((image, index) => (
                     <button
                       key={index}
                       onClick={() => setSelectedImage(index)}
                       className={
                         selectedImage === index
-                          ? `${styles.indicator} ${styles.indicatorActive}`
-                          : `${styles.indicator} ${styles.indicatorInactive}`
+                          ? `${styles.thumbnail} ${styles.thumbnailActive}`
+                          : styles.thumbnail
                       }
-                      aria-label={`Go to image ${index + 1}`}
-                    />
+                    >
+                      <img
+                        src={image.url}
+                        alt={`Thumbnail ${index + 1}`}
+                        className={styles.thumbnailImage}
+                      />
+                    </button>
                   ))}
                 </div>
               )}
-            </div>
-
-            {/* Thumbnail images */}
-            {selectedColorVariant && selectedColorVariant.images.length > 1 && (
-              <div className={styles.thumbnailContainer}>
-                {selectedColorVariant.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={
-                      selectedImage === index
-                        ? `${styles.thumbnail} ${styles.thumbnailActive}`
-                        : styles.thumbnail
-                    }
-                  >
-                    <img
-                      src={image.url}
-                      alt={`Thumbnail ${index + 1}`}
-                      className={styles.thumbnailImage}
-                    />
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           {/* Product Info */}
@@ -623,6 +853,7 @@ const ProductDetailPage = () => {
 
             {/* Size Selection */}
             {selectedColorVariant &&
+              selectedColorVariant.sizeVariants &&
               selectedColorVariant.sizeVariants.length > 0 && (
                 <div className={styles.selectionSection}>
                   <h3 className={styles.selectionTitle}>Size</h3>
@@ -680,7 +911,7 @@ const ProductDetailPage = () => {
             </div>
 
             {/* Specifications Section */}
-            {hasSpecifications && (
+            {hasSpecifications() && (
               <div className={styles.section}>
                 <button
                   className={styles.sectionHeader}
@@ -714,8 +945,8 @@ const ProductDetailPage = () => {
                     </span>
                   </div>
                   <p className={styles.arBannerText}>
-                    See how this {product.category} looks on you using augmented
-                    reality
+                    See how this {product.category?.main} looks on you using
+                    augmented reality
                   </p>
                 </div>
                 <button
@@ -891,12 +1122,18 @@ const ProductDetailPage = () => {
                 <div className={styles.arOverlay}>
                   <div className={styles.arProductPreview}>
                     <img
-                      src={product.images[0].url}
+                      src={
+                        selectedColorVariant?.images?.[0]?.url ||
+                        product.images?.[0]?.url ||
+                        ""
+                      }
                       alt={product.name}
                       className={styles.arProductImage}
                     />
                     <p className={styles.arProductName}>{product.name}</p>
-                    <p className={styles.arProductPrice}>${product.price}</p>
+                    <p className={styles.arProductPrice}>
+                      ${currentPrice.toFixed(2)}
+                    </p>
                     <p className={styles.arProductHint}>
                       Move your device to see how this product looks on you
                     </p>
@@ -928,7 +1165,7 @@ const ProductDetailPage = () => {
                   className={styles.relatedProductCard}
                 >
                   <img
-                    src={relatedProduct.images[0].url}
+                    src={relatedProduct.images?.[0]?.url || ""}
                     alt={relatedProduct.name}
                     className={styles.relatedProductImage}
                   />

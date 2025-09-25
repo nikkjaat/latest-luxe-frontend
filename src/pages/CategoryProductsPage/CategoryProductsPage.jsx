@@ -4,6 +4,7 @@ import {
   useSearchParams,
   Link,
   useNavigate,
+  useLocation,
 } from "react-router-dom";
 import {
   Search,
@@ -184,6 +185,7 @@ const ProductImageSlider = ({
 };
 
 const CategoryProductsPage = () => {
+  const location = useLocation();
   const { categoryId } = useParams();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -195,6 +197,8 @@ const CategoryProductsPage = () => {
     items: cartItems,
     updateQuantity,
   } = useCart();
+  const { keyword, filterCategory, name, itemCount } = location.state || {};
+  // console.log(keyword, filterCategory, name, itemCount);
 
   // State management
   const [viewMode, setViewMode] = useState("grid");
@@ -467,7 +471,6 @@ const CategoryProductsPage = () => {
   };
 
   // Handle quantity change
-  // Handle quantity change
   const handleQuantityChange = (productId, newQuantity) => {
     // console.log(productId, newQuantity);
     if (newQuantity <= 0) {
@@ -564,9 +567,7 @@ const CategoryProductsPage = () => {
             <p className={styles.categoryDescription}>
               {currentCategory.description}
             </p>
-            <p className={styles.description}>
-              {filteredProducts.length} products found
-            </p>
+            <p className={styles.description}>{itemCount} products found</p>
           </div>
         </div>
 
@@ -742,11 +743,11 @@ const CategoryProductsPage = () => {
         )}
 
         {/* Products Grid/List */}
-        {paginatedProducts.length > 0 ? (
+        {filterCategory.length > 0 ? (
           <>
             {viewMode === "grid" ? (
               <div className={styles.productsGrid}>
-                {paginatedProducts.map((product) => {
+                {filterCategory.map((product) => {
                   const productId = product._id || product.id;
                   const inCart = isInCart(productId);
                   const cartQuantity = getCartQuantity(productId);

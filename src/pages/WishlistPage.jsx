@@ -72,7 +72,7 @@ const WishlistPage = () => {
             >
               <div className="relative">
                 <img
-                  src={item.productId.images[0].url}
+                  src={item.productId.colorVariants[0].images[0].url}
                   alt={item.productId.name}
                   className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
                 />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Star, Heart, ShoppingCart, Zap } from "lucide-react";
+import { Star, Heart, ShoppingCart, Zap, Minus, Plus } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -11,6 +11,12 @@ const FeaturedProducts = () => {
   const { items, addToWishlist, removeFromWishlist, isInWishlist } =
     useWishlist();
   const { products, getProducts } = useProducts();
+  const {
+    addToCart,
+    removeFromCart,
+    items: cartItems,
+    updateQuantity,
+  } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const navigate = useNavigate();
 
@@ -25,6 +31,30 @@ const FeaturedProducts = () => {
     };
     fetchProducts();
   }, [products]);
+
+  const isInCart = (productId) => {
+    return cartItems?.some(
+      (item) => item.productId?._id === productId || item.id === productId
+    );
+  };
+
+  // Get cart quantity
+  const getCartQuantity = (productId) => {
+    const cartItem = cartItems?.find(
+      (item) => item.productId?._id === productId || item.id === productId
+    );
+    return cartItem ? cartItem.quantity : 0;
+  };
+
+  const handleQuantityChange = (productId, newQuantity) => {
+    // console.log(productId, newQuantity);
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+    } else {
+      // Use updateQuantity instead of addToCart
+      updateQuantity(productId, newQuantity);
+    }
+  };
 
   // Filter and limit to top 8 featured products
   useEffect(() => {
@@ -50,7 +80,7 @@ const FeaturedProducts = () => {
       id: product._id,
       name: product.name,
       price: product.price,
-      image: product.images[0].url,
+      image: product.colorVariants[0].images[0].url,
     });
   };
 
@@ -194,6 +224,9 @@ const FeaturedProducts = () => {
           <div className={styles.grid}>
             {featuredProducts.map((product) => {
               const isWishlisted = isInWishlist(product._id);
+              const productId = product._id || product.id;
+              const inCart = isInCart(productId);
+              const cartQuantity = getCartQuantity(productId);
 
               return (
                 <div key={product._id} className={styles.productCard}>
@@ -259,20 +292,61 @@ const FeaturedProducts = () => {
                     </div>
 
                     <div className={styles.buttonGroup}>
-                      <button
-                        onClick={() => handleAddToCart(product)}
-                        className={styles.addToCartButton}
-                      >
-                        <ShoppingCart className={styles.cartIcon} />
-                        Add to Cart
-                      </button>
-                      <button
-                        onClick={() => handleBuyNow(product)}
-                        className={styles.buyNowButton}
-                      >
-                        <Zap className={styles.buyNowIcon} />
-                        Buy Now
-                      </button>
+                      {inCart ? (
+                        <div className={styles.quantitySection}>
+                          <div className={styles.quantityControls}>
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(
+                                  productId,
+                                  cartQuantity - 1
+                                )
+                              }
+                              className={styles.quantityButton}
+                            >
+                              <Minus className={styles.quantityIcon} />
+                            </button>
+                            <span className={styles.quantityDisplay}>
+                              {cartQuantity} in cart
+                            </span>
+                            <button
+                              onClick={() =>
+                                handleQuantityChange(
+                                  productId,
+                                  cartQuantity + 1
+                                )
+                              }
+                              className={styles.quantityButton}
+                            >
+                              <Plus className={styles.quantityIcon} />
+                            </button>
+                          </div>
+                          <button
+                            className={styles.buyNowButton}
+                            onClick={() => handleBuyNow(product)}
+                          >
+                            <Zap className={styles.buyNowIcon} />
+                            Buy Now
+                          </button>
+                        </div>
+                      ) : (
+                        <div className={styles.buttonGroup}>
+                          <button
+                            className={styles.addToCartButton}
+                            onClick={() => handleAddToCart(product)}
+                          >
+                            <ShoppingCart className={styles.cartIcon} />
+                            Add to Cart
+                          </button>
+                          <button
+                            className={styles.buyNowButton}
+                            onClick={() => handleBuyNow(product)}
+                          >
+                            <Zap className={styles.buyNowIcon} />
+                            Buy Now
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

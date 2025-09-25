@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import styles from "./Categories.module.css";
 import { useProducts } from "../../context/ProductContext";
 import { useCategory } from "../../context/CategoryContext";
@@ -9,6 +9,7 @@ const Categories = () => {
   const { products, getProducts, isLoading, hasFetched } = useProducts();
   const { categories: contextCategories, adminGetCategories } = useCategory();
   const [localCategories, setLocalCategories] = useState([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Only fetch products if they haven't been fetched yet
@@ -118,7 +119,54 @@ const Categories = () => {
     kids: styles.overlayCyan,
   };
 
-  // Calculate item counts for each category
+  // Default subcategories for fallback (same as CategoriesPage)
+  const defaultSubcategories = {
+    women: ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear"],
+    men: ["Shirts", "Suits", "Casual Wear", "Accessories", "Shoes"],
+    accessories: ["Jewelry", "Bags", "Watches", "Sunglasses", "Scarves"],
+    home: ["Furniture", "Decor", "Lighting", "Textiles", "Kitchen"],
+    electronics: ["Smartphones", "Laptops", "Audio", "Smart Home", "Gaming"],
+    beauty: ["Skincare", "Makeup", "Fragrance", "Hair Care", "Wellness"],
+    sports: ["Activewear", "Equipment", "Footwear", "Outdoor", "Fitness"],
+    kids: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
+  };
+
+  // Function to handle category click - SAME LOGIC AS CategoriesPage
+  const handleCategoryClick = (category) => {
+    const keyword =
+      category.slug?.toLowerCase() || category.name?.toLowerCase();
+
+    // Filter products for this category - SAME LOGIC AS CategoriesPage
+    const filterCategory = products.filter((product) => {
+      const productCat = product.category?.main;
+      if (!productCat) return false;
+
+      if (typeof productCat === "string") {
+        return productCat.toLowerCase() === keyword;
+      }
+
+      if (typeof productCat === "object") {
+        return (
+          productCat.slug?.toLowerCase() === keyword ||
+          productCat.name?.toLowerCase() === keyword
+        );
+      }
+
+      return false;
+    });
+
+    // Navigate with same data structure as CategoriesPage
+    navigate(`/category/${category.slug}`, {
+      state: {
+        keyword,
+        filterCategory,
+        name: category.name,
+        itemCount: filterCategory.length,
+      },
+    });
+  };
+
+  // Calculate item counts for each category - USE SAME LOGIC AS CategoriesPage
   const categoriesWithCounts = useMemo(() => {
     // Use categories from context if available, otherwise use local fallback
     const categoriesToUse =
@@ -127,26 +175,40 @@ const Categories = () => {
         : localCategories;
 
     return categoriesToUse.map((category) => {
-      // Count products that belong to this category
-      const itemCount = products.filter((product) => {
-        // Check if product category matches category slug or ID
-        const productCategory = (product.category || "").toLowerCase().trim();
-        const categorySlug = (category.slug || "").toLowerCase().trim();
-        const categoryName = (category.name || "").toLowerCase().trim();
+      const slug = category.slug?.toLowerCase();
 
-        return (
-          productCategory === categorySlug ||
-          productCategory === categoryName ||
-          productCategory.includes(categorySlug) ||
-          categorySlug.includes(productCategory)
-        );
+      // Count products that belong to this category - USE EXACT MATCHING LIKE CategoriesPage
+      const itemCount = products.filter((product) => {
+        const productCategory = product.category?.main;
+
+        if (!productCategory) return false;
+
+        if (typeof productCategory === "string") {
+          return productCategory.toLowerCase() === slug;
+        }
+
+        if (typeof productCategory === "object") {
+          return productCategory.slug?.toLowerCase() === slug;
+        }
+
+        return false;
       }).length;
+
+      // Get image URL - SAME LOGIC AS CategoriesPage
+      const image =
+        category.image ||
+        (Array.isArray(category.images) && category.images.length > 0
+          ? category.images[0].url
+          : "");
 
       return {
         ...category,
         id: category.slug || category._id,
+        image,
         itemCount,
         overlayClass: overlayClasses[category.slug] || styles.overlayBlue,
+        subcategories:
+          category.subcategories || defaultSubcategories[category.slug] || [],
       };
     });
   }, [products, contextCategories, localCategories]);
@@ -176,6 +238,7 @@ const Categories = () => {
           ...cat,
           itemCount: 0,
           overlayClass: overlayClasses[cat.slug] || styles.overlayBlue,
+          subcategories: defaultSubcategories[cat.slug] || [],
         }));
 
   return (
@@ -190,10 +253,11 @@ const Categories = () => {
 
         <div className={styles.grid}>
           {displayCategories.map((category) => (
-            <Link
+            <div
               key={category.id}
-              to={`/category/${category.slug}`} // Use the actual slug from the database
+              onClick={() => handleCategoryClick(category)}
               className={styles.categoryCard}
+              style={{ cursor: "pointer" }}
             >
               <div className={styles.imageContainer}>
                 <img
@@ -215,7 +279,7 @@ const Categories = () => {
                   </div>
                 </div>
               </div>
-            </Link>
+            </div>
           ))}
         </div>
 

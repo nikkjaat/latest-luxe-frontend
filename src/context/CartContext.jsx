@@ -36,7 +36,6 @@ export const CartProvider = ({ children }) => {
   }, [isAuthenticated]);
 
   const addToCart = async (item) => {
-    console.log(item);
     try {
       // Handle color variant information
       const cartItem = {
@@ -54,7 +53,6 @@ export const CartProvider = ({ children }) => {
   };
 
   const removeFromCart = async (id) => {
-    console.log(id);
     try {
       const response = await apiService.removeFromCart(id);
       if (response.success) {

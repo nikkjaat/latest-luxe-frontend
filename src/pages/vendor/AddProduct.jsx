@@ -34,22 +34,93 @@ const AddProduct = () => {
   const [draggedColorIndex, setDraggedColorIndex] = useState(null);
   const [imageUploadProgress, setImageUploadProgress] = useState({});
 
+  // Category-specific fields definitions
+  const categoryFields = {
+    electronics: [
+      { name: "brand", label: "Brand", type: "text" },
+      { name: "model", label: "Model", type: "text" },
+      { name: "screenSize", label: "Screen Size", type: "text" },
+      { name: "resolution", label: "Resolution", type: "text" },
+      { name: "ram", label: "RAM", type: "text" },
+      { name: "storage", label: "Storage", type: "text" },
+      { name: "processor", label: "Processor", type: "text" },
+      { name: "battery", label: "Battery", type: "text" },
+    ],
+    men: [
+      { name: "fabric", label: "Fabric", type: "text" },
+      { name: "fit", label: "Fit Type", type: "text" },
+      { name: "sleeveType", label: "Sleeve Type", type: "text" },
+      { name: "neckType", label: "Neck Type", type: "text" },
+      { name: "occasion", label: "Occasion", type: "text" },
+      { name: "pattern", label: "Pattern", type: "text" },
+    ],
+    women: [
+      { name: "fabric", label: "Fabric", type: "text" },
+      { name: "fit", label: "Fit Type", type: "text" },
+      { name: "occasion", label: "Occasion", type: "text" },
+      { name: "pattern", label: "Pattern", type: "text" },
+      { name: "neckType", label: "Neck Type", type: "text" },
+      { name: "sleeveType", label: "Sleeve Type", type: "text" },
+    ],
+    books: [
+      { name: "author", label: "Author", type: "text" },
+      { name: "publisher", label: "Publisher", type: "text" },
+      { name: "isbn", label: "ISBN", type: "text" },
+      { name: "language", label: "Language", type: "text" },
+      { name: "pages", label: "Total Pages", type: "number" },
+      { name: "genre", label: "Genre", type: "text" },
+    ],
+    furniture: [
+      { name: "material", label: "Material", type: "text" },
+      { name: "dimensions", label: "Dimensions (LxWxH)", type: "text" },
+      { name: "roomType", label: "Room Type", type: "text" },
+      { name: "assembly", label: "Assembly Required", type: "text" },
+      { name: "weightCapacity", label: "Weight Capacity", type: "text" },
+    ],
+    grocery: [
+      { name: "expiryDate", label: "Expiry Date", type: "date" },
+      { name: "weight", label: "Weight", type: "text" },
+      { name: "ingredients", label: "Ingredients", type: "text" },
+      { name: "nutritionFacts", label: "Nutrition Facts", type: "textarea" },
+    ],
+    toys: [
+      { name: "ageRange", label: "Age Range", type: "text" },
+      { name: "material", label: "Material", type: "text" },
+      { name: "batteryRequired", label: "Battery Required", type: "checkbox" },
+      { name: "safetyInfo", label: "Safety Information", type: "textarea" },
+    ],
+    sports: [
+      { name: "sportType", label: "Sport Type", type: "text" },
+      { name: "material", label: "Material", type: "text" },
+      { name: "size", label: "Size", type: "text" },
+      { name: "weight", label: "Weight", type: "text" },
+    ],
+    beauty: [
+      { name: "skinType", label: "Skin Type", type: "text" },
+      { name: "ingredients", label: "Ingredients", type: "text" },
+      { name: "volume", label: "Volume/Weight", type: "text" },
+      { name: "benefits", label: "Benefits", type: "textarea" },
+    ],
+    other: [],
+  };
+
   const [formData, setFormData] = useState({
     name: "",
     description: "",
     price: "",
     originalPrice: "",
-    category: "",
-    subcategory: "",
+    category: {
+      main: "",
+      sub: "",
+    },
     brand: "",
     badge: "",
     status: "active",
-    specifications: {
-      weight: "",
-      dimensions: {
-        length: "",
-        width: "",
-        height: "",
+    specifications: {},
+    commonSpecs: {
+      weight: {
+        value: "",
+        unit: "kg",
       },
       material: "",
       warranty: "",
@@ -71,6 +142,8 @@ const AddProduct = () => {
         ],
       },
     ],
+    // Initialize category-specific fields
+    categoryFields: {},
   });
 
   const [tempTag, setTempTag] = useState("");
@@ -114,6 +187,9 @@ const AddProduct = () => {
     "13",
     "14",
   ];
+
+  const weightUnits = ["kg", "g", "lb", "oz"];
+  const dimensionUnits = ["cm", "m", "in", "ft"];
 
   useEffect(() => {
     adminGetCategories();
@@ -159,24 +235,20 @@ const AddProduct = () => {
         description: product.description || "",
         price: product.price || "",
         originalPrice: product.originalPrice || "",
-        category: product.category || "",
-        subcategory: product.subcategory || "",
+        category: product.category || { main: "", sub: "" },
         brand: product.brand || "",
         badge: product.badge || "",
         status: product.status || "active",
-        specifications: {
-          weight: product.specifications?.weight || "",
-          dimensions: {
-            length: product.specifications?.dimensions?.length || "",
-            width: product.specifications?.dimensions?.width || "",
-            height: product.specifications?.dimensions?.height || "",
-          },
-          material: product.specifications?.material || "",
-          warranty: product.specifications?.warranty || "",
-          features: product.specifications?.features || [],
+        specifications: product.specifications || {},
+        commonSpecs: {
+          weight: product.commonSpecs?.weight || { value: "", unit: "kg" },
+          material: product.commonSpecs?.material || "",
+          warranty: product.commonSpecs?.warranty || "",
+          features: product.commonSpecs?.features || [],
         },
         tags: product.tags || [],
         colorVariants,
+        categoryFields: product.categoryFields || {},
       });
     } catch (error) {
       console.error("Failed to load product:", error);
@@ -187,21 +259,47 @@ const AddProduct = () => {
   };
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value, type, checked } = e.target;
 
-    if (name.startsWith("specifications.")) {
+    if (name.startsWith("commonSpecs.")) {
       const fieldPath = name.split(".");
       setFormData((prev) => ({
         ...prev,
-        specifications: {
-          ...prev.specifications,
+        commonSpecs: {
+          ...prev.commonSpecs,
           [fieldPath[1]]:
             fieldPath.length > 2
               ? {
-                  ...prev.specifications[fieldPath[1]],
+                  ...prev.commonSpecs[fieldPath[1]],
                   [fieldPath[2]]: value,
                 }
               : value,
+        },
+      }));
+    } else if (name.startsWith("category.")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        category: {
+          ...prev.category,
+          [field]: value,
+        },
+      }));
+
+      // If changing main category, reset category-specific fields
+      if (field === "main") {
+        setFormData((prev) => ({
+          ...prev,
+          categoryFields: {},
+        }));
+      }
+    } else if (name.startsWith("categoryFields.")) {
+      const fieldName = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        categoryFields: {
+          ...prev.categoryFields,
+          [fieldName]: type === "checkbox" ? checked : value,
         },
       }));
     } else {
@@ -211,6 +309,14 @@ const AddProduct = () => {
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
+  };
+
+  // Get the current category-specific fields based on selected category
+  const getCurrentCategoryFields = () => {
+    const mainCategory = formData.category.main;
+    return mainCategory && categoryFields[mainCategory]
+      ? categoryFields[mainCategory]
+      : [];
   };
 
   // Color variant management
@@ -450,9 +556,9 @@ const AddProduct = () => {
 
     setFormData((prev) => ({
       ...prev,
-      specifications: {
-        ...prev.specifications,
-        [type]: [...prev.specifications[type], value.trim()],
+      commonSpecs: {
+        ...prev.commonSpecs,
+        [type]: [...prev.commonSpecs[type], value.trim()],
       },
     }));
 
@@ -463,11 +569,9 @@ const AddProduct = () => {
   const removeSpecificationItem = (type, itemToRemove) => {
     setFormData((prev) => ({
       ...prev,
-      specifications: {
-        ...prev.specifications,
-        [type]: prev.specifications[type].filter(
-          (item) => item !== itemToRemove
-        ),
+      commonSpecs: {
+        ...prev.commonSpecs,
+        [type]: prev.commonSpecs[type].filter((item) => item !== itemToRemove),
       },
     }));
   };
@@ -499,7 +603,8 @@ const AddProduct = () => {
       newErrors.description = "Description is required";
     if (!formData.price || parseFloat(formData.price) <= 0)
       newErrors.price = "Valid price is required";
-    if (!formData.category) newErrors.category = "Category is required";
+    if (!formData.category.main)
+      newErrors.category_main = "Category is required";
 
     // Validate color variants
     formData.colorVariants.forEach((variant, colorIndex) => {
@@ -550,8 +655,7 @@ const AddProduct = () => {
       formDataToSend.append("name", formData.name);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("price", Number(formData.price));
-      formDataToSend.append("category", formData.category);
-      formDataToSend.append("subcategory", formData.subcategory || "");
+      formDataToSend.append("category", JSON.stringify(formData.category));
       formDataToSend.append("brand", formData.brand || "");
       formDataToSend.append("badge", formData.badge || "");
       formDataToSend.append("status", formData.status);
@@ -579,8 +683,18 @@ const AddProduct = () => {
         JSON.stringify(formData.specifications)
       );
 
+      // Common specifications
+      formDataToSend.append(
+        "commonSpecs",
+        JSON.stringify(formData.commonSpecs)
+      );
+
       // Tags
       formDataToSend.append("tags", JSON.stringify(formData.tags));
+      formDataToSend.append(
+        "categoryFields",
+        JSON.stringify(formData.categoryFields)
+      );
 
       // Color variants data (without images)
       const colorVariantsData = formData.colorVariants.map((variant) => ({
@@ -646,9 +760,26 @@ const AddProduct = () => {
       ...prev,
       name,
       // Auto-generate subcategory from name if not set
-      subcategory: prev.subcategory || generateSlug(name),
+      category: {
+        ...prev.category,
+        sub: prev.category.sub || generateSlug(name),
+      },
     }));
   };
+
+  // Get main categories from the backend categories
+  const mainCategories = [
+    "electronics",
+    "men",
+    "women",
+    "grocery",
+    "furniture",
+    "books",
+    "toys",
+    "sports",
+    "beauty",
+    "other",
+  ];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -735,46 +866,48 @@ const AddProduct = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category *
+                  Main Category *
                 </label>
                 <select
-                  name="category"
-                  value={formData.category}
+                  name="category.main"
+                  value={formData.category.main}
                   onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.category ? "border-red-500" : "border-gray-300"
+                    errors.category_main ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.name} value={category.name}>
-                      {category.name.charAt(0).toUpperCase() +
-                        category.name.slice(1)}
+                  {mainCategories.map((category) => (
+                    <option key={category} value={category}>
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
                     </option>
                   ))}
                 </select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                {errors.category_main && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.category_main}
+                  </p>
                 )}
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subcategory
+                  Subcategory *
                 </label>
                 <input
                   type="text"
-                  name="subcategory"
-                  value={formData.subcategory}
+                  name="category.sub"
+                  value={formData.category.sub}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter subcategory"
                 />
               </div>
 
+              {/* Brand field - shown for all categories */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Brand
+                  Brand *
                 </label>
                 <input
                   type="text"
@@ -882,6 +1015,62 @@ const AddProduct = () => {
               </div>
             </div>
           </div>
+
+          {/* Category-specific Fields */}
+          {formData.category.main && categoryFields[formData.category.main] && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-6">
+                {formData.category.main.charAt(0).toUpperCase() +
+                  formData.category.main.slice(1)}{" "}
+                Specifications
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {getCurrentCategoryFields().map((field) => (
+                  <div
+                    key={field.name}
+                    className={field.type === "textarea" ? "md:col-span-2" : ""}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {field.label}
+                    </label>
+                    {field.type === "textarea" ? (
+                      <textarea
+                        name={`categoryFields.${field.name}`}
+                        value={formData.cat2egoryFields[field.name] || ""}
+                        onChange={handleChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                      />
+                    ) : field.type === "checkbox" ? (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name={`categoryFields.${field.name}`}
+                          checked={formData.categoryFields[field.name] || false}
+                          onChange={handleChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {field.label}
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type={field.type}
+                        name={`categoryFields.${field.name}`}
+                        value={formData.categoryFields[field.name] || ""}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Color Variants Section */}
           <div className="bg-white shadow rounded-lg p-6">
@@ -1338,27 +1527,41 @@ const AddProduct = () => {
             </div>
           </div>
 
-          {/* Specifications */}
+          {/* Common Specifications */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">
-              Product Specifications
+              Common Specifications
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Weight (kg)
+                  Weight
                 </label>
-                <input
-                  type="number"
-                  name="specifications.weight"
-                  min="0"
-                  step="0.01"
-                  value={formData.specifications.weight}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0.00"
-                />
+                <div className="flex">
+                  <input
+                    type="number"
+                    name="commonSpecs.weight.value"
+                    min="0"
+                    step="0.01"
+                    value={formData.commonSpecs.weight.value}
+                    onChange={handleChange}
+                    className="w-3/4 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
+                  <select
+                    name="commonSpecs.weight.unit"
+                    value={formData.commonSpecs.weight.unit}
+                    onChange={handleChange}
+                    className="w-1/4 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {weightUnits.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
               <div>
@@ -1367,8 +1570,8 @@ const AddProduct = () => {
                 </label>
                 <input
                   type="text"
-                  name="specifications.material"
-                  value={formData.specifications.material}
+                  name="commonSpecs.material"
+                  value={formData.commonSpecs.material}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Cotton, Wood, Metal"
@@ -1381,53 +1584,14 @@ const AddProduct = () => {
                 </label>
                 <input
                   type="text"
-                  name="specifications.warranty"
-                  value={formData.specifications.warranty}
+                  name="commonSpecs.warranty"
+                  value={formData.commonSpecs.warranty}
                   onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., 1 Year, 6 Months"
                 />
               </div>
 
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dimensions (cm)
-                </label>
-                <div className="grid grid-cols-3 gap-4">
-                  <input
-                    type="number"
-                    name="specifications.dimensions.length"
-                    min="0"
-                    step="0.1"
-                    value={formData.specifications.dimensions.length}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Length"
-                  />
-                  <input
-                    type="number"
-                    name="specifications.dimensions.width"
-                    min="0"
-                    step="0.1"
-                    value={formData.specifications.dimensions.width}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Width"
-                  />
-                  <input
-                    type="number"
-                    name="specifications.dimensions.height"
-                    min="0"
-                    step="0.1"
-                    value={formData.specifications.dimensions.height}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Height"
-                  />
-                </div>
-              </div>
-
-              {/* Features */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Key Features
@@ -1454,9 +1618,9 @@ const AddProduct = () => {
                     Add
                   </button>
                 </div>
-                {formData.specifications.features.length > 0 && (
+                {formData.commonSpecs.features.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {formData.specifications.features.map((feature, index) => (
+                    {formData.commonSpecs.features.map((feature, index) => (
                       <span
                         key={index}
                         className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"

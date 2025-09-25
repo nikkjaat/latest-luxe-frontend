@@ -61,7 +61,7 @@ const CategoriesPage = () => {
       category.slug?.toLowerCase() || category.name?.toLowerCase();
 
     const filterCategory = products.filter((product) => {
-      const productCat = product.category;
+      const productCat = product.category.main;
       if (!productCat) return false;
 
       if (typeof productCat === "string") {
@@ -77,6 +77,7 @@ const CategoriesPage = () => {
 
       return false;
     });
+    // console.log(filterCategory);
 
     navigate(`/category/${category.slug}`, {
       state: {
@@ -101,7 +102,7 @@ const CategoriesPage = () => {
         const slug = category.slug?.toLowerCase();
 
         const productCount = products.filter((product) => {
-          const productCategory = product.category;
+          const productCategory = product.category.main;
 
           if (!productCategory) return false;
 
