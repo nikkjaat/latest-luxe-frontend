@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Star, Heart, ShoppingCart, Zap, Minus, Plus } from "lucide-react";
+import {
+  Star,
+  Heart,
+  ShoppingCart,
+  Zap,
+  Minus,
+  Plus,
+  Loader,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../../context/CartContext";
 import { useWishlist } from "../../context/WishlistContext";
@@ -18,12 +26,12 @@ const FeaturedProducts = () => {
     updateQuantity,
   } = useCart();
   const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loadingItems, setLoadingItems] = useState({});
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Fetch all products first
         await getProducts();
       } catch (error) {
         console.error("Failed to fetch products:", error);
@@ -32,13 +40,17 @@ const FeaturedProducts = () => {
     fetchProducts();
   }, [products]);
 
+  // Reset loading state when cart items change
+  useEffect(() => {
+    setLoadingItems({});
+  }, [cartItems]);
+
   const isInCart = (productId) => {
     return cartItems?.some(
       (item) => item.productId?._id === productId || item.id === productId
     );
   };
 
-  // Get cart quantity
   const getCartQuantity = (productId) => {
     const cartItem = cartItems?.find(
       (item) => item.productId?._id === productId || item.id === productId
@@ -46,51 +58,59 @@ const FeaturedProducts = () => {
     return cartItem ? cartItem.quantity : 0;
   };
 
-  const handleQuantityChange = (productId, newQuantity) => {
-    // console.log(productId, newQuantity);
+  const handleQuantityChange = async (productId, newQuantity) => {
+    setLoadingItems((prev) => ({ ...prev, [productId]: true }));
     if (newQuantity <= 0) {
       removeFromCart(productId);
-    } else {
-      // Use updateQuantity instead of addToCart
-      updateQuantity(productId, newQuantity);
+      return;
     }
+
+    setLoadingItems((prev) => ({ ...prev, [productId]: true }));
+    await updateQuantity(productId, newQuantity);
+    // Loading state will be reset automatically by the useEffect above
   };
 
   // Filter and limit to top 8 featured products
   useEffect(() => {
     if (products.length > 0) {
-      // Sort products by rating, popularity, or any other criteria
       const sortedProducts = [...products]
         .sort((a, b) => {
-          // Sort by rating (highest first)
           if (b.rating !== a.rating) {
             return b.rating - a.rating;
           }
-          // If ratings are equal, sort by number of reviews
           return b.reviews - a.reviews;
         })
-        .slice(0, 8); // Take only top 8 products
+        .slice(0, 8);
 
       setFeaturedProducts(sortedProducts);
     }
   }, [products]);
 
-  const handleAddToCart = (product) => {
-    addToCart({
-      id: product._id,
+  const handleAddToCart = async (product) => {
+    const productId = product._id || product.id;
+    setLoadingItems((prev) => ({ ...prev, [productId]: true }));
+
+    await addToCart({
+      id: productId,
       name: product.name,
       price: product.price,
       image: product.colorVariants[0].images[0].url,
     });
+
+    // Loading state will be reset automatically by the useEffect above
   };
 
-  const handleBuyNow = (product) => {
-    addToCart({
-      id: product._id,
+  const handleBuyNow = async (product) => {
+    const productId = product._id || product.id;
+    setLoadingItems((prev) => ({ ...prev, [productId]: true }));
+
+    await addToCart({
+      id: productId,
       name: product.name,
       price: product.price,
       image: product.images[0].url,
     });
+
     navigate("/cart");
   };
 
@@ -115,27 +135,24 @@ const FeaturedProducts = () => {
       let imageInterval;
 
       if (!isPaused) {
-        // Progress bar animation
         progressInterval = setInterval(() => {
           setProgress((prev) => {
             if (prev >= 100) {
               return 0;
             }
-            return prev + 100 / 30; // 30 steps for 3 seconds (100ms intervals)
+            return prev + 100 / 30;
           });
         }, 100);
 
-        // Image change every 3 seconds
         imageInterval = setInterval(() => {
           setIsTransitioning(true);
-
           setTimeout(() => {
             setCurrentImageIndex(
               (prevIndex) => (prevIndex + 1) % images.length
             );
             setProgress(0);
             setIsTransitioning(false);
-          }, 300); // 300ms fade transition
+          }, 300);
         }, 3000);
       }
 
@@ -145,13 +162,9 @@ const FeaturedProducts = () => {
       };
     }, [images.length, isPaused]);
 
-    const handleMouseEnter = () => {
-      setIsPaused(true);
-    };
-
+    const handleMouseEnter = () => setIsPaused(true);
     const handleMouseLeave = () => {
       setIsPaused(false);
-      // Reset progress when resuming
       setProgress(0);
     };
 
@@ -176,30 +189,27 @@ const FeaturedProducts = () => {
           {badge && <div className={styles.badge}>{badge}</div>}
         </div>
 
-        {/* Progress Bar - only show if there are multiple images */}
         {images.length > 1 && (
-          <div className={styles.progressContainer}>
-            <div
-              className={`${styles.progressBar} ${
-                isPaused ? styles.paused : ""
-              }`}
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
-        )}
-
-        {/* Image Indicators */}
-        {images.length > 1 && (
-          <div className={styles.indicators}>
-            {images.map((_, index) => (
+          <>
+            <div className={styles.progressContainer}>
               <div
-                key={index}
-                className={`${styles.indicator} ${
-                  index === currentImageIndex ? styles.active : ""
+                className={`${styles.progressBar} ${
+                  isPaused ? styles.paused : ""
                 }`}
-              />
-            ))}
-          </div>
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
+            <div className={styles.indicators}>
+              {images.map((_, index) => (
+                <div
+                  key={index}
+                  className={`${styles.indicator} ${
+                    index === currentImageIndex ? styles.active : ""
+                  }`}
+                />
+              ))}
+            </div>
+          </>
         )}
       </div>
     );
@@ -223,14 +233,15 @@ const FeaturedProducts = () => {
         ) : (
           <div className={styles.grid}>
             {featuredProducts.map((product) => {
-              const isWishlisted = isInWishlist(product._id);
               const productId = product._id || product.id;
+              const isWishlisted = isInWishlist(productId);
               const inCart = isInCart(productId);
               const cartQuantity = getCartQuantity(productId);
+              const isLoading = loadingItems[productId];
 
               return (
-                <div key={product._id} className={styles.productCard}>
-                  <Link to={`/product/${product._id}`}>
+                <div key={productId} className={styles.productCard}>
+                  <Link to={`/product/${productId}`}>
                     <ProductImageSlider
                       images={product.colorVariants[0].images || []}
                       name={product.name}
@@ -270,7 +281,7 @@ const FeaturedProducts = () => {
                       </span>
                     </div>
 
-                    <Link to={`/product/${product._id}`}>
+                    <Link to={`/product/${productId}`}>
                       <h3 className={styles.productName}>{product.name}</h3>
                     </Link>
 
@@ -303,11 +314,18 @@ const FeaturedProducts = () => {
                                 )
                               }
                               className={styles.quantityButton}
+                              disabled={isLoading}
                             >
                               <Minus className={styles.quantityIcon} />
                             </button>
                             <span className={styles.quantityDisplay}>
-                              {cartQuantity} in cart
+                              {isLoading ? (
+                                <Loader
+                                  className={`${styles.quantityLoader} ${styles.spinning}`}
+                                />
+                              ) : (
+                                `${cartQuantity} in cart`
+                              )}
                             </span>
                             <button
                               onClick={() =>
@@ -317,6 +335,7 @@ const FeaturedProducts = () => {
                                 )
                               }
                               className={styles.quantityButton}
+                              disabled={isLoading}
                             >
                               <Plus className={styles.quantityIcon} />
                             </button>
@@ -324,6 +343,7 @@ const FeaturedProducts = () => {
                           <button
                             className={styles.buyNowButton}
                             onClick={() => handleBuyNow(product)}
+                            disabled={isLoading}
                           >
                             <Zap className={styles.buyNowIcon} />
                             Buy Now
@@ -334,13 +354,23 @@ const FeaturedProducts = () => {
                           <button
                             className={styles.addToCartButton}
                             onClick={() => handleAddToCart(product)}
+                            disabled={isLoading}
                           >
-                            <ShoppingCart className={styles.cartIcon} />
-                            Add to Cart
+                            {isLoading ? (
+                              <Loader
+                                className={`${styles.cartIcon} ${styles.spinning}`}
+                              />
+                            ) : (
+                              <>
+                                <ShoppingCart className={styles.cartIcon} />
+                                Add to Cart
+                              </>
+                            )}
                           </button>
                           <button
                             className={styles.buyNowButton}
                             onClick={() => handleBuyNow(product)}
+                            disabled={isLoading}
                           >
                             <Zap className={styles.buyNowIcon} />
                             Buy Now

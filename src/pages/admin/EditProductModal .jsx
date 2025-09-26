@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   X,
   Save,
@@ -8,10 +8,17 @@ import {
   Trash2,
   Eye,
   Edit,
+  Palette,
+  Image as ImageIcon,
+  Move,
+  AlertCircle,
+  Check,
+  Ruler,
 } from "lucide-react";
 import apiService from "../../services/api";
 import { useProducts } from "../../context/ProductContext";
 import { useNavigate } from "react-router-dom";
+import { useCategory } from "../../context/CategoryContext";
 
 const EditProductModal = ({
   product,
@@ -19,56 +26,126 @@ const EditProductModal = ({
   onUpdate,
   loading: parentLoading,
 }) => {
-  const [editFormData, setEditFormData] = useState({
-    name: product?.name || "",
-    description: product?.description || "",
-    price: product?.price || "",
-    originalPrice: product?.originalPrice || "",
-    category: product?.category || "",
-    subcategory: product?.subcategory || "",
-    brand: product?.brand || "",
-    stock: product?.stock || "",
-    images:
-      product?.images?.map((img) => ({
-        ...img,
-        url: img.url || img.secure_url,
-        markedForDeletion: false,
-      })) || [],
-    specifications: {
-      weight: product?.specifications?.weight || "",
-      dimensions: {
-        length: product?.specifications?.dimensions?.length || "",
-        width: product?.specifications?.dimensions?.width || "",
-        height: product?.specifications?.dimensions?.height || "",
-      },
-      material: product?.specifications?.material || "",
-      color: product?.specifications?.color || [],
-      size: product?.specifications?.size || [],
+  const navigate = useNavigate();
+  const { updateProduct } = useProducts();
+  const { categories: contextCategories, adminGetCategories } = useCategory();
+
+  // Category-specific fields definitions
+  const categoryFields = {
+    electronics: [
+      { name: "brand", label: "Brand", type: "text" },
+      { name: "model", label: "Model", type: "text" },
+      { name: "screenSize", label: "Screen Size", type: "text" },
+      { name: "resolution", label: "Resolution", type: "text" },
+      { name: "ram", label: "RAM", type: "text" },
+      { name: "storage", label: "Storage", type: "text" },
+      { name: "processor", label: "Processor", type: "text" },
+      { name: "battery", label: "Battery", type: "text" },
+    ],
+    men: [
+      { name: "fabric", label: "Fabric", type: "text" },
+      { name: "fit", label: "Fit Type", type: "text" },
+      { name: "sleeveType", label: "Sleeve Type", type: "text" },
+      { name: "neckType", label: "Neck Type", type: "text" },
+      { name: "occasion", label: "Occasion", type: "text" },
+      { name: "pattern", label: "Pattern", type: "text" },
+    ],
+    women: [
+      { name: "fabric", label: "Fabric", type: "text" },
+      { name: "fit", label: "Fit Type", type: "text" },
+      { name: "occasion", label: "Occasion", type: "text" },
+      { name: "pattern", label: "Pattern", type: "text" },
+      { name: "neckType", label: "Neck Type", type: "text" },
+      { name: "sleeveType", label: "Sleeve Type", type: "text" },
+    ],
+    books: [
+      { name: "author", label: "Author", type: "text" },
+      { name: "publisher", label: "Publisher", type: "text" },
+      { name: "isbn", label: "ISBN", type: "text" },
+      { name: "language", label: "Language", type: "text" },
+      { name: "pages", label: "Total Pages", type: "number" },
+      { name: "genre", label: "Genre", type: "text" },
+    ],
+    furniture: [
+      { name: "material", label: "Material", type: "text" },
+      { name: "dimensions", label: "Dimensions (LxWxH)", type: "text" },
+      { name: "roomType", label: "Room Type", type: "text" },
+      { name: "assembly", label: "Assembly Required", type: "text" },
+      { name: "weightCapacity", label: "Weight Capacity", type: "text" },
+    ],
+    grocery: [
+      { name: "expiryDate", label: "Expiry Date", type: "date" },
+      { name: "weight", label: "Weight", type: "text" },
+      { name: "ingredients", label: "Ingredients", type: "text" },
+      { name: "nutritionFacts", label: "Nutrition Facts", type: "textarea" },
+    ],
+    toys: [
+      { name: "ageRange", label: "Age Range", type: "text" },
+      { name: "material", label: "Material", type: "text" },
+      { name: "batteryRequired", label: "Battery Required", type: "checkbox" },
+      { name: "safetyInfo", label: "Safety Information", type: "textarea" },
+    ],
+    sports: [
+      { name: "sportType", label: "Sport Type", type: "text" },
+      { name: "material", label: "Material", type: "text" },
+      { name: "size", label: "Size", type: "text" },
+      { name: "weight", label: "Weight", type: "text" },
+    ],
+    beauty: [
+      { name: "skinType", label: "Skin Type", type: "text" },
+      { name: "ingredients", label: "Ingredients", type: "text" },
+      { name: "volume", label: "Volume/Weight", type: "text" },
+      { name: "benefits", label: "Benefits", type: "textarea" },
+    ],
+    other: [],
+  };
+
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    price: "",
+    originalPrice: "",
+    category: {
+      main: "",
+      sub: "",
     },
-    tags: product?.tags || [],
-    badge: product?.badge || "",
-    status: product?.status || "active",
+    brand: "",
+    badge: "",
+    status: "active",
+    specifications: {},
+    commonSpecs: {
+      weight: {
+        value: "",
+        unit: "kg",
+      },
+      material: "",
+      warranty: "",
+      features: [],
+    },
+    tags: [],
+    colorVariants: [
+      {
+        colorName: "Default",
+        colorCode: "#000000",
+        images: [],
+        sizeVariants: [
+          {
+            size: "",
+            customSize: "",
+            stock: "",
+            priceAdjustment: 0,
+          },
+        ],
+      },
+    ],
+    categoryFields: {},
   });
 
-  const [tempColor, setTempColor] = useState("");
-  const [tempSize, setTempSize] = useState("");
   const [tempTag, setTempTag] = useState("");
+  const [tempFeature, setTempFeature] = useState("");
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const { updateProduct } = useProducts();
-
-  const navigate = useNavigate();
-
-  const categories = [
-    "women",
-    "men",
-    "accessories",
-    "home",
-    "electronics",
-    "beauty",
-    "sports",
-    "kids",
-  ];
+  const [draggedImageIndex, setDraggedImageIndex] = useState(null);
 
   const badges = [
     "Best Seller",
@@ -78,28 +155,185 @@ const EditProductModal = ({
     "Trending",
     "Premium",
     "Sale",
+    "Hot Deal",
+    "Staff Pick",
   ];
 
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
+  const commonSizes = [
+    "XS",
+    "S",
+    "M",
+    "L",
+    "XL",
+    "XXL",
+    "XXXL",
+    "28",
+    "30",
+    "32",
+    "34",
+    "36",
+    "38",
+    "40",
+    "42",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+  ];
 
-    if (name.startsWith("specifications.")) {
+  const weightUnits = ["kg", "g", "lb", "oz"];
+  const dimensionUnits = ["cm", "m", "in", "ft"];
+
+  // Initialize form data when product changes
+  useEffect(() => {
+    if (product) {
+      // Convert existing product data to new color variant format
+      const colorVariants =
+        product.colorVariants && product.colorVariants.length > 0
+          ? product.colorVariants.map((variant) => ({
+              ...variant,
+              images: variant.images.map((img, index) => ({
+                ...img,
+                url: img.url || img.secure_url,
+                markedForDeletion: false,
+                alt: img.alt || `Product image ${index + 1}`,
+                isPrimary: img.isPrimary || index === 0,
+              })),
+            }))
+          : [
+              {
+                colorName: "Default",
+                colorCode: "#000000",
+                images:
+                  product?.images?.map((img, index) => ({
+                    ...img,
+                    url: img.url || img.secure_url,
+                    markedForDeletion: false,
+                    alt: img.alt || `Product image ${index + 1}`,
+                    isPrimary: index === 0,
+                  })) || [],
+                sizeVariants:
+                  product.sizeVariants && product.sizeVariants.length > 0
+                    ? product.sizeVariants
+                    : [
+                        {
+                          size: "",
+                          customSize: "",
+                          stock: product.stock || "",
+                          priceAdjustment: 0,
+                        },
+                      ],
+              },
+            ];
+
+      setFormData({
+        name: product?.name || "",
+        description: product?.description || "",
+        price: product?.price || "",
+        originalPrice: product?.originalPrice || "",
+        category: {
+          main: product?.category?.main || product?.category || "",
+          sub: product?.category?.sub || product?.subcategory || "",
+        },
+        brand: product?.brand || "",
+        badge: product?.badge || "",
+        status: product?.status || "active",
+        specifications: product?.specifications || {},
+        commonSpecs: {
+          weight: product?.commonSpecs?.weight || { value: "", unit: "kg" },
+          material: product?.commonSpecs?.material || "",
+          warranty: product?.commonSpecs?.warranty || "",
+          features: product?.commonSpecs?.features || [],
+        },
+        tags: product?.tags || [],
+        colorVariants,
+        categoryFields: product?.categoryFields || {},
+      });
+    }
+  }, [product]);
+
+  useEffect(() => {
+    const initializeCategories = async () => {
+      try {
+        await adminGetCategories();
+      } catch (error) {
+        console.error("Failed to fetch categories from API:", error);
+      }
+    };
+
+    initializeCategories();
+  }, []);
+
+  // Add this function to sort images with primary image first
+  const getSortedImages = (images) => {
+    if (!images || images.length === 0) return [];
+
+    // Create a copy to avoid mutating the original array
+    const sortedImages = [...images];
+
+    // Find the primary image index
+    const primaryIndex = sortedImages.findIndex((img) => img.isPrimary);
+
+    // If primary image exists and it's not already first, move it to the beginning
+    if (primaryIndex > 0) {
+      const [primaryImage] = sortedImages.splice(primaryIndex, 1);
+      sortedImages.unshift(primaryImage);
+    }
+
+    return sortedImages;
+  };
+
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
+
+    if (name.startsWith("commonSpecs.")) {
       const fieldPath = name.split(".");
-      setEditFormData((prev) => ({
+      setFormData((prev) => ({
         ...prev,
-        specifications: {
-          ...prev.specifications,
+        commonSpecs: {
+          ...prev.commonSpecs,
           [fieldPath[1]]:
             fieldPath.length > 2
               ? {
-                  ...prev.specifications[fieldPath[1]],
+                  ...prev.commonSpecs[fieldPath[1]],
                   [fieldPath[2]]: value,
                 }
               : value,
         },
       }));
+    } else if (name.startsWith("category.")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        category: {
+          ...prev.category,
+          [field]: value,
+        },
+      }));
+
+      // If changing main category, reset category-specific fields
+      if (field === "main") {
+        setFormData((prev) => ({
+          ...prev,
+          categoryFields: {},
+        }));
+      }
+    } else if (name.startsWith("categoryFields.")) {
+      const fieldName = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        categoryFields: {
+          ...prev.categoryFields,
+          [fieldName]: type === "checkbox" ? checked : value,
+        },
+      }));
     } else {
-      setEditFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData((prev) => ({ ...prev, [name]: value }));
     }
 
     if (errors[name]) {
@@ -107,87 +341,327 @@ const EditProductModal = ({
     }
   };
 
-  const handleImageUpload = (e) => {
-    const files = Array.from(e.target.files);
-    const newImages = files.map((file) => ({
-      url: URL.createObjectURL(file),
-      file,
-      publicId: "",
-      alt: `Product image ${editFormData.images.length + 1}`,
-    }));
+  // Get the current category-specific fields based on selected category
+  const getCurrentCategoryFields = () => {
+    const mainCategory = formData.category.main;
+    return mainCategory && categoryFields[mainCategory]
+      ? categoryFields[mainCategory]
+      : [];
+  };
 
-    setEditFormData((prev) => ({
+  // Color variant management
+  const addColorVariant = () => {
+    setFormData((prev) => ({
       ...prev,
-      images: [...prev.images, ...newImages].slice(0, 5),
+      colorVariants: [
+        ...prev.colorVariants,
+        {
+          colorName: "",
+          colorCode: "#000000",
+          images: [],
+          sizeVariants: [
+            {
+              size: "",
+              customSize: "",
+              stock: "",
+              priceAdjustment: 0,
+            },
+          ],
+        },
+      ],
     }));
   };
 
-  const toggleImageDeletion = (index) => {
-    setEditFormData((prev) => {
-      const newImages = [...prev.images];
-      if (newImages[index].publicId) {
-        newImages[index] = {
-          ...newImages[index],
-          markedForDeletion: !newImages[index].markedForDeletion,
-        };
-      } else {
-        newImages.splice(index, 1);
+  const removeColorVariant = (index) => {
+    if (formData.colorVariants.length === 1) {
+      alert("At least one color variant is required");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.filter((_, i) => i !== index),
+    }));
+  };
+
+  const updateColorVariant = (index, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === index ? { ...variant, [field]: value } : variant
+      ),
+    }));
+  };
+
+  // Size variant management
+  const addSizeVariant = (colorIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              sizeVariants: [
+                ...variant.sizeVariants,
+                {
+                  size: "",
+                  customSize: "",
+                  stock: "",
+                  priceAdjustment: 0,
+                },
+              ],
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const removeSizeVariant = (colorIndex, sizeIndex) => {
+    if (formData.colorVariants[colorIndex].sizeVariants.length === 1) {
+      alert("At least one size variant is required per color");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              sizeVariants: variant.sizeVariants.filter(
+                (_, j) => j !== sizeIndex
+              ),
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const updateSizeVariant = (colorIndex, sizeIndex, field, value) => {
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              sizeVariants: variant.sizeVariants.map((sizeVariant, j) =>
+                j === sizeIndex
+                  ? { ...sizeVariant, [field]: value }
+                  : sizeVariant
+              ),
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const generateSlug = (name) => {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+  };
+
+  const handleNameChange = (e) => {
+    const name = e.target.value;
+    setFormData((prev) => ({
+      ...prev,
+      name,
+      // Auto-generate subcategory from name if not set
+      category: {
+        ...prev.category,
+        sub: prev.category.sub || generateSlug(name),
+      },
+    }));
+  };
+
+  // Image handling for color variants
+  // Image handling for color variants
+  const handleImageUpload = (colorIndex, files) => {
+    const fileArray = Array.from(files);
+    const maxImages = 10;
+
+    // Filter out images marked for deletion to get active count
+    const activeImages = formData.colorVariants[colorIndex].images.filter(
+      (img) => !img.markedForDeletion
+    );
+
+    if (activeImages.length + fileArray.length > maxImages) {
+      alert(`Maximum ${maxImages} images allowed per color`);
+      return;
+    }
+
+    // Validate file types and sizes
+    const validFiles = fileArray.filter((file) => {
+      if (!file.type.startsWith("image/")) {
+        alert(`${file.name} is not a valid image file`);
+        return false;
       }
-      return { ...prev, images: newImages };
+      if (file.size > 5 * 1024 * 1024) {
+        alert(`${file.name} is too large. Maximum size is 5MB`);
+        return false;
+      }
+      return true;
     });
-  };
 
-  const addColor = () => {
-    if (tempColor && !editFormData.specifications.color.includes(tempColor)) {
-      setEditFormData((prev) => ({
-        ...prev,
-        specifications: {
-          ...prev.specifications,
-          color: [...prev.specifications.color, tempColor],
-        },
-      }));
-      setTempColor("");
-    }
-  };
+    const hasExistingPrimary = activeImages.some((img) => img.isPrimary);
 
-  const removeColor = (colorToRemove) => {
-    setEditFormData((prev) => ({
+    const newImages = validFiles.map((file, index) => ({
+      file,
+      url: URL.createObjectURL(file),
+      alt: `${formData.name} - ${
+        formData.colorVariants[colorIndex].colorName
+      } - Image ${activeImages.length + index + 1}`,
+      isPrimary: !hasExistingPrimary && index === 0, // Set as primary only if no existing primary
+      markedForDeletion: false,
+    }));
+
+    setFormData((prev) => ({
       ...prev,
-      specifications: {
-        ...prev.specifications,
-        color: prev.specifications.color.filter(
-          (color) => color !== colorToRemove
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              images: [
+                ...variant.images.filter((img) => !img.markedForDeletion),
+                ...newImages,
+              ],
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const toggleImageDeletion = (colorIndex, imageIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              images: variant.images.map((img, imgI) =>
+                imgI === imageIndex
+                  ? {
+                      ...img,
+                      markedForDeletion: img.publicId
+                        ? !img.markedForDeletion
+                        : false,
+                    }
+                  : img
+              ),
+            }
+          : variant
+      ),
+    }));
+
+    // If it's a new image (no publicId), remove it immediately
+    if (!formData.colorVariants[colorIndex].images[imageIndex].publicId) {
+      setFormData((prev) => ({
+        ...prev,
+        colorVariants: prev.colorVariants.map((variant, i) =>
+          i === colorIndex
+            ? {
+                ...variant,
+                images: variant.images.filter((_, imgI) => imgI !== imageIndex),
+              }
+            : variant
         ),
-      },
-    }));
-  };
-
-  const addSize = () => {
-    if (tempSize && !editFormData.specifications.size.includes(tempSize)) {
-      setEditFormData((prev) => ({
-        ...prev,
-        specifications: {
-          ...prev.specifications,
-          size: [...prev.specifications.size, tempSize],
-        },
       }));
-      setTempSize("");
     }
   };
 
-  const removeSize = (sizeToRemove) => {
-    setEditFormData((prev) => ({
+  const setPrimaryImage = (colorIndex, imageIndex) => {
+    setFormData((prev) => ({
       ...prev,
-      specifications: {
-        ...prev.specifications,
-        size: prev.specifications.size.filter((size) => size !== sizeToRemove),
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              images: variant.images.map((img, imgI) => ({
+                ...img,
+                isPrimary: imgI === imageIndex, // Set only the clicked image as primary
+              })),
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const handleImageDragStart = (e, colorIndex, imageIndex) => {
+    setDraggedImageIndex({ colorIndex, imageIndex });
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleImageDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleImageDrop = (e, targetColorIndex, targetImageIndex) => {
+    e.preventDefault();
+
+    if (!draggedImageIndex) return;
+
+    const { colorIndex: sourceColorIndex, imageIndex: sourceImageIndex } =
+      draggedImageIndex;
+
+    if (
+      sourceColorIndex === targetColorIndex &&
+      sourceImageIndex === targetImageIndex
+    ) {
+      setDraggedImageIndex(null);
+      return;
+    }
+
+    setFormData((prev) => {
+      const newColorVariants = [...prev.colorVariants];
+
+      const draggedImage =
+        newColorVariants[sourceColorIndex].images[sourceImageIndex];
+      newColorVariants[sourceColorIndex].images.splice(sourceImageIndex, 1);
+
+      newColorVariants[targetColorIndex].images.splice(
+        targetImageIndex,
+        0,
+        draggedImage
+      );
+
+      return { ...prev, colorVariants: newColorVariants };
+    });
+
+    setDraggedImageIndex(null);
+  };
+
+  // Specification management
+  const addSpecificationItem = (type, value) => {
+    if (!value.trim()) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      commonSpecs: {
+        ...prev.commonSpecs,
+        [type]: [...prev.commonSpecs[type], value.trim()],
+      },
+    }));
+
+    // Clear the temp value
+    if (type === "features") setTempFeature("");
+  };
+
+  const removeSpecificationItem = (type, itemToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      commonSpecs: {
+        ...prev.commonSpecs,
+        [type]: prev.commonSpecs[type].filter((item) => item !== itemToRemove),
       },
     }));
   };
 
+  // Tag management
   const addTag = () => {
-    if (tempTag && !editFormData.tags.includes(tempTag)) {
-      setEditFormData((prev) => ({
+    if (tempTag && !formData.tags.includes(tempTag)) {
+      setFormData((prev) => ({
         ...prev,
         tags: [...prev.tags, tempTag],
       }));
@@ -196,7 +670,7 @@ const EditProductModal = ({
   };
 
   const removeTag = (tagToRemove) => {
-    setEditFormData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       tags: prev.tags.filter((tag) => tag !== tagToRemove),
     }));
@@ -205,18 +679,49 @@ const EditProductModal = ({
   const validateForm = () => {
     const newErrors = {};
 
-    if (!editFormData.name.trim()) newErrors.name = "Product name is required";
-    if (!editFormData.description.trim())
+    // Basic validation
+    if (!formData.name.trim()) newErrors.name = "Product name is required";
+    if (!formData.description.trim())
       newErrors.description = "Description is required";
-    if (!editFormData.price || parseFloat(editFormData.price) <= 0)
+    if (!formData.price || parseFloat(formData.price) <= 0)
       newErrors.price = "Valid price is required";
-    if (!editFormData.category) newErrors.category = "Category is required";
-    if (!editFormData.stock || parseInt(editFormData.stock) < 0)
-      newErrors.stock = "Valid stock quantity is required";
-    if (
-      editFormData.images.filter((img) => !img.markedForDeletion).length === 0
-    )
-      newErrors.images = "At least one image is required";
+    if (!formData.category.main)
+      newErrors.category_main = "Category is required";
+
+    // Validate color variants
+    formData.colorVariants.forEach((variant, colorIndex) => {
+      if (!variant.colorName.trim()) {
+        newErrors[`colorName_${colorIndex}`] = "Color name is required";
+      }
+      const activeImages = variant.images.filter(
+        (img) => !img.markedForDeletion
+      );
+      if (activeImages.length === 0) {
+        newErrors[`images_${colorIndex}`] =
+          "At least one image is required per color";
+      }
+
+      // Validate size variants for each color
+      variant.sizeVariants.forEach((sizeVariant, sizeIndex) => {
+        if (!sizeVariant.size && !sizeVariant.customSize) {
+          newErrors[`size_${colorIndex}_${sizeIndex}`] =
+            "Size or custom size is required";
+        }
+        if (!sizeVariant.stock || parseInt(sizeVariant.stock) < 0) {
+          newErrors[`stock_${colorIndex}_${sizeIndex}`] =
+            "Valid stock quantity is required";
+        }
+
+        // Validate price adjustment
+        if (
+          sizeVariant.priceAdjustment &&
+          isNaN(parseFloat(sizeVariant.priceAdjustment))
+        ) {
+          newErrors[`priceAdjustment_${colorIndex}_${sizeIndex}`] =
+            "Price adjustment must be a valid number";
+        }
+      });
+    });
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -231,56 +736,100 @@ const EditProductModal = ({
 
       const formDataToSend = new FormData();
 
-      // Append all fields
-      formDataToSend.append("name", editFormData.name);
-      formDataToSend.append("description", editFormData.description);
-      formDataToSend.append("price", Number(editFormData.price));
-      formDataToSend.append("category", editFormData.category);
-      formDataToSend.append("stock", Number(editFormData.stock));
-      formDataToSend.append("subcategory", editFormData.subcategory);
+      // Basic product information
+      formDataToSend.append("name", formData.name);
+      formDataToSend.append("description", formData.description);
+      formDataToSend.append("price", Number(formData.price));
+      formDataToSend.append("category", JSON.stringify(formData.category));
+      formDataToSend.append("brand", formData.brand || "");
+      formDataToSend.append("badge", formData.badge || "");
+      formDataToSend.append("status", formData.status);
       formDataToSend.append(
         "originalPrice",
-        Number(editFormData.originalPrice || 0)
+        Number(formData.originalPrice || 0)
       );
-      formDataToSend.append("brand", editFormData.brand || "");
-      formDataToSend.append("badge", editFormData.badge || "");
-      formDataToSend.append("status", editFormData.status || "active");
 
-      // Handle specifications
-      const specsToSend = {
-        weight: editFormData.specifications.weight,
-        dimensions: {
-          length: editFormData.specifications.dimensions.length,
-          width: editFormData.specifications.dimensions.width,
-          height: editFormData.specifications.dimensions.height,
-        },
-        material: editFormData.specifications.material,
-        color: editFormData.specifications.color,
-        size: editFormData.specifications.size,
-      };
-      formDataToSend.append("specifications", JSON.stringify(specsToSend));
+      // Calculate total stock from all color and size variants
+      const totalStock = formData.colorVariants.reduce(
+        (sum, variant) =>
+          sum +
+          variant.sizeVariants.reduce(
+            (sizeSum, sizeVariant) =>
+              sizeSum + parseInt(sizeVariant.stock || 0),
+            0
+          ),
+        0
+      );
+      formDataToSend.append("stock", totalStock);
 
-      // Handle tags
-      formDataToSend.append("tags", JSON.stringify(editFormData.tags));
+      // Specifications
+      formDataToSend.append(
+        "specifications",
+        JSON.stringify(formData.specifications)
+      );
 
-      // Handle images
-      const keptImages = editFormData.images.filter(
-        (img) => img.url && !img.markedForDeletion && img.publicId
+      // Common specifications
+      formDataToSend.append(
+        "commonSpecs",
+        JSON.stringify(formData.commonSpecs)
       );
-      const newImages = editFormData.images.filter(
-        (img) => (img.file || img instanceof File) && !img.markedForDeletion
+
+      // Tags
+      formDataToSend.append("tags", JSON.stringify(formData.tags));
+      formDataToSend.append(
+        "categoryFields",
+        JSON.stringify(formData.categoryFields)
       );
-      const deletedImages = editFormData.images.filter(
-        (img) => img.markedForDeletion && img.publicId
-      );
+
+      // Color variants data (without images)
+      const colorVariantsData = formData.colorVariants.map((variant) => ({
+        colorName: variant.colorName,
+        colorCode: variant.colorCode,
+        sizeVariants: variant.sizeVariants.map((sizeVariant) => ({
+          size: sizeVariant.size,
+          customSize: sizeVariant.customSize,
+          stock: parseInt(sizeVariant.stock || 0),
+          priceAdjustment: parseFloat(sizeVariant.priceAdjustment || 0),
+        })),
+        imageCount: variant.images.filter((img) => !img.markedForDeletion)
+          .length,
+      }));
+      formDataToSend.append("colorVariants", JSON.stringify(colorVariantsData));
+
+      // Handle images for each color variant
+      const keptImages = [];
+      const deletedImages = [];
+
+      formData.colorVariants.forEach((variant, colorIndex) => {
+        variant.images.forEach((image, imageIndex) => {
+          if (image.publicId) {
+            if (image.markedForDeletion) {
+              deletedImages.push(image);
+            } else {
+              keptImages.push({
+                ...image,
+                colorIndex,
+                order: imageIndex,
+              });
+            }
+          } else if (image.file && !image.markedForDeletion) {
+            // New image
+            formDataToSend.append(`colorImages_${colorIndex}`, image.file);
+            formDataToSend.append(
+              `imageMetadata_${colorIndex}_${imageIndex}`,
+              JSON.stringify({
+                alt: image.alt,
+                isPrimary: image.isPrimary,
+                order: imageIndex,
+              })
+            );
+          }
+        });
+      });
 
       if (keptImages.length > 0) {
         formDataToSend.append("keptImages", JSON.stringify(keptImages));
       }
-
-      newImages.forEach((image) => {
-        formDataToSend.append("images", image.file || image);
-      });
 
       if (deletedImages.length > 0) {
         formDataToSend.append("deletedImages", JSON.stringify(deletedImages));
@@ -301,12 +850,26 @@ const EditProductModal = ({
     }
   };
 
+  // Get main categories
+  const mainCategories = [
+    "electronics",
+    "men",
+    "women",
+    "grocery",
+    "furniture",
+    "books",
+    "toys",
+    "sports",
+    "beauty",
+    "other",
+  ];
+
   if (!product) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+      <div className="bg-white rounded-lg max-w-6xl w-full max-h-[95vh] overflow-auto">
+        <div className="p-6 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white z-10">
           <h2 className="text-xl font-bold text-gray-900">Edit Product</h2>
           <button
             onClick={onClose}
@@ -317,7 +880,15 @@ const EditProductModal = ({
         </div>
 
         <form onSubmit={handleUpdateProduct} className="p-6 space-y-8">
-          {/* Basic Information Section */}
+          {/* Error Message */}
+          {errors.submit && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              {errors.submit}
+            </div>
+          )}
+
+          {/* Basic Information */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">
               Basic Information
@@ -325,18 +896,14 @@ const EditProductModal = ({
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="md:col-span-2">
-                <label
-                  htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Product Name *
                 </label>
                 <input
                   type="text"
-                  id="name"
                   name="name"
-                  value={editFormData.name}
-                  onChange={handleEditChange}
+                  value={formData.name}
+                  onChange={handleNameChange}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.name ? "border-red-500" : "border-gray-300"
                   }`}
@@ -349,22 +916,18 @@ const EditProductModal = ({
               </div>
 
               <div className="md:col-span-2">
-                <label
-                  htmlFor="description"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Description *
                 </label>
                 <textarea
-                  id="description"
                   name="description"
                   rows={4}
-                  value={editFormData.description}
-                  onChange={handleEditChange}
+                  value={formData.description}
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                     errors.description ? "border-red-500" : "border-gray-300"
                   }`}
-                  placeholder="Describe your product"
+                  placeholder="Describe your product in detail"
                   maxLength="2000"
                 />
                 {errors.description && (
@@ -372,143 +935,78 @@ const EditProductModal = ({
                     {errors.description}
                   </p>
                 )}
+                <p className="mt-1 text-sm text-gray-500">
+                  {formData.description.length}/2000 characters
+                </p>
               </div>
 
               <div>
-                <label
-                  htmlFor="category"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Category *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Main Category *
                 </label>
                 <select
-                  id="category"
-                  name="category"
-                  value={editFormData.category}
-                  onChange={handleEditChange}
+                  name="category.main"
+                  value={formData.category.main}
+                  onChange={handleChange}
                   className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.category ? "border-red-500" : "border-gray-300"
+                    errors.category_main ? "border-red-500" : "border-gray-300"
                   }`}
                 >
                   <option value="">Select a category</option>
-                  {categories.map((category) => (
+                  {mainCategories.map((category) => (
                     <option key={category} value={category}>
                       {category.charAt(0).toUpperCase() + category.slice(1)}
                     </option>
                   ))}
                 </select>
-                {errors.category && (
-                  <p className="mt-1 text-sm text-red-600">{errors.category}</p>
+                {errors.category_main && (
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.category_main}
+                  </p>
                 )}
               </div>
 
               <div>
-                <label
-                  htmlFor="subcategory"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Subcategory
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Subcategory *
                 </label>
                 <input
                   type="text"
-                  id="subcategory"
-                  name="subcategory"
-                  value={editFormData.subcategory}
-                  onChange={handleEditChange}
+                  name="category.sub"
+                  value={formData.category.sub}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter subcategory"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="brand"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Brand
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Brand *
                 </label>
                 <input
                   type="text"
-                  id="brand"
                   name="brand"
-                  value={editFormData.brand}
-                  onChange={handleEditChange}
+                  value={formData.brand}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="Enter brand name"
                 />
               </div>
 
               <div>
-                <label
-                  htmlFor="stock"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Stock Quantity *
-                </label>
-                <input
-                  type="number"
-                  id="stock"
-                  name="stock"
-                  min="0"
-                  value={editFormData.stock}
-                  onChange={handleEditChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.stock ? "border-red-500" : "border-gray-300"
-                  }`}
-                  placeholder="0"
-                />
-                {errors.stock && (
-                  <p className="mt-1 text-sm text-red-600">{errors.stock}</p>
-                )}
-              </div>
-
-              <div>
-                <label
-                  htmlFor="badge"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Badge
-                </label>
-                <select
-                  id="badge"
-                  name="badge"
-                  value={editFormData.badge}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">Select a badge (optional)</option>
-                  {badges.map((badge) => (
-                    <option key={badge} value={badge}>
-                      {badge}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Pricing Section */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">Pricing</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label
-                  htmlFor="price"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Price *
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Base Price *
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-2 text-gray-500">$</span>
                   <input
                     type="number"
-                    id="price"
                     name="price"
                     min="0"
                     step="0.01"
-                    value={editFormData.price}
-                    onChange={handleEditChange}
+                    value={formData.price}
+                    onChange={handleChange}
                     className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                       errors.price ? "border-red-500" : "border-gray-300"
                     }`}
@@ -521,22 +1019,18 @@ const EditProductModal = ({
               </div>
 
               <div>
-                <label
-                  htmlFor="originalPrice"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Original Price (Optional)
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-2 text-gray-500">$</span>
                   <input
                     type="number"
-                    id="originalPrice"
                     name="originalPrice"
                     min="0"
                     step="0.01"
-                    value={editFormData.originalPrice}
-                    onChange={handleEditChange}
+                    value={formData.originalPrice}
+                    onChange={handleChange}
                     className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="0.00"
                   />
@@ -545,168 +1039,666 @@ const EditProductModal = ({
                   For showing discounts
                 </p>
               </div>
-            </div>
-          </div>
 
-          {/* Images Section */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">
-              Product Images
-            </h2>
-
-            <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Upload Images * (Max 5 images)
+                  Badge
                 </label>
-                <div className="text-sm text-gray-600">
-                  <label htmlFor="images" className="block cursor-pointer">
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <div className="text-sm text-gray-600">
-                        <span className="text-blue-600 hover:text-blue-700">
-                          Click to upload
-                        </span>{" "}
-                        or drag and drop
-                      </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        PNG, JPG, GIF up to 10MB
-                      </p>
-                    </div>
-                  </label>
-                  <input
-                    type="file"
-                    id="images"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="hidden"
-                  />
-                </div>
-                {errors.images && (
-                  <p className="mt-1 text-sm text-red-600">{errors.images}</p>
-                )}
+                <select
+                  name="badge"
+                  value={formData.badge}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">Select a badge (optional)</option>
+                  {badges.map((badge) => (
+                    <option key={badge} value={badge}>
+                      {badge}
+                    </option>
+                  ))}
+                </select>
               </div>
 
-              {editFormData.images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                  {editFormData.images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={image.url || image.secure_url}
-                        alt={image.alt}
-                        className={`w-full h-24 object-cover rounded-lg ${
-                          image.markedForDeletion
-                            ? "opacity-50 border-2 border-red-500"
-                            : ""
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => toggleImageDeletion(index)}
-                        className={`absolute -top-2 -right-2 rounded-full p-1 ${
-                          image.markedForDeletion
-                            ? "bg-green-500 hover:bg-green-600"
-                            : "bg-red-500 hover:bg-red-600"
-                        } text-white`}
-                      >
-                        {image.markedForDeletion ? (
-                          <RefreshCw className="h-4 w-4" />
-                        ) : (
-                          <X className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  ))}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Status
+                </label>
+                <div className="flex items-center space-x-4">
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="status"
+                      value="active"
+                      checked={formData.status === "active"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-gray-700">Active</span>
+                  </label>
+                  <label className="inline-flex items-center">
+                    <input
+                      type="radio"
+                      name="status"
+                      value="inactive"
+                      checked={formData.status === "inactive"}
+                      onChange={handleChange}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="ml-2 text-gray-700">Inactive</span>
+                  </label>
                 </div>
-              )}
+              </div>
             </div>
           </div>
 
-          {/* Specifications Section */}
+          {/* Category-specific Fields */}
+          {/* Category-specific Fields */}
+          {formData.category.main && categoryFields[formData.category.main] && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-6">
+                {formData.category.main.charAt(0).toUpperCase() +
+                  formData.category.main.slice(1)}{" "}
+                Specifications
+              </h2>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {getCurrentCategoryFields().map((field) => (
+                  <div
+                    key={field.name}
+                    className={field.type === "textarea" ? "md:col-span-2" : ""}
+                  >
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {field.label}
+                    </label>
+                    {field.type === "textarea" ? (
+                      <textarea
+                        name={`categoryFields.${field.name}`}
+                        value={formData.categoryFields[field.name] || ""}
+                        onChange={handleChange}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                      />
+                    ) : field.type === "checkbox" ? (
+                      <div className="flex items-center">
+                        <input
+                          type="checkbox"
+                          name={`categoryFields.${field.name}`}
+                          checked={formData.categoryFields[field.name] || false}
+                          onChange={handleChange}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <span className="ml-2 text-sm text-gray-700">
+                          {field.label}
+                        </span>
+                      </div>
+                    ) : (
+                      <input
+                        type={field.type}
+                        name={`categoryFields.${field.name}`}
+                        value={formData.categoryFields[field.name] || ""}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder={`Enter ${field.label.toLowerCase()}`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Color Variants Section */}
+          <div className="bg-white shadow rounded-lg p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-lg font-medium text-gray-900 flex items-center">
+                <Palette className="h-5 w-5 mr-2 text-purple-600" />
+                Color & Size Variants
+              </h2>
+              <button
+                type="button"
+                onClick={addColorVariant}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Color
+              </button>
+            </div>
+
+            <div className="space-y-8">
+              {formData.colorVariants.map((variant, colorIndex) => (
+                <div
+                  key={colorIndex}
+                  className="border border-gray-200 rounded-lg p-6 relative"
+                >
+                  {/* Color Header */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-md font-medium text-gray-900 flex items-center">
+                      <div
+                        className="w-6 h-6 rounded-full border-2 border-gray-300 mr-3"
+                        style={{ backgroundColor: variant.colorCode }}
+                      ></div>
+                      Color Variant {colorIndex + 1}
+                    </h3>
+                    {formData.colorVariants.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeColorVariant(colorIndex)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-5 w-5" />
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Color Details */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Color Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={variant.colorName}
+                        onChange={(e) =>
+                          updateColorVariant(
+                            colorIndex,
+                            "colorName",
+                            e.target.value
+                          )
+                        }
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          errors[`colorName_${colorIndex}`]
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        }`}
+                        placeholder="e.g., Midnight Blue"
+                      />
+                      {errors[`colorName_${colorIndex}`] && (
+                        <p className="mt-1 text-sm text-red-600">
+                          {errors[`colorName_${colorIndex}`]}
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Color Code
+                      </label>
+                      <input
+                        type="color"
+                        value={variant.colorCode}
+                        onChange={(e) =>
+                          updateColorVariant(
+                            colorIndex,
+                            "colorCode",
+                            e.target.value
+                          )
+                        }
+                        className="w-full h-10 border border-gray-300 rounded-md cursor-pointer"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Size Variants for this Color */}
+                  <div className="mb-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="text-md font-medium text-gray-900 flex items-center">
+                        <Ruler className="h-5 w-5 mr-2 text-blue-600" />
+                        Size Variants for{" "}
+                        {variant.colorName || `Color ${colorIndex + 1}`}
+                        <span className="ml-2 text-sm text-gray-500">
+                          ({variant.sizeVariants.length} size
+                          {variant.sizeVariants.length !== 1 ? "s" : ""})
+                        </span>
+                      </h4>
+                      <button
+                        type="button"
+                        onClick={() => addSizeVariant(colorIndex)}
+                        className="bg-blue-600 text-white px-3 py-1 rounded-md hover:bg-blue-700 transition-colors flex items-center text-sm"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Size
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {variant.sizeVariants.map((sizeVariant, sizeIndex) => (
+                        <div
+                          key={sizeIndex}
+                          className="relative p-4 bg-gray-50 rounded-lg border border-gray-200"
+                        >
+                          {/* Header with size number and remove button */}
+                          <div className="flex items-center justify-between mb-3">
+                            <span className="text-sm font-medium text-gray-700">
+                              Size Option {sizeIndex + 1}
+                            </span>
+                            {variant.sizeVariants.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  removeSizeVariant(colorIndex, sizeIndex)
+                                }
+                                className="text-red-600 hover:text-red-800 p-1 rounded-full hover:bg-red-50 transition-colors"
+                                title="Remove this size option"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Size
+                              </label>
+                              <select
+                                value={sizeVariant.size}
+                                onChange={(e) =>
+                                  updateSizeVariant(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "size",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">Select a size</option>
+                                {commonSizes.map((size) => (
+                                  <option key={size} value={size}>
+                                    {size}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Custom Size
+                              </label>
+                              <input
+                                type="text"
+                                value={sizeVariant.customSize}
+                                onChange={(e) =>
+                                  updateSizeVariant(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "customSize",
+                                    e.target.value
+                                  )
+                                }
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="e.g., 10x20 cm"
+                              />
+                              <p className="text-xs text-gray-500 mt-1">
+                                Use if size not in dropdown
+                              </p>
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Stock Quantity *
+                              </label>
+                              <input
+                                type="number"
+                                min="0"
+                                value={sizeVariant.stock}
+                                onChange={(e) =>
+                                  updateSizeVariant(
+                                    colorIndex,
+                                    sizeIndex,
+                                    "stock",
+                                    e.target.value
+                                  )
+                                }
+                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                  errors[`stock_${colorIndex}_${sizeIndex}`]
+                                    ? "border-red-500"
+                                    : "border-gray-300"
+                                }`}
+                                placeholder="0"
+                              />
+                              {errors[`stock_${colorIndex}_${sizeIndex}`] && (
+                                <p className="mt-1 text-sm text-red-600">
+                                  {errors[`stock_${colorIndex}_${sizeIndex}`]}
+                                </p>
+                              )}
+                            </div>
+
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Price Adjustment
+                              </label>
+                              <div className="relative">
+                                <span className="absolute left-3 top-2 text-gray-500">
+                                  $
+                                </span>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  value={sizeVariant.priceAdjustment}
+                                  onChange={(e) =>
+                                    updateSizeVariant(
+                                      colorIndex,
+                                      sizeIndex,
+                                      "priceAdjustment",
+                                      e.target.value
+                                    )
+                                  }
+                                  className={`w-full pl-8 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                                    errors[
+                                      `priceAdjustment_${colorIndex}_${sizeIndex}`
+                                    ]
+                                      ? "border-red-500"
+                                      : "border-gray-300"
+                                  }`}
+                                  placeholder="0.00"
+                                />
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">
+                                Extra cost for this size
+                              </p>
+                              {errors[
+                                `priceAdjustment_${colorIndex}_${sizeIndex}`
+                              ] && (
+                                <p className="mt-1 text-sm text-red-600">
+                                  {
+                                    errors[
+                                      `priceAdjustment_${colorIndex}_${sizeIndex}`
+                                    ]
+                                  }
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Validation error for size requirement */}
+                          {errors[`size_${colorIndex}_${sizeIndex}`] && (
+                            <p className="mt-2 text-sm text-red-600">
+                              {errors[`size_${colorIndex}_${sizeIndex}`]}
+                            </p>
+                          )}
+
+                          {/* Final price preview for this size */}
+                          {sizeVariant.stock && formData.price && (
+                            <div className="mt-3 pt-3 border-t border-gray-200">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">
+                                  Final price for{" "}
+                                  {sizeVariant.size ||
+                                    sizeVariant.customSize ||
+                                    "this size"}
+                                  :
+                                </span>
+                                <span className="font-semibold text-green-600">
+                                  $
+                                  {(
+                                    parseFloat(formData.price) +
+                                    parseFloat(sizeVariant.priceAdjustment || 0)
+                                  ).toFixed(2)}
+                                </span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Helpful instructions */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <h5 className="font-semibold text-blue-900 text-sm mb-1">
+                        Size Variant Tips:
+                      </h5>
+                      <ul className="text-blue-800 text-xs space-y-1">
+                        <li>
+                          • Each color can have multiple sizes (S, M, L, etc.)
+                        </li>
+                        <li>• Set individual stock quantities for each size</li>
+                        <li>
+                          • Add price adjustments for premium sizes (like XXL)
+                        </li>
+                        <li>• Use custom size for unique dimensions</li>
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Images Section */}
+                  <div>
+                    <div className="flex items-center justify-between mb-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Images for{" "}
+                        {variant.colorName || `Color ${colorIndex + 1}`} *
+                      </label>
+                      <span className="text-xs text-gray-500">
+                        {
+                          variant.images.filter((img) => !img.markedForDeletion)
+                            .length
+                        }
+                        /10 images
+                      </span>
+                    </div>
+
+                    {/* Image Upload */}
+                    <div className="mb-4">
+                      <label className="block cursor-pointer">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <div className="text-sm text-gray-600">
+                            <span className="text-blue-600 hover:text-blue-700">
+                              Click to upload
+                            </span>{" "}
+                            or drag and drop
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2">
+                            PNG, JPG, GIF up to 5MB (Max 10 images per color)
+                          </p>
+                        </div>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={(e) =>
+                            handleImageUpload(colorIndex, e.target.files)
+                          }
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+
+                    {errors[`images_${colorIndex}`] && (
+                      <p className="mb-4 text-sm text-red-600">
+                        {errors[`images_${colorIndex}`]}
+                      </p>
+                    )}
+
+                    {/* Image Grid */}
+                    {variant.images.length > 0 && (
+                      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                        {getSortedImages(variant.images).map(
+                          (image, imageIndex) =>
+                            !image.markedForDeletion && (
+                              <div
+                                key={imageIndex}
+                                className="relative group"
+                                draggable
+                                onDragStart={(e) =>
+                                  handleImageDragStart(
+                                    e,
+                                    colorIndex,
+                                    imageIndex
+                                  )
+                                }
+                                onDragOver={handleImageDragOver}
+                                onDrop={(e) =>
+                                  handleImageDrop(e, colorIndex, imageIndex)
+                                }
+                              >
+                                <div
+                                  className={`aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 transition-colors cursor-move ${
+                                    image.markedForDeletion
+                                      ? "border-red-500"
+                                      : "border-gray-200 hover:border-blue-300"
+                                  }`}
+                                >
+                                  <img
+                                    src={image.url || image.secure_url}
+                                    alt={image.alt}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+
+                                {/* Image Controls */}
+                                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                  <div className="flex space-x-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPrimaryImage(colorIndex, imageIndex)
+                                      }
+                                      className={`p-2 rounded-full ${
+                                        image.isPrimary
+                                          ? "bg-green-500 text-white cursor-default"
+                                          : "bg-white text-gray-700 hover:bg-gray-100"
+                                      }`}
+                                      title={
+                                        image.isPrimary
+                                          ? "Currently primary image"
+                                          : "Set as primary image"
+                                      }
+                                      disabled={image.isPrimary}
+                                    >
+                                      {image.isPrimary ? (
+                                        <Check className="h-4 w-4" />
+                                      ) : (
+                                        <Eye className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleImageDeletion(
+                                          colorIndex,
+                                          imageIndex
+                                        )
+                                      }
+                                      className={`p-2 rounded-full ${
+                                        image.markedForDeletion
+                                          ? "bg-green-500 text-white hover:bg-green-600"
+                                          : "bg-red-500 text-white hover:bg-red-600"
+                                      }`}
+                                      title={
+                                        image.markedForDeletion
+                                          ? "Restore image"
+                                          : "Remove image"
+                                      }
+                                    >
+                                      {image.markedForDeletion ? (
+                                        <RefreshCw className="h-4 w-4" />
+                                      ) : (
+                                        <X className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Primary Badge */}
+                                {image.isPrimary &&
+                                  !image.markedForDeletion && (
+                                    <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                      Primary
+                                    </div>
+                                  )}
+
+                                {/* Deletion Badge */}
+                                {image.markedForDeletion && (
+                                  <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                    Will Delete
+                                  </div>
+                                )}
+
+                                {/* Drag Handle */}
+                                <div className="absolute top-2 right-2 bg-white bg-opacity-80 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Move className="h-3 w-3 text-gray-600" />
+                                </div>
+                              </div>
+                            )
+                        )}
+                      </div>
+                    )}
+
+                    {/* Image Instructions */}
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <h5 className="font-semibold text-blue-900 text-sm mb-1">
+                        Image Tips:
+                      </h5>
+                      <ul className="text-blue-800 text-xs space-y-1">
+                        <li>
+                          • Click the eye icon to set a different primary image
+                        </li>
+                        <li>• Drag images to reorder them</li>
+                        <li>
+                          • Use high-quality images (1200x1200px recommended)
+                        </li>
+                        <li>
+                          • Images should clearly show the product in this color
+                        </li>
+                        <li>
+                          • Red border indicates images marked for deletion
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Common Specifications */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">
-              Specifications
+              Common Specifications
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label
-                  htmlFor="specifications.weight"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Weight (kg)
-                </label>
-                <input
-                  type="number"
-                  id="specifications.weight"
-                  name="specifications.weight"
-                  min="0"
-                  step="0.01"
-                  value={editFormData.specifications.weight}
-                  onChange={handleEditChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0.00"
-                />
-              </div>
-
-              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Dimensions (cm)
+                  Weight
                 </label>
-                <div className="grid grid-cols-3 gap-2">
-                  <div>
-                    <input
-                      type="number"
-                      name="specifications.dimensions.length"
-                      min="0"
-                      step="0.1"
-                      value={editFormData.specifications.dimensions.length}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Length"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      name="specifications.dimensions.width"
-                      min="0"
-                      step="0.1"
-                      value={editFormData.specifications.dimensions.width}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Width"
-                    />
-                  </div>
-                  <div>
-                    <input
-                      type="number"
-                      name="specifications.dimensions.height"
-                      min="0"
-                      step="0.1"
-                      value={editFormData.specifications.dimensions.height}
-                      onChange={handleEditChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Height"
-                    />
-                  </div>
+                <div className="flex">
+                  <input
+                    type="number"
+                    name="commonSpecs.weight.value"
+                    min="0"
+                    step="0.01"
+                    value={formData.commonSpecs.weight.value}
+                    onChange={handleChange}
+                    className="w-3/4 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="0.00"
+                  />
+                  <select
+                    name="commonSpecs.weight.unit"
+                    value={formData.commonSpecs.weight.unit}
+                    onChange={handleChange}
+                    className="w-1/4 px-3 py-2 border border-gray-300 rounded-r-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    {weightUnits.map((unit) => (
+                      <option key={unit} value={unit}>
+                        {unit}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
               <div>
-                <label
-                  htmlFor="specifications.material"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                >
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Material
                 </label>
                 <input
                   type="text"
-                  id="specifications.material"
-                  name="specifications.material"
-                  value={editFormData.specifications.material}
-                  onChange={handleEditChange}
+                  name="commonSpecs.material"
+                  value={formData.commonSpecs.material}
+                  onChange={handleChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder="e.g., Cotton, Wood, Metal"
                 />
@@ -714,79 +1706,58 @@ const EditProductModal = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Colors
+                  Warranty
                 </label>
-                <div className="flex">
-                  <input
-                    type="text"
-                    value={tempColor}
-                    onChange={(e) => setTempColor(e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Add color"
-                    onKeyPress={(e) => e.key === "Enter" && addColor()}
-                  />
-                  <button
-                    type="button"
-                    onClick={addColor}
-                    className="px-3 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
-                  >
-                    Add
-                  </button>
-                </div>
-                {editFormData.specifications.color.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {editFormData.specifications.color.map((color, index) => (
-                      <span
-                        key={index}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-                      >
-                        {color}
-                        <button
-                          type="button"
-                          onClick={() => removeColor(color)}
-                          className="ml-1.5 inline-flex text-blue-400 hover:text-blue-600"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <input
+                  type="text"
+                  name="commonSpecs.warranty"
+                  value={formData.commonSpecs.warranty}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., 1 Year, 6 Months"
+                />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sizes
+                  Key Features
                 </label>
                 <div className="flex">
                   <input
                     type="text"
-                    value={tempSize}
-                    onChange={(e) => setTempSize(e.target.value)}
+                    value={tempFeature}
+                    onChange={(e) => setTempFeature(e.target.value)}
                     className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Add size"
-                    onKeyPress={(e) => e.key === "Enter" && addSize()}
+                    placeholder="Add a key feature"
+                    onKeyPress={(e) =>
+                      e.key === "Enter" &&
+                      addSpecificationItem("features", tempFeature)
+                    }
                   />
                   <button
                     type="button"
-                    onClick={addSize}
+                    onClick={() =>
+                      addSpecificationItem("features", tempFeature)
+                    }
                     className="px-3 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700"
                   >
                     Add
                   </button>
                 </div>
-                {editFormData.specifications.size.length > 0 && (
+                {formData.commonSpecs.features.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-2">
-                    {editFormData.specifications.size.map((size, index) => (
+                    {formData.commonSpecs.features.map((feature, index) => (
                       <span
                         key={index}
-                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
                       >
-                        {size}
+                        {feature}
                         <button
                           type="button"
-                          onClick={() => removeSize(size)}
-                          className="ml-1.5 inline-flex text-green-400 hover:text-green-600"
+                          onClick={() =>
+                            removeSpecificationItem("features", feature)
+                          }
+                          className="ml-1.5 inline-flex text-purple-400 hover:text-purple-600"
                         >
                           <X className="h-3 w-3" />
                         </button>
@@ -798,7 +1769,7 @@ const EditProductModal = ({
             </div>
           </div>
 
-          {/* Tags Section */}
+          {/* Tags */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-6">
               Product Tags
@@ -825,9 +1796,9 @@ const EditProductModal = ({
                   Add
                 </button>
               </div>
-              {editFormData.tags.length > 0 && (
+              {formData.tags.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {editFormData.tags.map((tag, index) => (
+                  {formData.tags.map((tag, index) => (
                     <span
                       key={index}
                       className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
@@ -844,59 +1815,68 @@ const EditProductModal = ({
                   ))}
                 </div>
               )}
+              <p className="mt-2 text-sm text-gray-500">
+                Tags help customers find your product. Use relevant keywords.
+              </p>
             </div>
           </div>
 
-          {/* Status Section */}
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-6">
-              Product Status
-            </h2>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Status
-              </label>
-              <div className="flex items-center space-x-4">
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="active"
-                    checked={editFormData.status === "active"}
-                    onChange={handleEditChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-700">Active</span>
-                </label>
-                <label className="inline-flex items-center">
-                  <input
-                    type="radio"
-                    name="status"
-                    value="inactive"
-                    checked={editFormData.status === "inactive"}
-                    onChange={handleEditChange}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="ml-2 text-gray-700">Inactive</span>
-                </label>
+          {/* Preview Section */}
+          {formData.name && formData.price && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <h2 className="text-lg font-medium text-gray-900 mb-6">
+                Product Preview
+              </h2>
+              <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                <div className="flex items-center space-x-4">
+                  {formData.colorVariants[0]?.images[0] && (
+                    <img
+                      src={formData.colorVariants[0].images[0].url}
+                      alt={formData.name}
+                      className="w-20 h-20 object-cover rounded-lg"
+                    />
+                  )}
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-gray-900">
+                      {formData.name}
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      {formData.description.slice(0, 100)}...
+                    </p>
+                    <div className="flex items-center space-x-2 mt-2">
+                      <span className="text-lg font-bold text-blue-600">
+                        ${formData.price}
+                      </span>
+                      {formData.originalPrice && (
+                        <span className="text-sm text-gray-500 line-through">
+                          ${formData.originalPrice}
+                        </span>
+                      )}
+                      {formData.badge && (
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          {formData.badge}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {/* Form Actions */}
-          <div className="flex justify-end space-x-4">
+          <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading || parentLoading}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center disabled:opacity-50"
+              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50"
             >
               {loading ? (
                 <RefreshCw className="h-4 w-4 mr-2 animate-spin" />

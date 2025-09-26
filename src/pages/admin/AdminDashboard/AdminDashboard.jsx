@@ -202,7 +202,7 @@ const AdminDashboard = () => {
   // Add user action handler
   const handleUserAction = async (userId, action) => {
     try {
-      setActionLoading((prev) => ({ ...prev, [userId]: action }));
+      // setActionLoading((prev) => ({ ...prev, [userId]: action }));
 
       if (action === "activate") {
         await apiService.adminActivateUser(userId);
@@ -780,14 +780,14 @@ const AdminDashboard = () => {
                   >
                     <img
                       src={
-                        product.images?.[0]?.url ||
+                        product.colorVariants[0].images?.[0]?.url ||
                         "https://via.placeholder.com/200"
                       }
                       alt={product.name}
                       className="w-full h-48 object-cover rounded-lg mb-4"
                     />
                     <div className="space-y-2">
-                      <h4 className="font-medium text-gray-900 line-clamp-2">
+                      <h4 className="font-medium text-gray-900 line-clamp-2 whitespace-nowrap overflow-hidden text-ellipsis w-full block">
                         {product.name}
                       </h4>
                       <p className="text-sm text-gray-500">

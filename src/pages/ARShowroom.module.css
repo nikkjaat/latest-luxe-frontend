@@ -1,0 +1,371 @@
+.container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #faf5ff 0%, #fce7f3 100%);
+}
+
+.wrapper {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+/* Header Styles */
+.header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.headerContent {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #9333ea 0%, #db2777 100%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.sparklesIcon {
+  width: 3rem;
+  height: 3rem;
+  color: #9333ea;
+  margin-right: 1rem;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #6b7280;
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.features {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  margin-top: 1.5rem;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+}
+
+.featureIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+/* Category Filter */
+.categoryFilter {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 2rem;
+}
+
+.categoryButtons {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.categoryButton {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  border: none;
+  cursor: pointer;
+}
+
+.categoryButtonActive {
+  background: #9333ea;
+  color: white;
+}
+
+.categoryButtonInactive {
+  color: #6b7280;
+  background: transparent;
+}
+
+.categoryButtonInactive:hover {
+  background: #f3f4f6;
+}
+
+.categoryIcon {
+  width: 1rem;
+  height: 1rem;
+  margin-right: 0.5rem;
+}
+
+/* Main Layout */
+.mainLayout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 1280px) {
+  .mainLayout {
+    grid-template-columns: 2fr 1fr;
+  }
+}
+
+/* Product Selection */
+.productSection {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .productGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .productGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .productGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Product Card */
+.productCard {
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 22rem;
+}
+
+.productCard:hover {
+  border-color: #d1d5db;
+}
+
+.productCardActive {
+  border-color: #9333ea;
+  background: #faf5ff;
+}
+
+.productImageContainer {
+  width: 100%;
+  height: 200px; /* Fixed height for consistent image size */
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Ensures image covers the container while maintaining aspect ratio */
+  border-radius: 0.5rem;
+}
+
+.productName {
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
+}
+
+.productInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.productPrice {
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #9333ea;
+}
+
+.arBadge {
+  display: flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.arIcon {
+  width: 1rem;
+  height: 1rem;
+  color: #fbbf24;
+  margin-right: 0.25rem;
+}
+
+/* AR Try-On Section */
+.arSection {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .arSection {
+    display: block;
+  }
+}
+
+.arContainer {
+  position: sticky;
+  top: 1rem;
+}
+
+.arPlaceholder {
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  padding: 2rem;
+  text-align: center;
+}
+
+.placeholderIcon {
+  width: 6rem;
+  height: 6rem;
+  background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem;
+}
+
+.placeholderText {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.placeholderSubtext {
+  color: #6b7280;
+}
+
+/* Mobile AR Try-On */
+.mobileAr {
+  margin-top: 1.5rem;
+}
+
+@media (min-width: 1280px) {
+  .mobileAr {
+    display: none;
+  }
+}
+
+/* No Products State */
+.noProducts {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.noProductsIcon {
+  width: 3rem;
+  height: 3rem;
+  color: #9ca3af;
+  margin: 0 auto 1rem;
+}
+
+.noProductsTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin-bottom: 0.5rem;
+}
+
+.noProductsText {
+  color: #6b7280;
+}
+
+/* Features Section */
+.featuresSection {
+  margin-top: 4rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .featuresSection {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.featureCard {
+  text-align: center;
+}
+
+.featureIconContainer {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.featureIconContainerBlue {
+  background: linear-gradient(135deg, #3b82f6 0%, #9333ea 100%);
+}
+
+.featureIconContainerGreen {
+  background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+}
+
+.featureIconContainerPurple {
+  background: linear-gradient(135deg, #9333ea 0%, #db2777 100%);
+}
+
+.featureCardIcon {
+  width: 2rem;
+  height: 2rem;
+  color: white;
+}
+
+.featureCardTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.featureCardText {
+  color: #6b7280;
+}

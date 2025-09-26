@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useProducts } from "../context/ProductContext";
 import ARTryOn from "../components/ARTryOn";
+import styles from "./ARShowroom.module.css";
 
 const ARShowroom = () => {
   const { products } = useProducts();
@@ -37,50 +38,48 @@ const ARShowroom = () => {
       : products.filter((p) => p.category === activeCategory);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-pink-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className={styles.container}>
+      <div className={styles.wrapper}>
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-4">
-            <Sparkles className="h-12 w-12 text-purple-600 mr-4" />
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
-              AR Showroom
-            </h1>
+        <div className={styles.header}>
+          <div className={styles.headerContent}>
+            <Sparkles className={styles.sparklesIcon} />
+            <h1 className={styles.title}>AR Showroom</h1>
           </div>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+          <p className={styles.subtitle}>
             Experience the future of shopping with Augmented Reality. Try on
             products virtually before you buy.
           </p>
-          <div className="mt-6 flex items-center justify-center space-x-8 text-sm text-gray-500">
-            <div className="flex items-center">
-              <Camera className="h-5 w-5 mr-2" />
+          <div className={styles.features}>
+            <div className={styles.featureItem}>
+              <Camera className={styles.featureIcon} />
               Real-time Try-on
             </div>
-            <div className="flex items-center">
-              <Share2 className="h-5 w-5 mr-2" />
+            <div className={styles.featureItem}>
+              <Share2 className={styles.featureIcon} />
               Share Your Look
             </div>
-            <div className="flex items-center">
-              <Download className="h-5 w-5 mr-2" />
+            <div className={styles.featureItem}>
+              <Download className={styles.featureIcon} />
               Save Photos
             </div>
           </div>
         </div>
 
         {/* Category Filter */}
-        <div className="flex justify-center mb-8">
-          <div className="bg-white rounded-lg shadow-lg p-2 flex flex-wrap justify-center gap-2">
+        <div className={styles.categoryFilter}>
+          <div className={styles.categoryButtons}>
             {categories.map((category) => (
               <button
                 key={category.id}
                 onClick={() => setActiveCategory(category.id)}
-                className={`flex items-center px-3 py-2 rounded-lg transition-all text-sm ${
+                className={`${styles.categoryButton} ${
                   activeCategory === category.id
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-600 hover:bg-gray-100"
+                    ? styles.categoryButtonActive
+                    : styles.categoryButtonInactive
                 }`}
               >
-                <category.icon className="h-4 w-4 mr-2" />
+                <category.icon className={styles.categoryIcon} />
                 {category.name}
               </button>
             ))}
@@ -88,48 +87,46 @@ const ARShowroom = () => {
         </div>
 
         {/* Responsive Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <div className={styles.mainLayout}>
           {/* Product Selection */}
-          <div className="xl:col-span-2">
-            <div className="bg-white rounded-lg shadow-lg p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">
+          <div>
+            <div className={styles.productSection}>
+              <h2 className={styles.productSectionTitle}>
                 Choose a Product to Try On
               </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 gap-6">
+              <div className={styles.productGrid}>
                 {filteredProducts.map((product) => (
                   <div key={product.id}>
                     <div
-                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
+                      className={`${styles.productCard} ${
                         selectedProduct?.id === product.id
-                          ? "border-purple-500 bg-purple-50"
-                          : "border-gray-200 hover:border-gray-300"
+                          ? styles.productCardActive
+                          : ""
                       }`}
                       onClick={() => setSelectedProduct(product)}
                     >
-                      <img
-                        src={product.images[0].url}
-                        alt={product.name}
-                        className="w-full h-32 object-cover rounded-lg mb-3"
-                      />
-                      <h3 className="font-semibold text-gray-900 mb-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center justify-between">
-                        <span className="text-lg font-bold text-purple-600">
+                      <div className={styles.productImageContainer}>
+                        <img
+                          src={product.colorVariants[0].images[0].url}
+                          alt={product.name}
+                          className={styles.productImage}
+                        />
+                      </div>
+                      <h3 className={styles.productName}>{product.name}</h3>
+                      <div className={styles.productInfo}>
+                        <span className={styles.productPrice}>
                           ${product.price}
                         </span>
-                        <div className="flex items-center">
-                          <Sparkles className="h-4 w-4 text-yellow-400 mr-1" />
-                          <span className="text-sm text-gray-600">
-                            AR Ready
-                          </span>
+                        <div className={styles.arBadge}>
+                          <Sparkles className={styles.arIcon} />
+                          <span>AR Ready</span>
                         </div>
                       </div>
                     </div>
 
-                    {/* AR Try-On for mobile/tablet - appears below selected product */}
+                    {/* AR Try-On for mobile/tablet */}
                     {selectedProduct?.id === product.id && (
-                      <div className="xl:hidden mt-6">
+                      <div className={styles.mobileAr}>
                         <ARTryOn product={selectedProduct} />
                       </div>
                     )}
@@ -137,12 +134,10 @@ const ARShowroom = () => {
                 ))}
               </div>
               {filteredProducts.length === 0 && (
-                <div className="text-center py-12">
-                  <Sparkles className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                    No Products Found
-                  </h3>
-                  <p className="text-gray-500">
+                <div className={styles.noProducts}>
+                  <Sparkles className={styles.noProductsIcon} />
+                  <h3 className={styles.noProductsTitle}>No Products Found</h3>
+                  <p className={styles.noProductsText}>
                     No products available in this category.
                   </p>
                 </div>
@@ -151,20 +146,18 @@ const ARShowroom = () => {
           </div>
 
           {/* AR Try-On - Only visible on XL screens and above */}
-          <div className="hidden xl:block xl:col-span-1">
+          <div className={styles.arSection}>
             {selectedProduct ? (
-              <div className="sticky top-4">
+              <div className={styles.arContainer}>
                 <ARTryOn product={selectedProduct} />
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow-lg p-8 text-center sticky top-4">
-                <div className="w-24 h-24 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <Sparkles className="h-12 w-12 text-purple-600" />
+              <div className={styles.arPlaceholder}>
+                <div className={styles.placeholderIcon}>
+                  <Sparkles className={styles.sparklesIcon} />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Select a Product
-                </h3>
-                <p className="text-gray-600">
+                <h3 className={styles.placeholderText}>Select a Product</h3>
+                <p className={styles.placeholderSubtext}>
                   Choose any product from the left to start your AR try-on
                   experience
                 </p>
@@ -174,39 +167,39 @@ const ARShowroom = () => {
         </div>
 
         {/* Features */}
-        <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Camera className="h-8 w-8 text-white" />
+        <div className={styles.featuresSection}>
+          <div className={styles.featureCard}>
+            <div
+              className={`${styles.featureIconContainer} ${styles.featureIconContainerBlue}`}
+            >
+              <Camera className={styles.featureCardIcon} />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Real-time Preview
-            </h3>
-            <p className="text-gray-600">
+            <h3 className={styles.featureCardTitle}>Real-time Preview</h3>
+            <p className={styles.featureCardText}>
               See how products look on you in real-time with advanced AR
               technology
             </p>
           </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Share2 className="h-8 w-8 text-white" />
+          <div className={styles.featureCard}>
+            <div
+              className={`${styles.featureIconContainer} ${styles.featureIconContainerGreen}`}
+            >
+              <Share2 className={styles.featureCardIcon} />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Share & Get Feedback
-            </h3>
-            <p className="text-gray-600">
+            <h3 className={styles.featureCardTitle}>Share & Get Feedback</h3>
+            <p className={styles.featureCardText}>
               Share your virtual try-on photos with friends and get their
               opinions
             </p>
           </div>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Download className="h-8 w-8 text-white" />
+          <div className={styles.featureCard}>
+            <div
+              className={`${styles.featureIconContainer} ${styles.featureIconContainerPurple}`}
+            >
+              <Download className={styles.featureCardIcon} />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Save Your Looks
-            </h3>
-            <p className="text-gray-600">
+            <h3 className={styles.featureCardTitle}>Save Your Looks</h3>
+            <p className={styles.featureCardText}>
               Download and save your favorite try-on photos for future reference
             </p>
           </div>

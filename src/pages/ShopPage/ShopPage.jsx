@@ -18,6 +18,7 @@ import styles from "./ShopPage.module.css";
 import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useCategory } from "../../context/CategoryContext";
 
 const ProductImageSlider = ({
   product,
@@ -183,6 +184,12 @@ const ShopPage = () => {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const { getProducts, products } = useProducts();
   const navigate = useNavigate();
+  const { categories: contextCategories, adminGetCategories } = useCategory();
+
+  useEffect(() => {
+    getProducts();
+    adminGetCategories();
+  }, []);
 
   const getNextHundred = (price) => {
     return Math.ceil(price / 100) * 100;
@@ -211,22 +218,29 @@ const ShopPage = () => {
 
   const categories = [
     { id: "all", name: "All Products" },
-    { id: "women", name: "Women's Fashion" },
-    { id: "men", name: "Men's Collection" },
-    { id: "accessories", name: "Accessories" },
-    { id: "home", name: "Home & Living" },
-    { id: "electronics", name: "Electronics" },
-    { id: "beauty", name: "Beauty & Care" },
+    ...(contextCategories || [])
+      .filter((category) => category.isActive)
+      .map((category) => ({
+        id: category.name, // Use category name as ID to match product.category
+        name: category.description, // Use category.name for display, not description
+        slug: category.slug,
+      })),
   ];
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+
+    // Handle category filtering correctly
     const matchesCategory =
-      selectedCategory === "all" || product.category === selectedCategory;
+      selectedCategory === "all"
+        ? true
+        : product.category.main === selectedCategory;
+
     const matchesPrice =
       product.price >= priceRange[0] && product.price <= priceRange[1];
+
     return matchesSearch && matchesCategory && matchesPrice;
   });
 
@@ -300,9 +314,9 @@ const ShopPage = () => {
                   {categories.map((category) => (
                     <button
                       key={category.id}
-                      onClick={() => setSelectedCategory(category.id)}
+                      onClick={() => setSelectedCategory(category.id)} // FIXED: Use category.id
                       className={`${styles.categoryButton} ${
-                        selectedCategory === category.id
+                        selectedCategory === category.id // FIXED: Compare with category.id
                           ? styles.active
                           : styles.inactive
                       }`}

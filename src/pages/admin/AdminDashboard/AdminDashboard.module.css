@@ -411,6 +411,12 @@
 .productName {
   font-weight: 500;
   color: #111827;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  display: block;
 }
 
 .productVendor {

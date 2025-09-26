@@ -426,14 +426,17 @@ const AddProduct = () => {
   };
 
   // Image handling for color variants
+  // Image handling for color variants
   const handleImageUpload = (colorIndex, files) => {
     const fileArray = Array.from(files);
     const maxImages = 10;
 
-    if (
-      formData.colorVariants[colorIndex].images.length + fileArray.length >
-      maxImages
-    ) {
+    // Filter out images marked for deletion to get active count
+    const activeImages = formData.colorVariants[colorIndex].images.filter(
+      (img) => !img.markedForDeletion
+    );
+
+    if (activeImages.length + fileArray.length > maxImages) {
       alert(`Maximum ${maxImages} images allowed per color`);
       return;
     }
@@ -445,30 +448,56 @@ const AddProduct = () => {
         return false;
       }
       if (file.size > 5 * 1024 * 1024) {
-        // 5MB limit
         alert(`${file.name} is too large. Maximum size is 5MB`);
         return false;
       }
       return true;
     });
 
+    const hasExistingPrimary = activeImages.some((img) => img.isPrimary);
+
     const newImages = validFiles.map((file, index) => ({
       file,
       url: URL.createObjectURL(file),
       alt: `${formData.name} - ${
         formData.colorVariants[colorIndex].colorName
-      } - Image ${
-        formData.colorVariants[colorIndex].images.length + index + 1
-      }`,
-      isPrimary:
-        formData.colorVariants[colorIndex].images.length === 0 && index === 0,
+      } - Image ${activeImages.length + index + 1}`,
+      isPrimary: !hasExistingPrimary && index === 0, // Set as primary only if no existing primary
+      markedForDeletion: false,
     }));
 
     setFormData((prev) => ({
       ...prev,
       colorVariants: prev.colorVariants.map((variant, i) =>
         i === colorIndex
-          ? { ...variant, images: [...variant.images, ...newImages] }
+          ? {
+              ...variant,
+              images: [
+                ...variant.images.filter((img) => !img.markedForDeletion),
+                ...newImages,
+              ],
+            }
+          : variant
+      ),
+    }));
+  };
+
+  const toggleImageDeletion = (colorIndex, imageIndex) => {
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              images: variant.images.map((img, imgI) =>
+                imgI === imageIndex
+                  ? {
+                      ...img,
+                      markedForDeletion: !img.markedForDeletion,
+                    }
+                  : img
+              ),
+            }
           : variant
       ),
     }));
@@ -497,7 +526,7 @@ const AddProduct = () => {
               ...variant,
               images: variant.images.map((img, imgI) => ({
                 ...img,
-                isPrimary: imgI === imageIndex,
+                isPrimary: imgI === imageIndex, // Set only the clicked image as primary
               })),
             }
           : variant
@@ -611,6 +640,14 @@ const AddProduct = () => {
       if (!variant.colorName.trim()) {
         newErrors[`colorName_${colorIndex}`] = "Color name is required";
       }
+
+      const activeImages = variant.images.filter(
+        (img) => !img.markedForDeletion
+      );
+      if (activeImages.length === 0) {
+        newErrors[`images_${colorIndex}`] =
+          "At least one image is required per color";
+      }
       if (variant.images.length === 0) {
         newErrors[`images_${colorIndex}`] =
           "At least one image is required per color";
@@ -664,7 +701,7 @@ const AddProduct = () => {
         Number(formData.originalPrice || 0)
       );
 
-      // Calculate total stock from all color and size variants
+      // Calculate total stock
       const totalStock = formData.colorVariants.reduce(
         (sum, variant) =>
           sum +
@@ -677,19 +714,15 @@ const AddProduct = () => {
       );
       formDataToSend.append("stock", totalStock);
 
-      // Specifications
+      // Append other data
       formDataToSend.append(
         "specifications",
         JSON.stringify(formData.specifications)
       );
-
-      // Common specifications
       formDataToSend.append(
         "commonSpecs",
         JSON.stringify(formData.commonSpecs)
       );
-
-      // Tags
       formDataToSend.append("tags", JSON.stringify(formData.tags));
       formDataToSend.append(
         "categoryFields",
@@ -706,14 +739,27 @@ const AddProduct = () => {
           stock: parseInt(sizeVariant.stock || 0),
           priceAdjustment: parseFloat(sizeVariant.priceAdjustment || 0),
         })),
-        imageCount: variant.images.length,
       }));
       formDataToSend.append("colorVariants", JSON.stringify(colorVariantsData));
 
-      // Handle images for each color variant
+      // Handle images - collect all kept and deleted images
+      const keptImages = [];
+      const deletedImages = [];
+
       formData.colorVariants.forEach((variant, colorIndex) => {
         variant.images.forEach((image, imageIndex) => {
-          if (image.file) {
+          if (image.publicId && !image.markedForDeletion) {
+            // Kept existing image
+            keptImages.push({
+              ...image,
+              colorIndex,
+              order: imageIndex,
+            });
+          } else if (image.publicId && image.markedForDeletion) {
+            // Deleted existing image
+            deletedImages.push(image);
+          } else if (image.file && !image.markedForDeletion) {
+            // New image
             formDataToSend.append(`colorImages_${colorIndex}`, image.file);
             formDataToSend.append(
               `imageMetadata_${colorIndex}_${imageIndex}`,
@@ -726,6 +772,18 @@ const AddProduct = () => {
           }
         });
       });
+
+      // Append kept and deleted images arrays
+      if (keptImages.length > 0) {
+        formDataToSend.append("keptImages", JSON.stringify(keptImages));
+      }
+
+      if (deletedImages.length > 0) {
+        formDataToSend.append("deletedImages", JSON.stringify(deletedImages));
+      }
+
+      console.log("Kept Images:", keptImages);
+      console.log("Deleted Images:", deletedImages);
 
       let response;
       if (isEditing) {
@@ -1393,7 +1451,23 @@ const AddProduct = () => {
                         {variant.colorName || `Color ${colorIndex + 1}`} *
                       </label>
                       <span className="text-xs text-gray-500">
-                        {variant.images.length}/10 images
+                        {
+                          variant.images.filter((img) => !img.markedForDeletion)
+                            .length
+                        }
+                        /10 images
+                        {variant.images.filter((img) => img.markedForDeletion)
+                          .length > 0 && (
+                          <span className="text-red-500 ml-2">
+                            (
+                            {
+                              variant.images.filter(
+                                (img) => img.markedForDeletion
+                              ).length
+                            }{" "}
+                            marked for deletion)
+                          </span>
+                        )}
                       </span>
                     </div>
 
@@ -1431,72 +1505,133 @@ const AddProduct = () => {
                     )}
 
                     {/* Image Grid */}
-                    {variant.images.length > 0 && (
+                    {/* Image Grid */}
+                    {variant.images.filter((img) => !img.markedForDeletion)
+                      .length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                        {variant.images.map((image, imageIndex) => (
-                          <div
-                            key={imageIndex}
-                            className="relative group"
-                            draggable
-                            onDragStart={(e) =>
-                              handleImageDragStart(e, colorIndex, imageIndex)
-                            }
-                            onDragOver={handleImageDragOver}
-                            onDrop={(e) =>
-                              handleImageDrop(e, colorIndex, imageIndex)
-                            }
-                          >
-                            <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 transition-colors cursor-move">
-                              <img
-                                src={image.url || image.secure_url}
-                                alt={image.alt}
-                                className="w-full h-full object-cover"
-                              />
-                            </div>
+                        {variant.images.map(
+                          (image, imageIndex) =>
+                            !image.markedForDeletion && (
+                              <div
+                                key={imageIndex}
+                                className="relative group"
+                                draggable
+                                onDragStart={(e) =>
+                                  handleImageDragStart(
+                                    e,
+                                    colorIndex,
+                                    imageIndex
+                                  )
+                                }
+                                onDragOver={handleImageDragOver}
+                                onDrop={(e) =>
+                                  handleImageDrop(e, colorIndex, imageIndex)
+                                }
+                              >
+                                <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-gray-200 hover:border-blue-300 transition-colors cursor-move">
+                                  <img
+                                    src={image.url || image.secure_url}
+                                    alt={image.alt}
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
 
-                            {/* Image Controls */}
-                            <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                              <div className="flex space-x-2">
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    setPrimaryImage(colorIndex, imageIndex)
-                                  }
-                                  className={`p-2 rounded-full ${
-                                    image.isPrimary
-                                      ? "bg-green-500 text-white"
-                                      : "bg-white text-gray-700 hover:bg-gray-100"
-                                  }`}
-                                  title="Set as primary image"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    removeImage(colorIndex, imageIndex)
-                                  }
-                                  className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                                  title="Remove image"
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
+                                {/* Image Controls */}
+                                <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                  <div className="flex space-x-2">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        setPrimaryImage(colorIndex, imageIndex)
+                                      }
+                                      className={`p-2 rounded-full ${
+                                        image.isPrimary
+                                          ? "bg-green-500 text-white"
+                                          : "bg-white text-gray-700 hover:bg-gray-100"
+                                      }`}
+                                      title="Set as primary image"
+                                    >
+                                      <Eye className="h-4 w-4" />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleImageDeletion(
+                                          colorIndex,
+                                          imageIndex
+                                        )
+                                      }
+                                      className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
+                                      title="Remove image"
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </button>
+                                  </div>
+                                </div>
+
+                                {/* Primary Badge */}
+                                {image.isPrimary && (
+                                  <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                    Primary
+                                  </div>
+                                )}
+
+                                {/* Drag Handle */}
+                                <div className="absolute top-2 right-2 bg-white bg-opacity-80 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Move className="h-3 w-3 text-gray-600" />
+                                </div>
                               </div>
-                            </div>
+                            )
+                        )}
+                      </div>
+                    )}
+                    {/* Images marked for deletion with restore option */}
+                    {variant.images.filter((img) => img.markedForDeletion)
+                      .length > 0 && (
+                      <div className="mt-4">
+                        <h5 className="text-sm font-medium text-gray-700 mb-2">
+                          Images Marked for Deletion
+                        </h5>
+                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                          {variant.images.map(
+                            (image, imageIndex) =>
+                              image.markedForDeletion && (
+                                <div
+                                  key={imageIndex}
+                                  className="relative group opacity-60"
+                                >
+                                  <div className="aspect-square bg-gray-100 rounded-lg overflow-hidden border-2 border-red-300">
+                                    <img
+                                      src={image.url || image.secure_url}
+                                      alt={image.alt}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
 
-                            {/* Primary Badge */}
-                            {image.isPrimary && (
-                              <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-1 rounded">
-                                Primary
-                              </div>
-                            )}
+                                  {/* Restore Button */}
+                                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleImageDeletion(
+                                          colorIndex,
+                                          imageIndex
+                                        )
+                                      }
+                                      className="p-2 bg-green-500 text-white rounded-full hover:bg-green-600"
+                                      title="Restore image"
+                                    >
+                                      <RefreshCw className="h-4 w-4" />
+                                    </button>
+                                  </div>
 
-                            {/* Drag Handle */}
-                            <div className="absolute top-2 right-2 bg-white bg-opacity-80 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Move className="h-3 w-3 text-gray-600" />
-                            </div>
-                          </div>
-                        ))}
+                                  <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                                    Will Delete
+                                  </div>
+                                </div>
+                              )
+                          )}
+                        </div>
                       </div>
                     )}
 

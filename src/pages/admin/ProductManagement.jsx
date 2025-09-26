@@ -66,7 +66,7 @@ const ProductManagement = () => {
 
   const fetchProducts = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       try {
         const response = await apiService.adminGetProducts();
         if (response.success && response.data) {
@@ -774,7 +774,7 @@ const ProductManagement = () => {
                   </div>
 
                   <div className="p-4">
-                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 ">
                       {product.name}
                     </h3>
                     <p className="text-sm text-gray-600 mb-2 capitalize">

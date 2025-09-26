@@ -47,7 +47,7 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
+      // setLoading(true);
       try {
         const response = await apiService.getAllUsers();
         // Filter out admin users for security

@@ -113,12 +113,19 @@ const ProductDetailPage = () => {
 
   useEffect(() => {
     if (!product || !selectedColor) return;
+
     const colorVariant = product.colorVariants.find(
       (variant) => variant.colorName === selectedColor
     );
+
     if (colorVariant) {
       setSelectedColorVariant(colorVariant);
-      setSelectedImage(0);
+
+      // Set selected image to primary image or first image
+      const sortedImages = getSortedImages(colorVariant.images);
+      const primaryIndex = sortedImages.findIndex((img) => img.isPrimary);
+      setSelectedImage(primaryIndex >= 0 ? primaryIndex : 0);
+
       if (colorVariant.sizeVariants?.length > 0) {
         const firstSizeVariant = colorVariant.sizeVariants[0];
         setSelectedSizeVariant(firstSizeVariant);
@@ -229,18 +236,35 @@ const ProductDetailPage = () => {
     )
     .slice(0, 4);
 
+  // Add this function to sort images with primary image first
+  const getSortedImages = (images) => {
+    if (!images || images.length === 0) return [];
+
+    // Create a copy to avoid mutating the original array
+    const sortedImages = [...images];
+
+    // Find the primary image index
+    const primaryIndex = sortedImages.findIndex((img) => img.isPrimary);
+
+    // If primary image exists and it's not already first, move it to the beginning
+    if (primaryIndex > 0) {
+      const [primaryImage] = sortedImages.splice(primaryIndex, 1);
+      sortedImages.unshift(primaryImage);
+    }
+
+    return sortedImages;
+  };
+
   useEffect(() => {
-    if (
-      !selectedColorVariant?.images ||
-      selectedColorVariant.images.length <= 1 ||
-      !autoScroll
-    )
-      return;
+    const images = selectedColorVariant?.images || [];
+    const sortedImages = getSortedImages(images);
+
+    if (sortedImages.length <= 1 || !autoScroll) return;
+
     const interval = setInterval(() => {
-      setSelectedImage(
-        (prev) => (prev + 1) % selectedColorVariant.images.length
-      );
+      setSelectedImage((prev) => (prev + 1) % sortedImages.length);
     }, 3000);
+
     return () => clearInterval(interval);
   }, [selectedColorVariant?.images, autoScroll]);
 
@@ -704,67 +728,72 @@ const ProductDetailPage = () => {
               onMouseEnter={() => setAutoScroll(false)}
               onMouseLeave={() => setAutoScroll(true)}
             >
-              {selectedColorVariant &&
-              selectedColorVariant.images &&
-              selectedColorVariant.images.length > 0 ? (
-                <img
-                  src={selectedColorVariant.images[selectedImage]?.url}
-                  alt={product.name}
-                  className={styles.mainImage}
-                />
-              ) : product.images && product.images.length > 0 ? (
-                <img
-                  src={product.images[selectedImage]?.url}
-                  alt={product.name}
-                  className={styles.mainImage}
-                />
-              ) : (
-                <div className={styles.noImage}>No Image Available</div>
-              )}
+              {(() => {
+                const imagesToShow =
+                  selectedColorVariant?.images || product.images || [];
+                const sortedImages = getSortedImages(imagesToShow);
 
+                return sortedImages.length > 0 ? (
+                  <>
+                    <img
+                      src={
+                        sortedImages[selectedImage]?.url ||
+                        sortedImages[selectedImage]?.secure_url
+                      }
+                      alt={product.name}
+                      className={styles.mainImage}
+                    />
+                  </>
+                ) : (
+                  <div className={styles.noImage}>No Image Available</div>
+                );
+              })()}
               {/* Image indicators */}
               {selectedColorVariant &&
                 selectedColorVariant.images &&
                 selectedColorVariant.images.length > 1 && (
                   <div className={styles.imageIndicators}>
-                    {selectedColorVariant.images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedImage(index)}
-                        className={
-                          selectedImage === index
-                            ? `${styles.indicator} ${styles.indicatorActive}`
-                            : `${styles.indicator} ${styles.indicatorInactive}`
-                        }
-                        aria-label={`Go to image ${index + 1}`}
-                      />
-                    ))}
+                    {getSortedImages(selectedColorVariant.images).map(
+                      (_, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImage(index)}
+                          className={
+                            selectedImage === index
+                              ? `${styles.indicator} ${styles.indicatorActive}`
+                              : `${styles.indicator} ${styles.indicatorInactive}`
+                          }
+                          aria-label={`Go to image ${index + 1}`}
+                        />
+                      )
+                    )}
                   </div>
                 )}
             </div>
-
             {/* Thumbnail images */}
             {selectedColorVariant &&
               selectedColorVariant.images &&
               selectedColorVariant.images.length > 1 && (
                 <div className={styles.thumbnailContainer}>
-                  {selectedColorVariant.images.map((image, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setSelectedImage(index)}
-                      className={
-                        selectedImage === index
-                          ? `${styles.thumbnail} ${styles.thumbnailActive}`
-                          : styles.thumbnail
-                      }
-                    >
-                      <img
-                        src={image.url}
-                        alt={`Thumbnail ${index + 1}`}
-                        className={styles.thumbnailImage}
-                      />
-                    </button>
-                  ))}
+                  {getSortedImages(selectedColorVariant.images).map(
+                    (image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImage(index)}
+                        className={
+                          selectedImage === index
+                            ? `${styles.thumbnail} ${styles.thumbnailActive}`
+                            : styles.thumbnail
+                        }
+                      >
+                        <img
+                          src={image.url || image.secure_url}
+                          alt={`Thumbnail ${index + 1}`}
+                          className={styles.thumbnailImage}
+                        />
+                      </button>
+                    )
+                  )}
                 </div>
               )}
           </div>
@@ -1123,8 +1152,12 @@ const ProductDetailPage = () => {
                   <div className={styles.arProductPreview}>
                     <img
                       src={
-                        selectedColorVariant?.images?.[0]?.url ||
-                        product.images?.[0]?.url ||
+                        getSortedImages(
+                          selectedColorVariant?.images || product.images
+                        )?.[0]?.url ||
+                        getSortedImages(
+                          selectedColorVariant?.images || product.images
+                        )?.[0]?.secure_url ||
                         ""
                       }
                       alt={product.name}

@@ -198,6 +198,7 @@ const CategoryProductsPage = () => {
     updateQuantity,
   } = useCart();
   const { keyword, filterCategory, name, itemCount } = location.state || {};
+  const [loadingItems, setLoadingItems] = useState({});
   // console.log(keyword, filterCategory, name, itemCount);
 
   // State management
@@ -465,6 +466,10 @@ const CategoryProductsPage = () => {
     navigate("/cart");
   };
 
+  useEffect(() => {
+    setLoadingItems({});
+  }, [cartItems]);
+
   // Handle remove from cart
   const handleRemoveFromCart = (productId) => {
     removeFromCart(productId);
@@ -473,6 +478,7 @@ const CategoryProductsPage = () => {
   // Handle quantity change
   const handleQuantityChange = (productId, newQuantity) => {
     // console.log(productId, newQuantity);
+    setLoadingItems((prev) => ({ ...prev, [productId]: true }));
     if (newQuantity <= 0) {
       removeFromCart(productId);
     } else {
@@ -751,6 +757,7 @@ const CategoryProductsPage = () => {
                   const productId = product._id || product.id;
                   const inCart = isInCart(productId);
                   const cartQuantity = getCartQuantity(productId);
+                  const isLoading = loadingItems[productId];
 
                   return (
                     <div key={productId} className={styles.productCard}>
@@ -826,12 +833,19 @@ const CategoryProductsPage = () => {
                                     cartQuantity - 1
                                   )
                                 }
+                                disabled={isLoading}
                                 className={styles.quantityButton}
                               >
                                 <Minus className={styles.quantityIcon} />
                               </button>
                               <span className={styles.quantityDisplay}>
-                                {cartQuantity} in cart
+                                {isLoading ? (
+                                  <Loader
+                                    className={`${styles.quantityLoader} ${styles.spinning}`}
+                                  />
+                                ) : (
+                                  `${cartQuantity} in cart`
+                                )}
                               </span>
                               <button
                                 onClick={() =>
@@ -840,6 +854,7 @@ const CategoryProductsPage = () => {
                                     cartQuantity + 1
                                   )
                                 }
+                                disabled={isLoading}
                                 className={styles.quantityButton}
                               >
                                 <Plus className={styles.quantityIcon} />
@@ -878,10 +893,11 @@ const CategoryProductsPage = () => {
               </div>
             ) : (
               <div className={styles.productsList}>
-                {paginatedProducts.map((product) => {
+                {filterCategory.map((product) => {
                   const productId = product._id || product.id;
                   const inCart = isInCart(productId);
                   const cartQuantity = getCartQuantity(productId);
+                  const isLoading = loadingItems[productId];
 
                   return (
                     <div key={productId} className={styles.productListItem}>
@@ -974,12 +990,27 @@ const CategoryProductsPage = () => {
                                     cartQuantity - 1
                                   )
                                 }
+                                disabled={isLoading}
                                 className={styles.quantityButton}
                               >
                                 <Minus className={styles.quantityIcon} />
                               </button>
                               <span className={styles.quantityDisplay}>
-                                {cartQuantity} in cart
+                                {isLoading ? (
+                                  <Loader
+                                    className={`${styles.cartIcon} ${styles.spinning}`}
+                                  />
+                                ) : (
+                                  <>
+                                    {isLoading ? (
+                                      <Loader
+                                        className={`${styles.quantityLoader} ${styles.spinning}`}
+                                      />
+                                    ) : (
+                                      `${cartQuantity} in cart`
+                                    )}
+                                  </>
+                                )}
                               </span>
                               <button
                                 onClick={() =>
@@ -988,6 +1019,8 @@ const CategoryProductsPage = () => {
                                     cartQuantity + 1
                                   )
                                 }
+                                disabled={isLoading}
+                                s
                                 className={styles.quantityButton}
                               >
                                 <Plus className={styles.quantityIcon} />

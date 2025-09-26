@@ -616,7 +616,7 @@ const VendorDashboard = () => {
                       </div>
 
                       <div className="p-4">
-                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2">
+                        <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 whitespace-nowrap overflow-hidden text-ellipsis w-full block">
                           {product.name}
                         </h3>
                         <div className="flex items-center justify-between mb-3">
