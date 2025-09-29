@@ -82,6 +82,8 @@ const AdminDashboard = () => {
     }
   };
 
+  console.log(products);
+
   const fetchVendors = async () => {
     try {
       try {
@@ -533,7 +535,7 @@ const AdminDashboard = () => {
                       <div key={product._id} className="flex items-center">
                         <img
                           src={
-                            product.images?.[0]?.url ||
+                            product.colorVariants[0].images[0]?.url ||
                             "https://via.placeholder.com/48"
                           }
                           alt={product.name}

@@ -749,7 +749,7 @@ const CategoryProductsPage = () => {
         )}
 
         {/* Products Grid/List */}
-        {filterCategory.length > 0 ? (
+        {filterCategory?.length > 0 ? (
           <>
             {viewMode === "grid" ? (
               <div className={styles.productsGrid}>

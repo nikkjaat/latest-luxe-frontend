@@ -194,10 +194,12 @@ export const CategoryProvider = ({ children }) => {
         throw new Error(response.message || "Failed to update category");
       }
 
+      console.log(response)
+
       // Format the updated category with proper ID
       const updatedCategory = {
-        ...response.category,
-        id: response.category._id,
+        ...response.data,
+        id: response.data._id,
       };
 
       setCategories((prev) =>

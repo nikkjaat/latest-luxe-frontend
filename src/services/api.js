@@ -806,7 +806,7 @@ class ApiService {
   }
 
   async adminDeleteCategory(id) {
-    return this.request(`/admin/categories/${id}`, {
+    return this.request(`/admin/delete-category/${id}`, {
       method: "DELETE",
     });
   }

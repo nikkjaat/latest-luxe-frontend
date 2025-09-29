@@ -1621,7 +1621,6 @@ const AddProduct = () => {
                         )}
                       </div>
                     )}
-
                     {/* Images marked for deletion with restore option */}
                     {variant.images.filter((img) => img.markedForDeletion)
                       .length > 0 && (

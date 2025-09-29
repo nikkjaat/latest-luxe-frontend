@@ -15,9 +15,10 @@ import {
   TrendingUp,
   Link as LinkIcon,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import apiService from "../../../services/api";
 import { useCategory } from "../../../context/CategoryContext";
+import { useProducts } from "../../../context/ProductContext"; // Import ProductContext
 import styles from "./CategoryManagement.module.css";
 
 const CategoryManagement = () => {
@@ -27,13 +28,17 @@ const CategoryManagement = () => {
     adminUpdateCategory,
     adminDeleteCategory,
   } = useCategory();
+
+  const { products, getProducts } = useProducts(); // Get products context
+  const navigate = useNavigate();
+
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [actionLoading, setActionLoading] = useState({});
-  const [imageUploadMethod, setImageUploadMethod] = useState("url"); // 'url' or 'file'
+  const [imageUploadMethod, setImageUploadMethod] = useState("url");
   const [imagePreview, setImagePreview] = useState(null);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
@@ -48,6 +53,7 @@ const CategoryManagement = () => {
 
   useEffect(() => {
     fetchCategories();
+    fetchProducts();
   }, []);
 
   const fetchCategories = async () => {
@@ -61,14 +67,113 @@ const CategoryManagement = () => {
     }
   };
 
+  const fetchProducts = async () => {
+    try {
+      await getProducts();
+    } catch (error) {
+      console.error("Failed to fetch products:", error);
+    }
+  };
+
   // Get categories from context
   const { categories: contextCategories } = useCategory();
 
+  // Count products for each category and update categories state
   useEffect(() => {
     if (contextCategories && contextCategories.length > 0) {
-      setCategories(contextCategories);
+      const categoriesWithProductCounts = contextCategories.map((category) => {
+        const productCount = countProductsInCategory(category);
+        return {
+          ...category,
+          productCount,
+        };
+      });
+      setCategories(categoriesWithProductCounts);
     }
-  }, [contextCategories]);
+  }, [contextCategories, products]);
+
+  // Function to count products in a specific category
+  const countProductsInCategory = (category) => {
+    if (!products || products.length === 0) return 0;
+
+    const slug = category.slug?.toLowerCase();
+    const name = category.name?.toLowerCase();
+
+    return products.filter((product) => {
+      const productCategory = product.category?.main;
+
+      if (!productCategory) return false;
+
+      // Handle string category
+      if (typeof productCategory === "string") {
+        return (
+          productCategory.toLowerCase() === slug ||
+          productCategory.toLowerCase() === name
+        );
+      }
+
+      // Handle object category
+      if (typeof productCategory === "object") {
+        return (
+          productCategory.slug?.toLowerCase() === slug ||
+          productCategory.name?.toLowerCase() === name ||
+          productCategory._id === category._id
+        );
+      }
+
+      return false;
+    }).length;
+  };
+
+  // Function to get filtered products for a category (for navigation)
+  const getProductsByCategory = (category) => {
+    if (!products || products.length === 0) return [];
+
+    const slug = category.slug?.toLowerCase();
+    const name = category.name?.toLowerCase();
+    const keyword = slug || name;
+
+    return products.filter((product) => {
+      const productCategory = product.category?.main;
+
+      if (!productCategory) return false;
+
+      // Handle string category
+      if (typeof productCategory === "string") {
+        return (
+          productCategory.toLowerCase() === slug ||
+          productCategory.toLowerCase() === name
+        );
+      }
+
+      // Handle object category
+      if (typeof productCategory === "object") {
+        return (
+          productCategory.slug?.toLowerCase() === slug ||
+          productCategory.name?.toLowerCase() === name ||
+          productCategory._id === category._id
+        );
+      }
+
+      return false;
+    });
+  };
+
+  // Handle view category click
+  const handleViewCategory = (category) => {
+    const filterCategory = getProductsByCategory(category);
+    const keyword =
+      category.slug?.toLowerCase() || category.name?.toLowerCase();
+
+    navigate(`/category/${category.slug}`, {
+      state: {
+        keyword,
+        filterCategory,
+        name: category.name,
+        itemCount: category.productCount || filterCategory.length,
+      },
+    });
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -453,13 +558,13 @@ const CategoryManagement = () => {
                 </div>
 
                 <div className={styles.actions}>
-                  <Link
-                    to={`/category/${category.slug}`}
+                  <button
+                    onClick={() => handleViewCategory(category)}
                     className={styles.viewButton}
                   >
                     <Eye size={16} className={styles.actionIcon} />
                     View
-                  </Link>
+                  </button>
                   <button
                     onClick={() => handleEdit(category)}
                     className={styles.editButton}
