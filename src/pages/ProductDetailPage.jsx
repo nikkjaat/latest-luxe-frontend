@@ -825,6 +825,8 @@ const ProductDetailPage = () => {
   const handleWishlistToggle = () =>
     isInWishlist(id) ? removeFromWishlist(product._id) : addToWishlist(product);
 
+  console.log(relatedProducts);
+
   return (
     <div className={styles.pageContainer}>
       <div className={styles.container}>
@@ -1303,7 +1305,7 @@ const ProductDetailPage = () => {
                   className={styles.relatedProductCard}
                 >
                   <img
-                    src={relatedProduct.images?.[0]?.url || ""}
+                    src={relatedProduct.colorVariants[0].images[0]?.url || ""}
                     alt={relatedProduct.name}
                     className={styles.relatedProductImage}
                   />

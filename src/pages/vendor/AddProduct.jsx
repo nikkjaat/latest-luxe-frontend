@@ -25,6 +25,8 @@ const AddProduct = () => {
   const { addProduct, updateProduct, getProduct } = useProducts();
   const { categories, adminGetCategories } = useCategory();
 
+  console.log(categories);
+
   const isEditing = location.search.includes("edit=true");
   const editProductId = location.state?.productId;
 
@@ -970,9 +972,9 @@ const AddProduct = () => {
                   }`}
                 >
                   <option value="">Select a category</option>
-                  {mainCategories.map((category) => (
-                    <option key={category} value={category}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                  {categories.map((category) => (
+                    <option key={category.name} value={category.name}>
+                      {category.description.charAt(0).toUpperCase() + category.description.slice(1)}
                     </option>
                   ))}
                 </select>
