@@ -534,8 +534,15 @@ const AddProduct = () => {
     }));
   };
 
+  // Image drag and drop handlers
   const handleImageDragStart = (e, colorIndex, imageIndex) => {
-    setDraggedImageIndex({ colorIndex, imageIndex });
+    e.dataTransfer.setData(
+      "application/json",
+      JSON.stringify({
+        colorIndex,
+        imageIndex,
+      })
+    );
     e.dataTransfer.effectAllowed = "move";
   };
 
@@ -547,36 +554,64 @@ const AddProduct = () => {
   const handleImageDrop = (e, targetColorIndex, targetImageIndex) => {
     e.preventDefault();
 
-    if (!draggedImageIndex) return;
-
-    const { colorIndex: sourceColorIndex, imageIndex: sourceImageIndex } =
-      draggedImageIndex;
-
-    if (
-      sourceColorIndex === targetColorIndex &&
-      sourceImageIndex === targetImageIndex
-    ) {
-      setDraggedImageIndex(null);
-      return;
-    }
-
-    setFormData((prev) => {
-      const newColorVariants = [...prev.colorVariants];
-
-      const draggedImage =
-        newColorVariants[sourceColorIndex].images[sourceImageIndex];
-      newColorVariants[sourceColorIndex].images.splice(sourceImageIndex, 1);
-
-      newColorVariants[targetColorIndex].images.splice(
-        targetImageIndex,
-        0,
-        draggedImage
+    try {
+      const draggedData = JSON.parse(
+        e.dataTransfer.getData("application/json")
       );
+      const { colorIndex: sourceColorIndex, imageIndex: sourceImageIndex } =
+        draggedData;
 
-      return { ...prev, colorVariants: newColorVariants };
-    });
+      if (
+        sourceColorIndex === targetColorIndex &&
+        sourceImageIndex === targetImageIndex
+      ) {
+        return;
+      }
 
-    setDraggedImageIndex(null);
+      setFormData((prev) => {
+        const newColorVariants = [...prev.colorVariants];
+        const sourceVariant = newColorVariants[sourceColorIndex];
+        const targetVariant = newColorVariants[targetColorIndex];
+
+        // If dragging within the same color variant
+        if (sourceColorIndex === targetColorIndex) {
+          const newImages = [...sourceVariant.images];
+          const [draggedImage] = newImages.splice(sourceImageIndex, 1);
+          newImages.splice(targetImageIndex, 0, draggedImage);
+
+          return {
+            ...prev,
+            colorVariants: newColorVariants.map((variant, index) =>
+              index === sourceColorIndex
+                ? { ...variant, images: newImages }
+                : variant
+            ),
+          };
+        }
+        // If dragging between different color variants
+        else {
+          const sourceImages = [...sourceVariant.images];
+          const targetImages = [...targetVariant.images];
+          const [draggedImage] = sourceImages.splice(sourceImageIndex, 1);
+          targetImages.splice(targetImageIndex, 0, draggedImage);
+
+          return {
+            ...prev,
+            colorVariants: newColorVariants.map((variant, index) => {
+              if (index === sourceColorIndex) {
+                return { ...variant, images: sourceImages };
+              }
+              if (index === targetColorIndex) {
+                return { ...variant, images: targetImages };
+              }
+              return variant;
+            }),
+          };
+        }
+      });
+    } catch (error) {
+      console.error("Error handling image drop:", error);
+    }
   };
 
   // Specification management
@@ -1470,7 +1505,6 @@ const AddProduct = () => {
                         )}
                       </span>
                     </div>
-
                     {/* Image Upload */}
                     <div className="mb-4">
                       <label className="block cursor-pointer">
@@ -1497,15 +1531,12 @@ const AddProduct = () => {
                         />
                       </label>
                     </div>
-
                     {errors[`images_${colorIndex}`] && (
                       <p className="mb-4 text-sm text-red-600">
                         {errors[`images_${colorIndex}`]}
                       </p>
                     )}
-
-                    {/* Image Grid */}
-                    {/* Image Grid */}
+                    {/* Updated image grid with proper drag and drop */}
                     {variant.images.filter((img) => !img.markedForDeletion)
                       .length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -1576,6 +1607,11 @@ const AddProduct = () => {
                                   </div>
                                 )}
 
+                                {/* Image Order Number */}
+                                <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                                  {imageIndex + 1}
+                                </div>
+
                                 {/* Drag Handle */}
                                 <div className="absolute top-2 right-2 bg-white bg-opacity-80 p-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">
                                   <Move className="h-3 w-3 text-gray-600" />
@@ -1585,6 +1621,7 @@ const AddProduct = () => {
                         )}
                       </div>
                     )}
+
                     {/* Images marked for deletion with restore option */}
                     {variant.images.filter((img) => img.markedForDeletion)
                       .length > 0 && (
@@ -1634,7 +1671,6 @@ const AddProduct = () => {
                         </div>
                       </div>
                     )}
-
                     {/* Image Instructions */}
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <h5 className="font-semibold text-blue-900 text-sm mb-1">

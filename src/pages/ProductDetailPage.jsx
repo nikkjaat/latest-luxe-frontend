@@ -33,6 +33,126 @@ import ProductReviews from "../components/ProductReviews";
 import ComparisonTool from "../components/ComparisonTool";
 import styles from "./ProductDetailPage.module.css";
 
+const ColorImageOption = ({ variant, isSelected, onSelect, isAutoScroll }) => {
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+  const intervalRef = useRef(null);
+
+  const variantImages = variant.images || [];
+  const hasMultipleImages = variantImages.length > 1;
+
+  useEffect(() => {
+    // Clear any existing interval
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+
+    // Start auto-scroll ONLY for NON-SELECTED colors
+    // - There are multiple images
+    // - Auto-scroll is enabled globally
+    // - This color is NOT selected
+    // - Not currently hovered (for better UX)
+    if (hasMultipleImages && isAutoScroll && !isSelected && !isHovered) {
+      intervalRef.current = setInterval(() => {
+        setCurrentImageIndex((prev) => (prev + 1) % variantImages.length);
+      }, 2000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [
+    hasMultipleImages,
+    isAutoScroll,
+    isSelected,
+    isHovered,
+    variantImages.length,
+  ]);
+
+  // Reset to first image when variant changes or when selected
+  useEffect(() => {
+    setCurrentImageIndex(0);
+  }, [variant.colorName, isSelected]);
+
+  // For selected color, always show the first image (no auto-scroll)
+  // For non-selected colors, use the currentImageIndex
+  const displayImageIndex = isSelected ? 0 : currentImageIndex;
+  const currentImage = variantImages[displayImageIndex] || variantImages[0];
+
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  return (
+    <button
+      className={
+        isSelected
+          ? `${styles.colorImageOption} ${styles.colorImageOptionSelected}`
+          : styles.colorImageOption
+      }
+      onClick={onSelect}
+      aria-label={`Select color: ${variant.colorName}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      <div className={styles.colorImageContainer}>
+        {currentImage && (
+          <img
+            src={currentImage.url || currentImage.secure_url}
+            alt={variant.colorName}
+            className={styles.colorImage}
+          />
+        )}
+
+        {/* Show image count badge if multiple images */}
+        {hasMultipleImages && (
+          <div className={styles.imageCountBadge}>
+            +{variantImages.length - 1}
+          </div>
+        )}
+
+        {/* Image indicators only for NON-SELECTED colors with multiple images */}
+        {hasMultipleImages && !isSelected && (
+          <div className={styles.colorImageIndicators}>
+            {variantImages.map((_, index) => (
+              <div
+                key={index}
+                className={
+                  index === currentImageIndex
+                    ? `${styles.colorImageIndicator} ${styles.colorImageIndicatorActive}`
+                    : styles.colorImageIndicator
+                }
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Selection checkmark - only for selected color */}
+        {isSelected && (
+          <div className={styles.colorSelectionCheck}>
+            <Check className={styles.colorCheckIcon} />
+          </div>
+        )}
+
+        {/* Pause indicator when hovered on non-selected colors */}
+        {isHovered && hasMultipleImages && !isSelected && (
+          <div className={styles.pauseOverlay}>
+            <div className={styles.pauseIcon}>⏸️</div>
+          </div>
+        )}
+      </div>
+
+      <span className={styles.colorName}>{variant.colorName}</span>
+    </button>
+  );
+};
+
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { products, getProduct } = useProducts();
@@ -853,28 +973,19 @@ const ProductDetailPage = () => {
               </div>
             </div>
 
-            {/* Color Selection */}
+            {/* Updated color selection section in main component */}
             {product.colorVariants && product.colorVariants.length > 0 && (
               <div className={styles.selectionSection}>
                 <h3 className={styles.selectionTitle}>Color</h3>
-                <div className={styles.colorOptions}>
+                <div className={styles.colorImageOptions}>
                   {product.colorVariants.map((variant) => (
-                    <button
+                    <ColorImageOption
                       key={variant.colorName}
-                      className={
-                        selectedColor === variant.colorName
-                          ? `${styles.colorOption} ${styles.colorOptionSelected}`
-                          : styles.colorOption
-                      }
-                      onClick={() => setSelectedColor(variant.colorName)}
-                      aria-label={`Select color: ${variant.colorName}`}
-                      style={{ backgroundColor: variant.colorCode || "#ccc" }}
-                      title={variant.colorName}
-                    >
-                      {selectedColor === variant.colorName && (
-                        <Check className={styles.checkIcon} />
-                      )}
-                    </button>
+                      variant={variant}
+                      isSelected={selectedColor === variant.colorName}
+                      onSelect={() => setSelectedColor(variant.colorName)}
+                      isAutoScroll={autoScroll}
+                    />
                   ))}
                 </div>
               </div>
@@ -910,12 +1021,10 @@ const ProductDetailPage = () => {
                   </div>
                 </div>
               )}
-
             {/* Selection Error */}
             {selectionError && (
               <div className={styles.selectionError}>{selectionError}</div>
             )}
-
             {/* Description Section */}
             <div className={styles.section}>
               <button
@@ -938,7 +1047,6 @@ const ProductDetailPage = () => {
                 </div>
               )}
             </div>
-
             {/* Specifications Section */}
             {hasSpecifications() && (
               <div className={styles.section}>
@@ -962,7 +1070,6 @@ const ProductDetailPage = () => {
                 )}
               </div>
             )}
-
             {/* AR Try-On Button */}
             {isARCompatible && (
               <div className={styles.arSection}>
@@ -991,7 +1098,6 @@ const ProductDetailPage = () => {
                 </button>
               </div>
             )}
-
             {/* Quantity and Actions */}
             <div className={styles.actionsSection}>
               <div className={styles.quantityContainer}>
@@ -1058,7 +1164,6 @@ const ProductDetailPage = () => {
                 Compare with Similar Products
               </button>
             </div>
-
             {/* Features - This is the boundary for sticky behavior */}
             <div ref={stickyBoundaryRef} className={styles.featuresSection}>
               <div className={styles.featuresGrid}>
