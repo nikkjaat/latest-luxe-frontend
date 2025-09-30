@@ -196,7 +196,7 @@ const ProductManagement = () => {
         ...filteredProducts.map((product) =>
           [
             `"${product.name}"`,
-            product.category,
+            product.category.main,
             product.price,
             product.stock,
             product.status,
@@ -648,11 +648,11 @@ const ProductManagement = () => {
                           <div className="flex items-center">
                             <img
                               src={
-                                product.images?.[0]?.url ||
+                                product.colorVariants[0].images[0]?.url ||
                                 "https://via.placeholder.com/60"
                               }
                               alt={product.name}
-                              className="h-12 w-12 rounded-lg object-cover"
+                              className="h-12 w-15 rounded-lg object-cover"
                             />
                             <div className="ml-4">
                               <div className="text-sm font-medium text-gray-900 max-w-xs truncate">
@@ -667,7 +667,9 @@ const ProductManagement = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <span className="capitalize">{product.category}</span>
+                          <span className="capitalize">
+                            {product.category.main}
+                          </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {product.vendorName || "Unknown"}
@@ -757,7 +759,7 @@ const ProductManagement = () => {
                   <div className="relative">
                     <img
                       src={
-                        product.images?.[0]?.url ||
+                        product.colorVariants[0].images[0]?.url ||
                         "https://via.placeholder.com/300"
                       }
                       alt={product.name}
@@ -929,7 +931,7 @@ const ProductManagement = () => {
                   <div>
                     <img
                       src={
-                        viewingProduct.images?.[0]?.url ||
+                        viewingProduct.colorVariants[0].images?.[0]?.url ||
                         "https://via.placeholder.com/400"
                       }
                       alt={viewingProduct.name}
@@ -938,7 +940,7 @@ const ProductManagement = () => {
                     {viewingProduct.images &&
                       viewingProduct.images.length > 1 && (
                         <div className="grid grid-cols-4 gap-2 mt-4">
-                          {viewingProduct.images
+                          {viewingProduct.colorVariants[0].images
                             .slice(1, 5)
                             .map((image, index) => (
                               <img
@@ -977,7 +979,9 @@ const ProductManagement = () => {
                       </div>
                       <div>
                         <span className="text-sm text-gray-500">Category</span>
-                        <p className="capitalize">{viewingProduct.category}</p>
+                        <p className="capitalize">
+                          {viewingProduct.category.main}
+                        </p>
                       </div>
                       <div>
                         <span className="text-sm text-gray-500">Vendor</span>

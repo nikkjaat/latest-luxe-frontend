@@ -158,6 +158,7 @@ class ApiService {
   }
 
   async updateProduct(id, productData) {
+    console.log(id, productData);
     const headers = {};
     if (this.token) {
       headers.Authorization = `Bearer ${this.token}`;
