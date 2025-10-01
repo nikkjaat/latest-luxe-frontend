@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Users,
   Package,
@@ -11,187 +11,55 @@ import {
   Eye,
   Edit,
   Trash2,
+  Ban,
   CheckCircle,
   XCircle,
   Calendar,
   Activity,
-  Grid,
+  Grid2x2 as Grid,
   Gift,
   Settings,
   Bell,
   FileText,
+  Database,
+  Server,
   Zap,
-  RefreshCw,
-  Ban,
+  X,
+  Star,
 } from "lucide-react";
 import { useVendors } from "../../../context/VendorContext";
 import { useProducts } from "../../../context/ProductContext";
 import { useAnalytics } from "../../../context/AnalyticsContext";
 import { Link } from "react-router-dom";
 import apiService from "../../../services/api";
-import UserDetails from "../UserDetails";
-import EditProductModal from "../EditProductModal "; // Import the EditProductModal
+import EditProductModal from "../EditProductModal ";
 
 const AdminDashboard = () => {
   const { vendors, vendorApplications, getVendors, getVendorApplications } =
     useVendors();
+  const { products, getProducts } = useProducts();
   const { analytics, getRevenueGrowth, getVisitorGrowth } = useAnalytics();
   const [activeTab, setActiveTab] = useState("overview");
   const [loading, setLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState("monthly");
   const [allUsers, setAllUsers] = useState([]);
   const [allVendors, setAllVendors] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [products, setProducts] = useState([]);
-
-  // Add user management state
-  const [showUserDetails, setShowUserDetails] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingProduct, setViewingProduct] = useState(null);
+  const [editingProduct, setEditingProduct] = useState(null);
   const [actionLoading, setActionLoading] = useState({});
 
-  // Add product edit modal state
-  const [showEditProductModal, setShowEditProductModal] = useState(false);
-  const [editingProduct, setEditingProduct] = useState(null);
-  const [activeUserCount, setActiveUserCount] = useState(0);
-  const [isActive, setIsActive] = useState(0);
-
-  useEffect(() => {
-    fetchProducts();
-    fetchVendors();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      try {
-        const response = await apiService.adminGetProducts();
-        if (response.success && response.data) {
-          setProducts(response.data);
-        } else {
-          setProducts([]);
-        }
-      } catch (apiError) {
-        console.error("API call failed:", apiError);
-        setProducts([]);
-      }
-    } catch (error) {
-      console.error("Failed to fetch products:", error);
-      setProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  console.log(products);
-
-  const fetchVendors = async () => {
-    try {
-      try {
-        const response = await apiService.getAllUsers();
-        const vendorUsers = response.users.filter(
-          (user) => user.role === "vendor"
-        );
-      } catch (apiError) {
-        console.error("API call failed:", apiError);
-      }
-    } catch (error) {
-      console.error("Failed to fetch vendors:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  const fetchUsers = async () => {
-    try {
-      // setLoading(true);
-      const response = await apiService.getAllUsers();
-      // Filter out admin users for security
-      const filteredUsers = response.users.filter(
-        (user) => user.role !== "admin"
-      );
-      setUsers(filteredUsers);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-      setUsers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const activeUsers = users.filter((user) => user.isActive === true);
-    setIsActive(activeUsers.length);
-
-    const thisMonthUsers = users.filter((user) => {
-      const createdAt = new Date(user.createdAt); // assuming this field exists
-      const now = new Date();
-      return (
-        createdAt.getMonth() === now.getMonth() &&
-        createdAt.getFullYear() === now.getFullYear()
-      );
-    });
-
-    setActiveUserCount(thisMonthUsers.length);
-  }, [users]);
-
-  const loadData = async () => {
-    try {
-      await Promise.all([
-        getVendors(),
-        getVendorApplications(),
-        fetchProducts(),
-      ]);
-    } catch (error) {
-      console.error("Failed to load admin data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  useEffect(() => {
-    getAllUsers();
-  }, []);
-
-  const getAllUsers = async () => {
-    try {
-      const response = await apiService.getAllUsers();
-      const filterUsers = response.users.filter(
-        (user) => user.role === "customer"
-      );
-      const filterVendors = response.users.filter(
-        (user) => user.role === "vendor"
-      );
-      setAllUsers(filterUsers);
-      setAllVendors(filterVendors);
-      setUsers([...filterUsers, ...filterVendors]); // Set combined users for stats
-    } catch (error) {
-      console.error("Failed to fetch users:", error);
-      setAllUsers([]);
-      setAllVendors([]);
-      setUsers([]);
-    }
-  };
-
-  // Add product edit handler
-  const handleEditProduct = (product) => {
-    setEditingProduct(product);
-    setShowEditProductModal(true);
-  };
-
-  // Add product delete handler
   const handleDeleteProduct = async (productId) => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       try {
         setActionLoading((prev) => ({ ...prev, [productId]: "deleting" }));
-        await apiService.deleteProduct(productId);
-        // Refresh products after deletion
-        await fetchProducts();
+        const response = await apiService.deleteProduct(productId);
+        if (response.success) {
+          await getProducts(); // Refresh the entire list
+        } else {
+          throw new Error(response.message || "Failed to delete product");
+        }
       } catch (error) {
         console.error("Failed to delete product:", error);
         alert("Failed to delete product");
@@ -201,59 +69,38 @@ const AdminDashboard = () => {
     }
   };
 
-  // Add user action handler
-  const handleUserAction = async (userId, action) => {
-    try {
-      // setActionLoading((prev) => ({ ...prev, [userId]: action }));
-
-      if (action === "activate") {
-        await apiService.adminActivateUser(userId);
-      } else if (action === "suspend") {
-        await apiService.adminSuspendUser(userId);
-      } else if (action === "delete") {
-        if (window.confirm("Are you sure you want to delete this user?")) {
-          await apiService.adminDeleteUser(userId);
-        } else {
-          setActionLoading((prev) => ({ ...prev, [userId]: null }));
-          return;
-        }
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        await Promise.all([
+          getVendors(),
+          getVendorApplications(),
+          getProducts(),
+        ]);
+      } catch (error) {
+        console.error("Failed to load admin data:", error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      // Refresh ALL data
-      await Promise.all([
-        // Refresh users and vendors lists
-        (async () => {
-          const response = await apiService.getAllUsers();
-          const filterUsers = response.users.filter(
-            (user) => user.role === "customer"
-          );
-          const filterVendors = response.users.filter(
-            (user) => user.role === "vendor"
-          );
-          setAllUsers(filterUsers);
-          setAllVendors(filterVendors);
-          setUsers([...filterUsers, ...filterVendors]);
-        })(),
-        // Refresh vendors from context
-        getVendors(),
-        getVendorApplications(),
-      ]);
+    loadData();
+  }, []);
 
-      // CRITICAL: Update the selectedUser if it's the same user
-      if (selectedUser && selectedUser._id === userId) {
-        const response = await apiService.getAllUsers();
-        const updatedUser = response.users.find((user) => user._id === userId);
-        if (updatedUser) {
-          setSelectedUser(updatedUser); // This updates the modal
-        }
-      }
-    } catch (error) {
-      console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user`);
-    } finally {
-      setActionLoading((prev) => ({ ...prev, [userId]: null }));
-    }
-  };
+  useEffect(() => {
+    const getAllUsers = async () => {
+      const response = await apiService.getAllUsers();
+      const filterUsers = response.users.filter(
+        (user) => user.role === "customer"
+      );
+      const filterVendors = response.users.filter(
+        (user) => user.role === "vendor"
+      );
+      setAllUsers(filterUsers);
+      setAllVendors(filterVendors);
+    };
+    getAllUsers();
+  }, []);
 
   const stats = [
     {
@@ -346,6 +193,17 @@ const AdminDashboard = () => {
         {config.label}
       </span>
     );
+  };
+
+  const handleEditProduct = (product) => {
+    setEditingProduct(product);
+    setShowEditModal(true);
+  };
+
+  const handleViewProduct = (product) => {
+    console.log(product);
+    setViewingProduct(product);
+    setShowViewModal(true);
   };
 
   const formatProductRating = (rating) => {
@@ -695,47 +553,14 @@ const AdminDashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
-                            <button
-                              onClick={() => {
-                                setSelectedUser(vendor);
-                                setShowUserDetails(true);
-                              }}
-                              className="text-blue-600 hover:text-blue-900"
-                            >
+                            <button className="text-blue-600 hover:text-blue-900">
                               <Eye className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() =>
-                                handleUserAction(
-                                  vendor._id,
-                                  vendor.vendorInfo?.status === "approved"
-                                    ? "suspend"
-                                    : "activate"
-                                )
-                              }
-                              disabled={actionLoading[vendor._id]}
-                              className="text-green-600 hover:text-green-900"
-                            >
-                              {actionLoading[vendor._id] ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : vendor.vendorInfo?.status === "approved" ? (
-                                <Ban className="h-4 w-4" />
-                              ) : (
-                                <CheckCircle className="h-4 w-4" />
-                              )}
+                            <button className="text-green-600 hover:text-green-900">
+                              <Edit className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() =>
-                                handleUserAction(vendor._id, "delete")
-                              }
-                              disabled={actionLoading[vendor._id]}
-                              className="text-red-600 hover:text-red-900"
-                            >
-                              {actionLoading[vendor._id] === "delete" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Trash2 className="h-4 w-4" />
-                              )}
+                            <button className="text-red-600 hover:text-red-900">
+                              <Ban className="h-4 w-4" />
                             </button>
                           </div>
                         </td>
@@ -782,14 +607,14 @@ const AdminDashboard = () => {
                   >
                     <img
                       src={
-                        product.colorVariants[0].images?.[0]?.url ||
+                        product.colorVariants[0].images[0]?.url ||
                         "https://via.placeholder.com/200"
                       }
                       alt={product.name}
                       className="w-full h-48 object-cover rounded-lg mb-4"
                     />
                     <div className="space-y-2">
-                      <h4 className="font-medium text-gray-900 line-clamp-2 whitespace-nowrap overflow-hidden text-ellipsis w-full block">
+                      <h4 className="font-medium text-gray-900 line-clamp-2">
                         {product.name}
                       </h4>
                       <p className="text-sm text-gray-500">
@@ -806,7 +631,10 @@ const AdminDashboard = () => {
                         <span>★ {formatProductRating(product.rating)}</span>
                       </div>
                       <div className="flex space-x-2 pt-2">
-                        <button className="flex-1 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                        <button
+                          onClick={() => handleViewProduct(product)}
+                          className="flex-1 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                        >
                           <Eye className="h-4 w-4 inline mr-1" />
                           View
                         </button>
@@ -819,14 +647,9 @@ const AdminDashboard = () => {
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(product._id)}
-                          disabled={actionLoading[product._id] === "deleting"}
-                          className="flex-1 text-red-600 hover:text-red-800 text-sm font-medium disabled:opacity-50"
+                          className="flex-1 text-red-600 hover:text-red-800 text-sm font-medium"
                         >
-                          {actionLoading[product._id] === "deleting" ? (
-                            <RefreshCw className="h-4 w-4 inline mr-1 animate-spin" />
-                          ) : (
-                            <Trash2 className="h-4 w-4 inline mr-1" />
-                          )}
+                          <Trash2 className="h-4 w-4 inline mr-1" />
                           Remove
                         </button>
                       </div>
@@ -855,9 +678,7 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-blue-900">
                         Total Users
                       </p>
-                      <p className="text-2xl font-bold text-blue-600">
-                        {users.length}
-                      </p>
+                      <p className="text-2xl font-bold text-blue-600">2,543</p>
                     </div>
                   </div>
                 </div>
@@ -868,9 +689,7 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-green-900">
                         Active Users
                       </p>
-                      <p className="text-2xl font-bold text-green-600">
-                        {isActive}
-                      </p>
+                      <p className="text-2xl font-bold text-green-600">2,156</p>
                     </div>
                   </div>
                 </div>
@@ -881,9 +700,7 @@ const AdminDashboard = () => {
                       <p className="text-sm font-medium text-purple-900">
                         New This Month
                       </p>
-                      <p className="text-2xl font-bold text-purple-600">
-                        {activeUserCount}
-                      </p>
+                      <p className="text-2xl font-bold text-purple-600">387</p>
                     </div>
                   </div>
                 </div>
@@ -904,6 +721,176 @@ const AdminDashboard = () => {
                   <Users className="h-5 w-5 mr-2" />
                   Manage All Users
                 </Link>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showViewModal && viewingProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Product Details
+                </h2>
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-6 w-6" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <img
+                      src={
+                        viewingProduct.colorVariants[0].images?.[0]?.url ||
+                        "https://via.placeholder.com/400"
+                      }
+                      alt={viewingProduct.name}
+                      className="w-full h-64 object-cover rounded-lg"
+                    />
+                    {viewingProduct.images &&
+                      viewingProduct.images.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2 mt-4">
+                          {viewingProduct.colorVariants[0].images
+                            .slice(1, 5)
+                            .map((image, index) => (
+                              <img
+                                key={index}
+                                src={image.url}
+                                alt={`${viewingProduct.name} ${index + 2}`}
+                                className="w-full h-16 object-cover rounded"
+                              />
+                            ))}
+                        </div>
+                      )}
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-900">
+                        {viewingProduct.name}
+                      </h3>
+                      <p className="text-gray-600 mt-2">
+                        {viewingProduct.description}
+                      </p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-sm text-gray-500">Price</span>
+                        <p className="text-xl font-bold text-blue-600">
+                          ${viewingProduct.price}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Stock</span>
+                        <p className="text-lg font-semibold">
+                          {viewingProduct.stock || 0}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Category</span>
+                        <p className="capitalize">
+                          {viewingProduct.category.main}
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-sm text-gray-500">Vendor</span>
+                        <p>{viewingProduct.vendorName || "Unknown"}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-sm text-gray-500">Rating</span>
+                      <div className="flex items-center">
+                        <Star className="h-5 w-5 text-yellow-400 fill-current mr-1" />
+                        <span className="font-semibold">
+                          {formatProductRating(viewingProduct.rating)}
+                        </span>
+                        <span className="text-gray-500 ml-2">
+                          ({formatProductReviews(viewingProduct.rating)}{" "}
+                          reviews)
+                        </span>
+                      </div>
+                    </div>
+
+                    {viewingProduct.specifications && (
+                      <div>
+                        <span className="text-sm text-gray-500">
+                          Specifications
+                        </span>
+                        <div className="mt-2 space-y-1 text-sm">
+                          {viewingProduct.specifications.material && (
+                            <p>
+                              <strong>Material:</strong>{" "}
+                              {viewingProduct.specifications.material}
+                            </p>
+                          )}
+                          {viewingProduct.specifications.weight && (
+                            <p>
+                              <strong>Weight:</strong>{" "}
+                              {viewingProduct.specifications.weight} kg
+                            </p>
+                          )}
+                          {viewingProduct.specifications.color &&
+                            viewingProduct.specifications.color.length > 0 && (
+                              <p>
+                                <strong>Colors:</strong>{" "}
+                                {viewingProduct.specifications.color.join(", ")}
+                              </p>
+                            )}
+                          {viewingProduct.specifications.size &&
+                            viewingProduct.specifications.size.length > 0 && (
+                              <p>
+                                <strong>Sizes:</strong>{" "}
+                                {viewingProduct.specifications.size.join(", ")}
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    )}
+
+                    {viewingProduct.tags && viewingProduct.tags.length > 0 && (
+                      <div>
+                        <span className="text-sm text-gray-500">Tags</span>
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {viewingProduct.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs"
+                            >
+                              {tag}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-4">
+                  <Link
+                    to={`/product/${viewingProduct._id}`}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center"
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View on Site
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      handleEditProduct(viewingProduct);
+                    }}
+                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 flex items-center"
+                  >
+                    <Edit className="h-4 w-4 mr-2" />
+                    Edit Product
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -1106,29 +1093,16 @@ const AdminDashboard = () => {
             </Link>
           </div>
         </div>
-
-        {/* User Details Modal */}
-        {showUserDetails && selectedUser && (
-          <UserDetails
-            selectedUser={selectedUser}
-            users={allUsers.concat(allVendors)}
-            setShowUserDetails={setShowUserDetails}
-            fetchUsers={getAllUsers}
-            setSelectedUser={setSelectedUser}
-            onUserAction={handleUserAction}
-          />
-        )}
-
-        {/* Edit Product Modal */}
-        {showEditProductModal && editingProduct && (
-          <EditProductModal
-            product={editingProduct}
-            onClose={() => setShowEditProductModal(false)}
-            onUpdate={fetchProducts}
-            loading={actionLoading[editingProduct._id] === "updating"}
-          />
-        )}
       </div>
+      {/* Edit Product Modal */}
+      {showEditModal && editingProduct && (
+        <EditProductModal
+          product={editingProduct}
+          onClose={() => setShowEditModal(false)}
+          onUpdate={getProducts}
+          // loading={actionLoading[editingProduct._id] === "updating"}
+        />
+      )}
     </div>
   );
 };

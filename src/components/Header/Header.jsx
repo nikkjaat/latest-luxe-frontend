@@ -18,6 +18,7 @@ import {
   FileText,
   TrendingUp,
   Package,
+  ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
@@ -147,73 +148,124 @@ const Header = () => {
             <div className={styles.navAndActions}>
               {" "}
               {/* Desktop Navigation - Only show on large screens */}
-              <nav className={styles.desktopNav}>
-                <Link to="/" className={styles.navLink}>
-                  <span>Home</span>
-                </Link>
-                <Link to="/shop" className={styles.navLink}>
-                  <span>Shop</span>
-                </Link>
-                <Link to="/categories" className={styles.navLink}>
-                  <span>Categories</span>
-                </Link>
-              </nav>
-              {/* Always Visible Buttons - AR Showroom and Social */}
-              <div className={styles.alwaysVisibleButtons}>
-                <Link to="/ar-showroom" className={styles.alwaysVisibleButton}>
-                  <Sparkles className="h-4 w-4" />
-                  <span className={styles.alwaysVisibleButtonText}>
-                    AR Showroom
-                  </span>
-                </Link>
-                <Link to="/social" className={styles.alwaysVisibleButton}>
-                  <Users className="h-4 w-4" />
-                  <span className={styles.alwaysVisibleButtonText}>Social</span>
-                </Link>
-              </div>
+              {user?.role === "admin" ? (
+                <nav className={styles.desktopNav}>
+                  <Link to="/admin/dashboard" className={styles.navLink}>
+                    <span>Dashboard</span>
+                  </Link>
+                  <Link to="/admin/users" className={styles.navLink}>
+                    <span>Users</span>
+                  </Link>
+                  <Link to="/admin/products" className={styles.navLink}>
+                    <span>Products</span>
+                  </Link>
+                  <Link to="/admin/orders" className={styles.navLink}>
+                    <span>Orders</span>
+                  </Link>
+                  <Link to="/admin/analytics" className={styles.navLink}>
+                    <span>Analytics</span>
+                  </Link>
+                </nav>
+              ) : (
+                <>
+                  <nav className={styles.desktopNav}>
+                    <Link to="/" className={styles.navLink}>
+                      <span>Home</span>
+                    </Link>
+                    <Link to="/shop" className={styles.navLink}>
+                      <span>Shop</span>
+                    </Link>
+                    <Link to="/categories" className={styles.navLink}>
+                      <span>Categories</span>
+                    </Link>
+                  </nav>
+                  {/* Always Visible Buttons - AR Showroom and Social */}
+                  <div className={styles.alwaysVisibleButtons}>
+                    <Link
+                      to="/ar-showroom"
+                      className={styles.alwaysVisibleButton}
+                    >
+                      <Sparkles className="h-4 w-4" />
+                      <span className={styles.alwaysVisibleButtonText}>
+                        AR Showroom
+                      </span>
+                    </Link>
+                    <Link to="/social" className={styles.alwaysVisibleButton}>
+                      <Users className="h-4 w-4" />
+                      <span className={styles.alwaysVisibleButtonText}>
+                        Social
+                      </span>
+                    </Link>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Desktop Actions */}
             <div className={styles.desktopActions}>
               {/* Search Button - Shows on laptop/tablet */}
-              <button
-                onClick={() => setShowSearchBarBelow(!showSearchBarBelow)}
-                className={styles.searchButton}
-                aria-label="Search"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-
-              {/* Wishlist - Show on all screens for users */}
-              {user?.role === "customer" && (
-                <Link
-                  to="/wishlist"
-                  className={`${styles.actionButton} ${styles.hideOnSmallScreen}`}
-                  aria-label="Wishlist"
+              {user?.role !== "admin" && (
+                <button
+                  onClick={() => setShowSearchBarBelow(!showSearchBarBelow)}
+                  className={styles.searchButton}
+                  aria-label="Search"
                 >
-                  <Heart className="h-5 w-5" />
-                  {wishlistItems.length > 0 && (
-                    <span className={`${styles.badge} ${styles.wishlistBadge}`}>
-                      {wishlistItems.length}
-                    </span>
-                  )}
-                </Link>
+                  <Search className="h-5 w-5" />
+                </button>
               )}
 
-              {/* Cart - Show on all screens for users */}
+              {/* Wishlist - Show on all screens for users */}
+              {/* Admin-specific actions */}
+              {user?.role === "admin" && (
+                <>
+                  <Link
+                    to="/admin/notifications"
+                    className={styles.actionButton}
+                    aria-label="Notifications"
+                  >
+                    <Bell className="h-5 w-5" />
+                    {unreadCount > 0 && (
+                      <span
+                        className={`${styles.badge} ${styles.notificationBadge}`}
+                      >
+                        {unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                </>
+              )}
+
+              {/* Customer-specific actions */}
               {user?.role === "customer" && (
-                <Link
-                  to="/cart"
-                  className={styles.actionButton}
-                  aria-label="Shopping Cart"
-                >
-                  <ShoppingCart className="h-5 w-5" />
-                  {totalItems > 0 && (
-                    <span className={`${styles.badge} ${styles.cartBadge}`}>
-                      {totalItems}
-                    </span>
-                  )}
-                </Link>
+                <>
+                  <Link
+                    to="/wishlist"
+                    className={`${styles.actionButton} ${styles.hideOnSmallScreen}`}
+                    aria-label="Wishlist"
+                  >
+                    <Heart className="h-5 w-5" />
+                    {wishlistItems.length > 0 && (
+                      <span
+                        className={`${styles.badge} ${styles.wishlistBadge}`}
+                      >
+                        {wishlistItems.length}
+                      </span>
+                    )}
+                  </Link>
+
+                  <Link
+                    to="/cart"
+                    className={styles.actionButton}
+                    aria-label="Shopping Cart"
+                  >
+                    <ShoppingCart className="h-5 w-5" />
+                    {totalItems > 0 && (
+                      <span className={`${styles.badge} ${styles.cartBadge}`}>
+                        {totalItems}
+                      </span>
+                    )}
+                  </Link>
+                </>
               )}
 
               {/* User Menu */}
@@ -260,46 +312,41 @@ const Header = () => {
 
                       <div className={styles.dropdownDivider}></div>
 
-                      <Link
-                        to={getDashboardLink()}
-                        className={styles.dropdownItem}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Settings className="h-4 w-4" />
-                        <span>{getDashboardLabel()}</span>
-                      </Link>
-
-                      {/* Notifications */}
-                      <Link
-                        to="/notifications"
-                        className={styles.dropdownItem}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Bell className="h-4 w-4" />
-                        <span>Notifications</span>
-                        {unreadCount > 0 && (
-                          <span className={styles.notificationCount}>
-                            {unreadCount}
-                          </span>
-                        )}
-                      </Link>
-
-                      {user.role === "customer" && (
-                        <>
-                          <Link
-                            to="/vendor/signup"
-                            onClick={() => setIsUserMenuOpen(false)}
-                            className={styles.dropdownItem}
-                          >
-                            <Store className="h-4 w-4" />
-                            <span>Become a Vendor</span>
-                          </Link>
-                        </>
-                      )}
-
-                      {/* Admin-specific items */}
+                      {/* Role-specific menu items */}
                       {user.role === "admin" && (
                         <>
+                          <Link
+                            to="/admin/dashboard"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Admin Dashboard</span>
+                          </Link>
+                          <Link
+                            to="/admin/users"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>User Management</span>
+                          </Link>
+                          <Link
+                            to="/admin/products"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Package className="h-4 w-4" />
+                            <span>Product Management</span>
+                          </Link>
+                          <Link
+                            to="/admin/orders"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <ShoppingBag className="h-4 w-4" />
+                            <span>Order Management</span>
+                          </Link>
                           <Link
                             to="/admin/vendor-applications"
                             className={styles.dropdownItem}
@@ -309,25 +356,40 @@ const Header = () => {
                             <span>Vendor Applications</span>
                           </Link>
                           <Link
-                            to="/admin/promotions"
+                            to="/admin/analytics"
                             className={styles.dropdownItem}
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            <Sparkles className="h-4 w-4" />
-                            <span>Promotions</span>
+                            <TrendingUp className="h-4 w-4" />
+                            <span>Analytics</span>
+                          </Link>
+                          <Link
+                            to="/admin/settings"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>System Settings</span>
                           </Link>
                         </>
                       )}
 
-                      {/* Vendor-specific items */}
                       {user.role === "vendor" && (
                         <>
+                          <Link
+                            to="/vendor/dashboard"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Vendor Dashboard</span>
+                          </Link>
                           <Link
                             to="/vendor/add-product"
                             className={styles.dropdownItem}
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            <Store className="h-4 w-4" />
+                            <Package className="h-4 w-4" />
                             <span>Add Product</span>
                           </Link>
                           <Link
@@ -335,7 +397,7 @@ const Header = () => {
                             className={styles.dropdownItem}
                             onClick={() => setIsUserMenuOpen(false)}
                           >
-                            <Package className="h-4 w-4" />
+                            <ShoppingBag className="h-4 w-4" />
                             <span>My Orders</span>
                           </Link>
                           <Link
@@ -357,24 +419,26 @@ const Header = () => {
                         </>
                       )}
 
-                      <div className={styles.dropdownDivider}></div>
-
-                      <Link
-                        to="/about"
-                        className={styles.dropdownItem}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Info className="h-4 w-4" />
-                        <span>About</span>
-                      </Link>
-                      <Link
-                        to="/contact"
-                        className={styles.dropdownItem}
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Phone className="h-4 w-4" />
-                        <span>Contact</span>
-                      </Link>
+                      {user.role === "customer" && (
+                        <>
+                          <Link
+                            to="/profile"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <Settings className="h-4 w-4" />
+                            <span>Profile</span>
+                          </Link>
+                          <Link
+                            to="/vendor/signup"
+                            onClick={() => setIsUserMenuOpen(false)}
+                            className={styles.dropdownItem}
+                          >
+                            <Store className="h-4 w-4" />
+                            <span>Become a Vendor</span>
+                          </Link>
+                        </>
+                      )}
 
                       <div className={styles.dropdownDivider}></div>
 
@@ -414,11 +478,13 @@ const Header = () => {
           </div>
 
           {/* Mobile Search Bar - Only on mobile */}
-          <div className={styles.mobileSearchBar}>
-            <div className={styles.mobileSearchContainer}>
-              <SmartSearch onSearch={handleSearch} />
+          {user?.role !== "admin" && (
+            <div className={styles.mobileSearchBar}>
+              <div className={styles.mobileSearchContainer}>
+                <SmartSearch onSearch={handleSearch} />
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Mobile/Tablet Navigation Menu */}
@@ -433,36 +499,73 @@ const Header = () => {
               onClick={(e) => e.stopPropagation()}
             >
               <div className={styles.mobileNavLinks}>
-                <button
-                  onClick={() => handleMobileNavClick("/")}
-                  className={styles.mobileNavLink}
-                >
-                  <span>Home</span>
-                </button>
-                <button
-                  onClick={() => handleMobileNavClick("/shop")}
-                  className={styles.mobileNavLink}
-                >
-                  <span>Shop</span>
-                </button>
-                <button
-                  onClick={() => handleMobileNavClick("/categories")}
-                  className={styles.mobileNavLink}
-                >
-                  <span>Categories</span>
-                </button>
+                {user?.role === "admin" ? (
+                  <>
+                    <button
+                      onClick={() => handleMobileNavClick("/admin/dashboard")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Dashboard</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/admin/users")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Users</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/admin/products")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Products</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/admin/orders")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Orders</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/admin/analytics")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Analytics</span>
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => handleMobileNavClick("/")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Home</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/shop")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Shop</span>
+                    </button>
+                    <button
+                      onClick={() => handleMobileNavClick("/categories")}
+                      className={styles.mobileNavLink}
+                    >
+                      <span>Categories</span>
+                    </button>
+                  </>
+                )}
 
                 {/* Social and Wishlist buttons - only show on very small screens */}
-                <div className={styles.smallScreenButtons}>
-                  <button
-                    onClick={() => handleMobileNavClick("/social")}
-                    className={styles.mobileNavLink}
-                  >
-                    <Users className="h-4 w-4" />
-                    <span>Social</span>
-                  </button>
+                {user?.role === "customer" && (
+                  <div className={styles.smallScreenButtons}>
+                    <button
+                      onClick={() => handleMobileNavClick("/social")}
+                      className={styles.mobileNavLink}
+                    >
+                      <Users className="h-4 w-4" />
+                      <span>Social</span>
+                    </button>
 
-                  {user?.role === "customer" && (
                     <button
                       onClick={() => handleMobileNavClick("/wishlist")}
                       className={styles.mobileNavLink}
@@ -477,8 +580,8 @@ const Header = () => {
                         </span>
                       )}
                     </button>
-                  )}
-                </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -486,7 +589,7 @@ const Header = () => {
       </header>
 
       {/* Search Bar Below Header */}
-      {showSearchBarBelow && (
+      {showSearchBarBelow && user?.role !== "admin" && (
         <div className={styles.searchBarBelowHeader} ref={searchBarRef}>
           <div className={styles.searchBarContainer}>
             <div className={styles.searchBarContent}>

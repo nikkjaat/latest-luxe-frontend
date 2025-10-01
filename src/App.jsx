@@ -21,22 +21,22 @@ import ProductDetailPage from "./pages/ProductDetailPage";
 import SocialPage from "./pages/SocialPage";
 import ARShowroom from "./pages/ARShowroom";
 import UnauthorizedPage from "./pages/UnauthorizedPage";
-import AdminDashboard from "./pages/admin/AdminDashboard/AdminDashboard";
+import AdminDashboard from "./pages/admin//AdminDashboard/AdminDashboard";
 import VendorApplications from "./pages/admin/VendorApplications";
 import PromotionManagement from "./pages/admin/PromotionManagement";
 import UserManagement from "./pages/admin/UserManagament/UserManagement";
 import ProductManagement from "./pages/admin/ProductManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard/AnalyticsDashboard";
-import CategoryManagement from "./pages/admin/CategoryManagement/CategoryManagement";
+import CategoryManagement from "./pages/admin//CategoryManagement/CategoryManagement";
 import SystemSettings from "./pages/admin/SystemSettings";
 import VendorDashboard from "./pages/vendor/VendorDashboard";
 import AddProduct from "./pages/vendor/AddProduct";
+import NotificationCenter from "./pages/admin/NotificationCenter";
+import ReportsCenter from "./pages/admin/ReportsCenter";
 import VendorOrders from "./pages/vendor/VendorOrders";
 import VendorAnalytics from "./pages/vendor/VendorAnalytics";
 import VendorProfile from "./pages/vendor/VendorProfile";
-import NotificationCenter from "./pages/admin/NotificationCenter";
-import ReportsCenter from "./pages/admin/ReportsCenter";
 import RoleBasedRoute from "./components/RoleBasedRoute";
 import PromotionBanner from "./components/PromotionBanner";
 import LiveChat from "./components/LiveChat";
@@ -67,7 +67,7 @@ function HomePage() {
 }
 
 function AppContent() {
-  const { isLoading } = useAuth();
+  const { isLoading, user } = useAuth();
 
   // Show loading screen while checking authentication
   if (isLoading) {
@@ -82,237 +82,247 @@ function AppContent() {
   }
 
   return (
-    <Router>
-      <AIProvider>
-        <SocialProvider>
-          <ARProvider>
-            <NotificationProvider>
-              <PromotionProvider>
-                <ReviewProvider>
-                  <AnalyticsProvider>
+    <AIProvider>
+      <SocialProvider>
+        <ARProvider>
+          <NotificationProvider>
+            <PromotionProvider>
+              <ReviewProvider>
+                <AnalyticsProvider>
+                  <ProductProvider>
                     <VendorProvider>
                       <CartProvider>
                         <WishlistProvider>
                           <CategoryProvider>
-                            <div className="min-h-screen bg-white">
-                              <PromotionBanner />
-                              <Header />
-                              <Routes>
-                                {/* Public Routes */}
-                                <Route path="/" element={<HomePage />} />
-                                <Route path="/login" element={<LoginPage />} />
-                                <Route
-                                  path="/signup"
-                                  element={<SignupPage />}
-                                />
-                                <Route
-                                  path="/vendor/signup"
-                                  element={<VendorSignupPage />}
-                                />
-                                <Route path="/shop" element={<ShopPage />} />
-                                <Route
-                                  path="/product/:id"
-                                  element={<ProductDetailPage />}
-                                />
-                                <Route
-                                  path="/categories"
-                                  element={<CategoriesPage />}
-                                />
-                                <Route
-                                  path="/category/:categoryId"
-                                  element={<CategoryProductsPage />}
-                                />
-                                <Route
-                                  path="/social"
-                                  element={<SocialPage />}
-                                />
-                                <Route
-                                  path="/ar-showroom"
-                                  element={<ARShowroom />}
-                                />
-                                <Route
-                                  path="/unauthorized"
-                                  element={<UnauthorizedPage />}
-                                />
+                            <Router>
+                              <div className="min-h-screen bg-white">
+                                {user?.role !== "admin" && <PromotionBanner />}
+                                <Header />
+                                <Routes>
+                                  {/* Public Routes */}
+                                  <Route path="/" element={<HomePage />} />
+                                  <Route
+                                    path="/login"
+                                    element={<LoginPage />}
+                                  />
+                                  <Route
+                                    path="/signup"
+                                    element={<SignupPage />}
+                                  />
+                                  <Route
+                                    path="/vendor/signup"
+                                    element={<VendorSignupPage />}
+                                  />
+                                  <Route path="/shop" element={<ShopPage />} />
+                                  <Route
+                                    path="/product/:id"
+                                    element={<ProductDetailPage />}
+                                  />
+                                  <Route
+                                    path="/categories"
+                                    element={<CategoriesPage />}
+                                  />
+                                  <Route
+                                    path="/category/:categoryId"
+                                    element={<CategoryProductsPage />}
+                                  />
+                                  <Route
+                                    path="/social"
+                                    element={<SocialPage />}
+                                  />
+                                  <Route
+                                    path="/ar-showroom"
+                                    element={<ARShowroom />}
+                                  />
+                                  <Route
+                                    path="/unauthorized"
+                                    element={<UnauthorizedPage />}
+                                  />
 
-                                {/* User Routes */}
-                                <Route
-                                  path="/cart"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["customer"]}>
-                                      <CartPage />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/profile"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["customer"]}>
-                                      <ProfilePage />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/wishlist"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["customer"]}>
-                                      <WishlistPage />
-                                    </RoleBasedRoute>
-                                  }
-                                />
+                                  {/* User Routes */}
+                                  <Route
+                                    path="/cart"
+                                    element={
+                                      <RoleBasedRoute
+                                        allowedRoles={["customer"]}
+                                      >
+                                        <CartPage />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/profile"
+                                    element={
+                                      <RoleBasedRoute
+                                        allowedRoles={["customer"]}
+                                      >
+                                        <ProfilePage />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/wishlist"
+                                    element={
+                                      <RoleBasedRoute
+                                        allowedRoles={["customer"]}
+                                      >
+                                        <WishlistPage />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
 
-                                {/* Admin Routes */}
-                                <Route
-                                  path="/admin/dashboard"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <AdminDashboard />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/vendor-applications"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <VendorApplications />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/promotions"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <PromotionManagement />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/users"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <UserManagement />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/products"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <ProductManagement />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/orders"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <OrderManagement />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/analytics"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <AnalyticsDashboard />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/categories"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <CategoryManagement />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/settings"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <SystemSettings />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/notifications"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <NotificationCenter />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/admin/reports"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["admin"]}>
-                                      <ReportsCenter />
-                                    </RoleBasedRoute>
-                                  }
-                                />
+                                  {/* Admin Routes */}
+                                  <Route
+                                    path="/admin/dashboard"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <AdminDashboard />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/vendor-applications"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <VendorApplications />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/promotions"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <PromotionManagement />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/users"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <UserManagement />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/products"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <ProductManagement />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/orders"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <OrderManagement />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/analytics"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <AnalyticsDashboard />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/categories"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <CategoryManagement />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/settings"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <SystemSettings />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
 
-                                {/* Vendor Routes */}
-                                <Route
-                                  path="/vendor/dashboard"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["vendor"]}>
-                                      <VendorDashboard />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/vendor/add-product"
-                                  element={
-                                    <RoleBasedRoute
-                                      allowedRoles={["vendor", "admin"]}
-                                    >
-                                      <AddProduct />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/vendor/orders"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["vendor"]}>
-                                      <VendorOrders />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/vendor/analytics"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["vendor"]}>
-                                      <VendorAnalytics />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/vendor/profile"
-                                  element={
-                                    <RoleBasedRoute allowedRoles={["vendor"]}>
-                                      <VendorProfile />
-                                    </RoleBasedRoute>
-                                  }
-                                />
-                              </Routes>
-                              <Footer />
-                              <LiveChat />
-                            </div>
+                                  {/* Vendor Routes */}
+                                  <Route
+                                    path="/vendor/dashboard"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["vendor"]}>
+                                        <VendorDashboard />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/vendor/add-product"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["vendor"]}>
+                                        <AddProduct />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/vendor/orders"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["vendor"]}>
+                                        <VendorOrders />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/vendor/analytics"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["vendor"]}>
+                                        <VendorAnalytics />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/vendor/profile"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["vendor"]}>
+                                        <VendorProfile />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+
+                                  {/* Admin Routes */}
+                                  <Route
+                                    path="/admin/notifications"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <NotificationCenter />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                  <Route
+                                    path="/admin/reports"
+                                    element={
+                                      <RoleBasedRoute allowedRoles={["admin"]}>
+                                        <ReportsCenter />
+                                      </RoleBasedRoute>
+                                    }
+                                  />
+                                </Routes>
+                                {user?.role !== "admin" && <Footer />}
+                                {user?.role !== "admin" && <LiveChat />}
+                              </div>
+                            </Router>
                           </CategoryProvider>
                         </WishlistProvider>
                       </CartProvider>
                     </VendorProvider>
-                  </AnalyticsProvider>
-                </ReviewProvider>
-              </PromotionProvider>
-            </NotificationProvider>
-          </ARProvider>
-        </SocialProvider>
-      </AIProvider>
-    </Router>
+                  </ProductProvider>
+                </AnalyticsProvider>
+              </ReviewProvider>
+            </PromotionProvider>
+          </NotificationProvider>
+        </ARProvider>
+      </SocialProvider>
+    </AIProvider>
   );
 }
-
 function App() {
   return (
     <AuthProvider>

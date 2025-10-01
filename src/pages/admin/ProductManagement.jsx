@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import apiService from "../../services/api";
-import EditProductModal from "./EditProductModal "; // Import the new component
+import EditProductModal from "./EditProductModal ";
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
