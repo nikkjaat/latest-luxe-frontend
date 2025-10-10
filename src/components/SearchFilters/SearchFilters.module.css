@@ -1,0 +1,409 @@
+/* SearchFilters.module.css */
+
+/* Main Filters Container */
+.filters {
+  width: 100%;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 16px 0;
+}
+
+/* Filter Section */
+.filterSection {
+  border-bottom: 1px solid #f1f5f9;
+  padding: 0 16px;
+}
+
+.filterSection:last-child {
+  border-bottom: none;
+}
+
+/* Section Header */
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.sectionHeader:hover {
+  color: #3b82f6;
+}
+
+.sectionHeader svg {
+  height: 18px;
+  width: 18px;
+  color: #64748b;
+  transition: transform 0.2s ease;
+}
+
+/* Section Content */
+.sectionContent {
+  padding-bottom: 16px;
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Price Inputs */
+.priceInputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.priceInput {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.priceInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.priceInput::placeholder {
+  color: #94a3b8;
+}
+
+.priceSeparator {
+  color: #64748b;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+/* Apply Button */
+.applyButton {
+  width: 100%;
+  padding: 10px 16px;
+  background: #3b82f6;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.applyButton:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.applyButton:active {
+  transform: translateY(0);
+}
+
+/* Filter Options */
+.filterOption {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-radius: 6px;
+}
+
+.filterOption:hover {
+  background-color: #f8fafc;
+}
+
+.filterOption input[type="radio"],
+.filterOption input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: #3b82f6;
+  cursor: pointer;
+}
+
+.filterOption input[type="radio"]:focus,
+.filterOption input[type="checkbox"]:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.optionLabel {
+  font-size: 14px;
+  color: #475569;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.filterOption:hover .optionLabel {
+  color: #1e293b;
+}
+
+.filterOption input:checked + .optionLabel {
+  color: #1e293b;
+  font-weight: 500;
+}
+
+/* Radio-specific styles */
+.filterOption input[type="radio"] {
+  border-radius: 50%;
+}
+
+.filterOption input[type="radio"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Checkbox-specific styles */
+.filterOption input[type="checkbox"] {
+  border-radius: 4px;
+}
+
+.filterOption input[type="checkbox"]:checked {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+}
+
+/* Rating-specific styles */
+.ratingOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ratingStars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  color: #fbbf24;
+  height: 14px;
+  width: 14px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .filters {
+    border-radius: 8px;
+    padding: 12px 0;
+  }
+
+  .filterSection {
+    padding: 0 12px;
+  }
+
+  .sectionHeader {
+    padding: 14px 0;
+    font-size: 13px;
+  }
+
+  .sectionContent {
+    padding-bottom: 14px;
+  }
+
+  .priceInputs {
+    gap: 8px;
+  }
+
+  .priceInput {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .applyButton {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .filterOption {
+    padding: 10px 0;
+    gap: 10px;
+  }
+
+  .optionLabel {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .filters {
+    padding: 8px 0;
+  }
+
+  .filterSection {
+    padding: 0 8px;
+  }
+
+  .sectionHeader {
+    padding: 12px 0;
+    font-size: 12px;
+  }
+
+  .priceInputs {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .priceSeparator {
+    display: none;
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .filters {
+    background: #1e293b;
+  }
+
+  .filterSection {
+    border-bottom-color: #334155;
+  }
+
+  .sectionHeader {
+    color: #f1f5f9;
+  }
+
+  .sectionHeader:hover {
+    color: #60a5fa;
+  }
+
+  .sectionHeader svg {
+    color: #94a3b8;
+  }
+
+  .priceInput {
+    background: #0f172a;
+    border-color: #334155;
+    color: #f1f5f9;
+  }
+
+  .priceInput:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.1);
+  }
+
+  .priceInput::placeholder {
+    color: #64748b;
+  }
+
+  .priceSeparator {
+    color: #94a3b8;
+  }
+
+  .applyButton {
+    background: #2563eb;
+  }
+
+  .applyButton:hover {
+    background: #1d4ed8;
+  }
+
+  .filterOption:hover {
+    background-color: #334155;
+  }
+
+  .optionLabel {
+    color: #cbd5e1;
+  }
+
+  .filterOption:hover .optionLabel {
+    color: #f1f5f9;
+  }
+
+  .filterOption input:checked + .optionLabel {
+    color: #f1f5f9;
+  }
+}
+
+/* Accessibility Improvements */
+.sectionHeader:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.filterOption:focus-within {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Animation for filter changes */
+.filterOption {
+  position: relative;
+}
+
+.filterOption::before {
+  content: "";
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 0;
+  background: #3b82f6;
+  border-radius: 2px;
+  transition: height 0.2s ease;
+}
+
+.filterOption input:checked::before {
+  height: 20px;
+}
+
+/* Loading state for price inputs */
+.priceInput:disabled {
+  background: #f8fafc;
+  color: #94a3b8;
+  cursor: not-allowed;
+}
+
+.priceInput:disabled::placeholder {
+  color: #cbd5e1;
+}
+
+/* Custom scrollbar for filter sections */
+.sectionContent {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.sectionContent::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sectionContent::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 2px;
+}
+
+.sectionContent::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 2px;
+}
+
+.sectionContent::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}

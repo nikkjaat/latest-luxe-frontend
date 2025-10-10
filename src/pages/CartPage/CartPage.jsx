@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Minus,
   Plus,
@@ -15,29 +15,37 @@ import { useCart } from "../../context/CartContext";
 import styles from "./CartPage.module.css";
 
 const CartPage = () => {
-  const { items, updateQuantity, removeFromCart, totalPrice, totalItems } =
-    useCart();
+  const { items, updateQuantity, removeFromCart, totalItems } = useCart();
   const [loadingItems, setLoadingItems] = useState({});
   const [deletingItems, setDeletingItems] = useState({});
+  // const [totalPrice, setTotalPrice] = useState(0);
+  const navigate = useNavigate();
+  let totalPrice = 0;
 
   // Reset loading state when items change (after successful update)
   useEffect(() => {
     setLoadingItems({});
+    setDeletingItems({});
   }, [items]);
 
-  const handleQuantityChange = async (id, newQuantity) => {
+  // console.log(items);
+
+  const handleQuantityChange = async (item, newQuantity) => {
     if (newQuantity < 1) return;
 
-    setLoadingItems((prev) => ({ ...prev, [id]: true }));
-    await updateQuantity(id, newQuantity);
+    setLoadingItems((prev) => ({ ...prev, [item._id]: true }));
+    await updateQuantity(item._id, newQuantity);
     // Loading state will be reset automatically by the useEffect above
     // when the items array updates
   };
 
-  const handleRemoveItem = async (id) => {
-    setDeletingItems((prev) => ({ ...prev, [id]: true }));
-    await removeFromCart(id);
-    setDeletingItems((prev) => ({ ...prev, [id]: false }));
+  const handleCheckout = () => {
+    navigate("/checkout");
+  };
+
+  const handleRemoveItem = async (item) => {
+    setDeletingItems((prev) => ({ ...prev, [item._id]: true }));
+    await removeFromCart(item._id);
   };
 
   if (items.length === 0) {
@@ -83,15 +91,34 @@ const CartPage = () => {
                   {items.map((item) => {
                     // Calculate the final price with adjustments
                     const basePrice = parseFloat(item.productId?.price || 0);
+
+                    const selectedColorVariant =
+                      item.productId.colorVariants.find(
+                        (variant) => variant.colorName === item.color
+                      );
+
+                    // 2. Get color adjustment
                     const colorAdjustment = parseFloat(
-                      item.colorVariant?.priceAdjustment || 0
+                      selectedColorVariant?.priceAdjustment || 0
                     );
+
+                    // 3. Find selected size variant inside that color
+                    const selectedSizeVariant =
+                      selectedColorVariant?.sizeVariants.find(
+                        (variant) =>
+                          variant.size === item.size ||
+                          variant.customSize === item.size
+                      );
+
+                    // 4. Get size adjustment
                     const sizeAdjustment = parseFloat(
-                      item.sizeVariant?.priceAdjustment || 0
+                      selectedSizeVariant?.priceAdjustment || 0
                     );
+
                     const finalPrice =
                       basePrice + colorAdjustment + sizeAdjustment;
                     const itemTotal = finalPrice * item.quantity;
+                    totalPrice += itemTotal;
 
                     return (
                       <div key={item._id} className={styles.cartItem}>
@@ -101,10 +128,7 @@ const CartPage = () => {
                         >
                           <div className={styles.itemImage}>
                             <img
-                              src={
-                                item.productId.colorVariants[0].images?.[0]
-                                  ?.url || item.productId?.images?.[0]?.url
-                              }
+                              src={item.image}
                               alt={item.productId.name}
                               className={styles.productImage}
                             />
@@ -170,28 +194,24 @@ const CartPage = () => {
                           </div>
 
                           <p className={styles.productPrice}>
-                            ${finalPrice.toFixed(2)} each
+                            ${finalPrice.toFixed(2)}/
                           </p>
                         </div>
 
                         <div className={styles.quantityControls}>
                           <button
                             onClick={() =>
-                              handleQuantityChange(
-                                item.productId._id,
-                                item.quantity - 1
-                              )
+                              handleQuantityChange(item, item.quantity - 1)
                             }
                             className={styles.quantityButton}
                             disabled={
-                              loadingItems[item.productId._id] ||
-                              item.quantity <= 1
+                              loadingItems[item._id] || item.quantity <= 1
                             }
                           >
                             <Minus className={styles.quantityIcon} />
                           </button>
                           <span className={styles.quantityDisplay}>
-                            {loadingItems[item.productId._id] ? (
+                            {loadingItems[item._id] ? (
                               <Loader
                                 className={`${styles.quantityLoader} ${styles.spinning}`}
                               />
@@ -201,10 +221,7 @@ const CartPage = () => {
                           </span>
                           <button
                             onClick={() =>
-                              handleQuantityChange(
-                                item.productId._id,
-                                item.quantity + 1
-                              )
+                              handleQuantityChange(item, item.quantity + 1)
                             }
                             className={styles.quantityButton}
                             disabled={loadingItems[item.productId._id]}
@@ -212,11 +229,11 @@ const CartPage = () => {
                             <Plus className={styles.quantityIcon} />
                           </button>
                           <button
-                            onClick={() => handleRemoveItem(item.productId._id)}
+                            onClick={() => handleRemoveItem(item)}
                             className={styles.removeButton}
                             disabled={deletingItems[item._id]}
                           >
-                            {deletingItems[item.productId._id] ? (
+                            {deletingItems[item._id] ? (
                               <Loader
                                 className={`${styles.removeIcon} ${styles.spinning}`}
                               />
@@ -271,7 +288,10 @@ const CartPage = () => {
                 </div>
               </div>
 
-              <button className={styles.checkoutButton}>
+              <button
+                onClick={handleCheckout}
+                className={styles.checkoutButton}
+              >
                 <CreditCard className={styles.checkoutIcon} />
                 Proceed to Checkout
               </button>

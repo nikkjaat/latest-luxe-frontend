@@ -91,6 +91,13 @@ class ApiService {
     });
   }
 
+  async googleAuth(idToken, role) {
+    return this.request("/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ idToken, role }),
+    });
+  }
+
   async logout() {
     return this.request("/auth/logout", {
       method: "POST",
@@ -202,6 +209,7 @@ class ApiService {
   }
 
   async addToCart(item) {
+    console.log(item);
     return this.request(`/customer/addtocart`, {
       method: "POST",
       body: JSON.stringify(item),
@@ -913,6 +921,185 @@ class ApiService {
     return this.request(`/social/posts/${postId}/share`, {
       method: "POST",
     });
+  }
+
+  // Search endpoints - Updated with better error handling
+  async searchProducts(searchParams = {}) {
+    try {
+      const queryString = new URLSearchParams(searchParams).toString();
+      const endpoint = `/search/products${
+        queryString ? `?${queryString}` : ""
+      }`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Search products error:", error);
+      return {
+        success: true,
+        products: [],
+        total: 0,
+        page: 1,
+        pages: 0,
+        filters: {},
+      };
+    }
+  }
+
+  async smartSearchProducts(searchParams = {}) {
+    try {
+      const queryString = new URLSearchParams(searchParams).toString();
+      const endpoint = `/search/smart/products${
+        queryString ? `?${queryString}` : ""
+      }`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Smart search products error:", error);
+      return {
+        success: true,
+        products: [],
+        total: 0,
+        page: 1,
+        pages: 0,
+        filters: {},
+      };
+    }
+  }
+
+  async getSearchSuggestions(query) {
+    try {
+      if (!query || query.length < 2) {
+        return { success: true, suggestions: [] };
+      }
+
+      const endpoint = `/search/suggestions?q=${encodeURIComponent(
+        query
+      )}&limit=8`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("All search suggestions failed:", error);
+      return this.getFallbackSuggestions(query);
+    }
+  }
+
+  async getSmartSearchSuggestions(query) {
+    try {
+      if (!query || query.length < 2) {
+        return { success: true, suggestions: [] };
+      }
+
+      const endpoint = `/search/smart/suggestions?q=${encodeURIComponent(
+        query
+      )}&limit=10`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Smart search suggestions failed:", error);
+      return this.getFallbackSuggestions(query);
+    }
+  }
+
+  // Get popular searches
+  async getPopularSearches(type = "terms") {
+    try {
+      const endpoint = `/search/popular?type=${type}&limit=5`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Popular searches error:", error);
+      // Fallback to default popular searches
+      return {
+        success: true,
+        data: [
+          "luxury handbags",
+          "smart watches",
+          "winter fashion",
+          "designer shoes",
+          "cosmetics",
+        ],
+      };
+    }
+  }
+
+  async getSearchAutocomplete(query) {
+    try {
+      if (!query || query.length < 2) {
+        return { success: true, suggestions: [] };
+      }
+
+      const endpoint = `/search/autocomplete?q=${encodeURIComponent(
+        query
+      )}&limit=5`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Autocomplete error:", error);
+      return { success: true, suggestions: [] };
+    }
+  }
+
+  async getSmartSearchAutocomplete(query) {
+    try {
+      if (!query || query.length < 2) {
+        return { success: true, suggestions: [] };
+      }
+
+      const endpoint = `/search/smart/autocomplete?q=${encodeURIComponent(
+        query
+      )}&limit=8`;
+      return await this.request(endpoint);
+    } catch (error) {
+      console.error("Smart autocomplete error:", error);
+      return { success: true, suggestions: [] };
+    }
+  }
+
+  // Fallback suggestions when API is not available
+  getFallbackSuggestions(query) {
+    const commonSuggestions = [
+      "shirt",
+      "dress",
+      "jeans",
+      "shoes",
+      "watch",
+      "bag",
+      "mobile",
+      "laptop",
+      "cosmetics",
+      "furniture",
+      "handbag",
+      "perfume",
+      "jewelry",
+      "sunglasses",
+      "jacket",
+    ];
+
+    const filtered = commonSuggestions.filter((item) =>
+      item.toLowerCase().includes(query.toLowerCase())
+    );
+
+    const suggestions = filtered.map((item) => ({
+      display: item,
+      name: item,
+      type: "suggestion",
+      count: Math.floor(Math.random() * 100) + 10,
+    }));
+
+    // Add some contextual suggestions
+    if (query.length > 1) {
+      suggestions.unshift(
+        {
+          display: `${query} for men`,
+          name: `${query} for men`,
+          type: "category",
+        },
+        {
+          display: `${query} for women`,
+          name: `${query} for women`,
+          type: "category",
+        }
+      );
+    }
+
+    return {
+      success: true,
+      suggestions: suggestions.slice(0, 8),
+    };
   }
 }
 

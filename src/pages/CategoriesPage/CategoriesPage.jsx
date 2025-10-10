@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Search, Filter, Grid, List, ArrowRight, Loader } from "lucide-react";
+import {
+  Search,
+  Filter,
+  Grid2x2 as Grid,
+  List,
+  ArrowRight,
+  Loader,
+  ChevronRight,
+} from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import styles from "./CategoriesPage.module.css";
 import { useProducts } from "../../context/ProductContext";
@@ -10,18 +18,17 @@ const CategoriesPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [categories, setCategories] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const { products, loading: productsLoading, getProducts } = useProducts();
   const { categories: contextCategories, adminGetCategories } = useCategory();
   const navigate = useNavigate();
 
+  console.log("Categories data:", products);
+
   useEffect(() => {
     getProducts();
-    // Initialize with default categories and then fetch from API
     const initializeCategories = async () => {
-      // Set default categories immediately
       setIsLoading(false);
-
-      // Then try to fetch from API
       try {
         await adminGetCategories();
       } catch (error) {
@@ -44,108 +51,189 @@ const CategoriesPage = () => {
     kids: styles.overlayCyan,
   };
 
-  // Default subcategories for fallback
-  const defaultSubcategories = {
-    women: ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear"],
-    men: ["Shirts", "Suits", "Casual Wear", "Accessories", "Shoes"],
-    accessories: ["Jewelry", "Bags", "Watches", "Sunglasses", "Scarves"],
-    home: ["Furniture", "Decor", "Lighting", "Textiles", "Kitchen"],
-    electronics: ["Smartphones", "Laptops", "Audio", "Smart Home", "Gaming"],
-    beauty: ["Skincare", "Makeup", "Fragrance", "Hair Care", "Wellness"],
-    sports: ["Activewear", "Equipment", "Footwear", "Outdoor", "Fitness"],
-    kids: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
+  // Function to get all subcategories recursively for display
+  const getAllSubcategories = (category) => {
+    const subcategories = [];
+
+    const collectSubcategories = (cat, level) => {
+      if (cat.subcategories && cat.subcategories.length > 0) {
+        cat.subcategories.forEach((subCat) => {
+          subcategories.push({
+            name: subCat.name,
+            slug: subCat.slug,
+            level: level,
+            hierarchyLevel: getHierarchyLevelFromNumber(level),
+          });
+          collectSubcategories(subCat, level + 1);
+        });
+      }
+    };
+
+    collectSubcategories(category, 2);
+    return subcategories;
   };
 
-  const getProductByCategory = (id, name, itemCount, category) => {
-    const keyword =
-      category.slug?.toLowerCase() || category.name?.toLowerCase();
+  const getHierarchyLevelFromNumber = (level) => {
+    const hierarchyMap = {
+      1: "main",
+      2: "subcategory",
+      3: "type",
+      4: "variant",
+      5: "style",
+    };
+    return hierarchyMap[level] || "main";
+  };
 
-    const filterCategory = products.filter((product) => {
-      const productCat = product.category.main;
-      if (!productCat) return false;
+  // Count products in each category recursively
+  const countProductsInCategory = (category) => {
+    if (!products || products.length === 0) return 0;
 
-      if (typeof productCat === "string") {
-        return productCat.toLowerCase() === keyword;
+    let count = 0;
+    const categorySlug = category.slug?.toLowerCase();
+    const categoryId = category._id;
+
+    // Count products in main category
+    count += products.filter((product) => {
+      const productCategory = product.category?.main;
+      if (!productCategory) return false;
+
+      if (typeof productCategory === "string") {
+        return productCategory.toLowerCase() === categorySlug;
       }
 
-      if (typeof productCat === "object") {
+      if (typeof productCategory === "object") {
         return (
-          productCat.slug?.toLowerCase() === keyword ||
-          productCat.name?.toLowerCase() === keyword
+          productCategory.slug?.toLowerCase() === categorySlug ||
+          productCategory._id === categoryId
         );
       }
 
       return false;
-    });
-    // console.log(filterCategory);
+    }).length;
 
-    navigate(`/category/${category.slug}`, {
-      state: {
-        keyword,
-        filterCategory,
-        name,
-        itemCount,
-      },
-    });
-  };
+    // Recursively count products in nested subcategories
+    const countNestedProducts = (categories) => {
+      if (!categories || categories.length === 0) return 0;
 
-  // Count products in each category
-  useEffect(() => {
-    if (
-      (products.length > 0 || !productsLoading) &&
-      (contextCategories.length > 0 || categories.length > 0)
-    ) {
-      const categoriesToProcess =
-        contextCategories.length > 0 ? contextCategories : categories;
+      let nestedCount = 0;
+      categories.forEach((subCat) => {
+        const subCatSlug = subCat.slug?.toLowerCase();
+        const subCatId = subCat._id;
 
-      const categoriesWithCounts = categoriesToProcess.map((category) => {
-        const slug = category.slug?.toLowerCase();
-
-        const productCount = products.filter((product) => {
-          const productCategory = product.category.main;
-
+        nestedCount += products.filter((product) => {
+          const productCategory = product.category?.main;
           if (!productCategory) return false;
 
           if (typeof productCategory === "string") {
-            return productCategory.toLowerCase() === slug;
+            return productCategory.toLowerCase() === subCatSlug;
           }
 
           if (typeof productCategory === "object") {
-            return productCategory.slug?.toLowerCase() === slug;
+            return (
+              productCategory.slug?.toLowerCase() === subCatSlug ||
+              productCategory._id === subCatId
+            );
           }
 
           return false;
         }).length;
 
-        const image =
-          category.image ||
-          (Array.isArray(category.images) && category.images.length > 0
-            ? category.images[0].url
-            : "");
-
-        return {
-          ...category,
-          id: category.slug || category._id,
-          image,
-          itemCount: productCount,
-          overlayClass: overlayClasses[category.slug] || styles.overlayBlue,
-          subcategories:
-            category.subcategories || defaultSubcategories[category.slug] || [],
-        };
+        // Recursively count in deeper levels
+        if (subCat.subcategories && subCat.subcategories.length > 0) {
+          nestedCount += countNestedProducts(subCat.subcategories);
+        }
       });
 
-      setCategories(categoriesWithCounts);
+      return nestedCount;
+    };
+
+    count += countNestedProducts(category.subcategories);
+    return count;
+  };
+
+  // Process categories data
+  useEffect(() => {
+    if (
+      (products.length > 0 || !productsLoading) &&
+      contextCategories.length > 0
+    ) {
+      const processedCategories = contextCategories
+        .filter((category) => category.isActive !== false) // Only active categories
+        .map((category) => {
+          const productCount = countProductsInCategory(category);
+          const allSubcategories = getAllSubcategories(category);
+
+          // Get display subcategories (first level only for preview)
+          const displaySubcategories = category.subcategories
+            ? category.subcategories.slice(0, 5).map((sub) => sub.name)
+            : [];
+
+          const image =
+            category.image ||
+            (Array.isArray(category.images) && category.images.length > 0
+              ? category.images[0].url
+              : "/api/placeholder/400/300");
+
+          return {
+            ...category,
+            id: category._id,
+            image,
+            itemCount: productCount,
+            totalProductCount: productCount, // Using the same count for now
+            overlayClass: overlayClasses[category.slug] || styles.overlayBlue,
+            displaySubcategories, // For preview display
+            allSubcategories, // All nested subcategories
+            level: category.level || 1,
+            hierarchyLevel: category.hierarchyLevel || "main",
+          };
+        })
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+      setCategories(processedCategories);
       setIsLoading(false);
     }
   }, [products, productsLoading, contextCategories]);
 
-  const filteredCategories = categories.filter(
-    (category) =>
-      category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (category.subcategories || []).some((sub) =>
-        sub.toLowerCase().includes(searchTerm.toLowerCase())
+  const handleCategoryClick = (category) => {
+    // Navigate to category page with the category data
+    navigate(`/category/${category.slug}`, {
+      state: {
+        category: category,
+        productCount: category.itemCount,
+      },
+    });
+  };
+
+  const handleSubcategoryClick = (mainCategory, subcategory) => {
+    // Navigate to subcategory page
+    navigate(`/category/${mainCategory.slug}/${subcategory.slug}`, {
+      state: {
+        mainCategory: mainCategory,
+        subcategory: subcategory,
+      },
+    });
+  };
+
+  const toggleCategoryExpansion = (categoryId) => {
+    setExpandedCategories((prev) => ({
+      ...prev,
+      [categoryId]: !prev[categoryId],
+    }));
+  };
+
+  // Filter categories based on search term
+  const filteredCategories = categories.filter((category) => {
+    if (!searchTerm) return true;
+
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      category.name.toLowerCase().includes(searchLower) ||
+      category.description?.toLowerCase().includes(searchLower) ||
+      category.allSubcategories.some((sub) =>
+        sub.name.toLowerCase().includes(searchLower)
       )
-  );
+    );
+  });
 
   if (isLoading || productsLoading) {
     return (
@@ -219,23 +307,18 @@ const CategoriesPage = () => {
           viewMode === "grid" ? (
             <div className={styles.gridView}>
               {filteredCategories.map((category) => (
-                <div
-                  onClick={() => {
-                    getProductByCategory(
-                      category.id,
-                      category.name,
-                      category.itemCount,
-                      category
-                    );
-                  }}
-                  key={category.id}
-                  className={styles.categoryCard}
-                >
-                  <div className={styles.imageContainer}>
+                <div key={category.id} className={styles.categoryCard}>
+                  <div
+                    className={styles.imageContainer}
+                    onClick={() => handleCategoryClick(category)}
+                  >
                     <img
                       src={category.image}
                       alt={category.name}
                       className={styles.categoryImage}
+                      onError={(e) => {
+                        e.target.src = "/api/placeholder/400/300";
+                      }}
                     />
                     <div
                       className={`${styles.overlay} ${category.overlayClass}`}
@@ -244,7 +327,7 @@ const CategoriesPage = () => {
                     <div className={styles.content}>
                       <h3 className={styles.categoryName}>{category.name}</h3>
                       <p className={styles.itemCount}>
-                        {category.itemCount} items
+                        {category.totalProductCount} items
                       </p>
 
                       <div className={styles.exploreButton}>
@@ -256,19 +339,21 @@ const CategoriesPage = () => {
 
                   <div className={styles.cardContent}>
                     <div className={styles.subcategories}>
-                      {(category.subcategories || [])
+                      {category.displaySubcategories
                         .slice(0, 3)
                         .map((sub, index) => (
                           <span key={index} className={styles.subcategoryTag}>
                             {sub}
                           </span>
                         ))}
-                      {(category.subcategories || []).length > 3 && (
+                      {category.displaySubcategories.length > 3 && (
                         <span className={styles.moreCount}>
-                          +{(category.subcategories || []).length - 3} more
+                          +{category.displaySubcategories.length - 3} more
                         </span>
                       )}
                     </div>
+
+                    
                   </div>
                 </div>
               ))}
@@ -276,24 +361,19 @@ const CategoriesPage = () => {
           ) : (
             <div className={styles.listView}>
               {filteredCategories.map((category) => (
-                <div
-                  key={category.id}
-                  className={styles.listCard}
-                  onClick={() => {
-                    getProductByCategory(
-                      category.id,
-                      category.name,
-                      category.itemCount,
-                      category
-                    );
-                  }}
-                >
-                  <div className={styles.listContent}>
+                <div key={category.id} className={styles.listCard}>
+                  <div
+                    className={styles.listContent}
+                    onClick={() => handleCategoryClick(category)}
+                  >
                     <div className={styles.listImageContainer}>
                       <img
                         src={category.image}
                         alt={category.name}
                         className={styles.listImage}
+                        onError={(e) => {
+                          e.target.src = "/api/placeholder/400/300";
+                        }}
                       />
                       <div
                         className={`${styles.listOverlay} ${category.overlayClass}`}
@@ -306,14 +386,15 @@ const CategoriesPage = () => {
                           {category.name}
                         </h3>
                         <span className={styles.listItemCount}>
-                          {category.itemCount} items
+                          {category.totalProductCount} items
                         </span>
                       </div>
                       <p className={styles.listDescription}>
-                        {category.description}
+                        {category.description ||
+                          `Explore our ${category.name} collection`}
                       </p>
                       <div className={styles.listSubcategories}>
-                        {(category.subcategories || []).map((sub, index) => (
+                        {category.displaySubcategories.map((sub, index) => (
                           <span
                             key={index}
                             className={styles.listSubcategoryTag}
@@ -329,6 +410,49 @@ const CategoriesPage = () => {
                       <ArrowRight className={styles.listExploreIcon} />
                     </div>
                   </div>
+
+                  {/* Nested categories in list view */}
+                  {category.allSubcategories.length > 0 && (
+                    <div className={styles.listNestedCategories}>
+                      <button
+                        onClick={() => toggleCategoryExpansion(category.id)}
+                        className={styles.listExpandButton}
+                      >
+                        <ChevronRight
+                          className={`${styles.listExpandIcon} ${
+                            expandedCategories[category.id]
+                              ? styles.expanded
+                              : ""
+                          }`}
+                        />
+                        {category.allSubcategories.length} subcategories
+                        available
+                      </button>
+
+                      {expandedCategories[category.id] && (
+                        <div className={styles.listNestedList}>
+                          {category.allSubcategories.map((sub, index) => (
+                            <div
+                              key={index}
+                              className={styles.listNestedItem}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleSubcategoryClick(category, sub);
+                              }}
+                            >
+                              <span className={styles.listNestedName}>
+                                {sub.name}
+                              </span>
+                              <span className={styles.listNestedLevel}>
+                                {sub.hierarchyLevel}
+                              </span>
+                              <ArrowRight className={styles.listNestedArrow} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

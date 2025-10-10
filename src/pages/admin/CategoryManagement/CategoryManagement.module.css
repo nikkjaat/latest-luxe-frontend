@@ -1136,3 +1136,1201 @@
     transform: rotate(360deg);
   }
 }
+
+/* Subcategories Styles */
+.subcategoryInputGroup {
+  display: flex;
+  margin-bottom: 8px;
+}
+
+.subcategoryInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-right: none;
+  border-radius: 6px 0 0 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.subcategoryInput:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.subcategoryAddButton {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: 1px solid #3b82f6;
+  border-radius: 0 6px 6px 0;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.subcategoryAddButton:hover {
+  background: #2563eb;
+  border-color: #2563eb;
+}
+
+.subcategoriesContainer {
+  margin-top: 12px;
+}
+
+.subcategoriesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subcategoryTag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #e0e7ff;
+  color: #3730a3;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  border: 1px solid #c7d2fe;
+}
+
+.subcategoryRemoveButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  color: #6366f1;
+  background: none;
+  border: none;
+  cursor: pointer;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  transition: all 0.2s;
+}
+
+.subcategoryRemoveButton:hover {
+  color: white;
+  background: #6366f1;
+}
+
+.subcategoryRemoveIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.subcategoryHelperText {
+  margin-top: 8px;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.4;
+}
+
+/* Subcategories Section - Updated for Three Levels */
+.subcategoriesContainer {
+  margin-top: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f9fafb;
+}
+
+.subcategoriesTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.subcategoriesList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subcategoryItem {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.subcategoryItem:hover {
+  border-color: #3b82f6;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+}
+
+.subcategoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.expandButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.expandButton:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.subcategoryTag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.subcategorySlug {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 400;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.subcategoryRemoveButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subcategoryRemoveButton:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.subcategoryRemoveIcon {
+  width: 14px;
+  height: 14px;
+}
+
+/* Sub-subcategories Container */
+.subSubcategoriesContainer {
+  margin-top: 12px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.subSubcategoryInputGroup {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.subSubcategoryInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.subSubcategoryInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.subSubcategoryAddButton {
+  padding: 8px 16px;
+  background: #10b981;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.subSubcategoryAddButton:hover {
+  background: #059669;
+}
+
+.subSubcategoriesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.subSubcategoryTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 20px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #374151;
+  transition: all 0.2s;
+}
+
+.subSubcategoryTag:hover {
+  border-color: #3b82f6;
+  background: #eff6ff;
+}
+
+.subSubcategorySlug {
+  font-size: 10px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 10px;
+}
+
+.subSubcategoryRemoveButton {
+  background: none;
+  border: none;
+  padding: 2px;
+  cursor: pointer;
+  color: #9ca3af;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.subSubcategoryRemoveButton:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.subSubcategoryRemoveIcon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Subcategory Helper Text */
+.subcategoryHelperText {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
+/* Updated Preview Styles for Three Levels */
+.subcategoriesPreview {
+  margin: 12px 0;
+}
+
+.subcategoryPreview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.subcategoryPreviewTag {
+  background: #eff6ff;
+  color: #1e40af;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.subSubcategoryCount {
+  font-size: 11px;
+  color: #6b7280;
+  background: #f3f4f6;
+  padding: 2px 6px;
+  border-radius: 8px;
+}
+
+/* Form Field Adjustments for Three Levels */
+.formField .subcategoryInputGroup {
+  margin-bottom: 12px;
+}
+
+.subcategoryInput {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.subcategoryInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.subcategoryAddButton {
+  padding: 10px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.subcategoryAddButton:hover {
+  background: #2563eb;
+}
+
+/* Responsive Design for Three Levels */
+@media (max-width: 768px) {
+  .subcategoriesContainer {
+    padding: 12px;
+  }
+
+  .subcategoryHeader {
+    flex-wrap: wrap;
+  }
+
+  .subcategoryTag {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .subSubcategoryInputGroup {
+    flex-direction: column;
+  }
+
+  .subSubcategoryInput {
+    width: 100%;
+  }
+
+  .subSubcategoryAddButton {
+    width: fit-content;
+  }
+}
+
+@media (max-width: 480px) {
+  .subcategoriesContainer {
+    padding: 8px;
+  }
+
+  .subcategoryItem {
+    padding: 8px;
+  }
+
+  .subcategoryHeader {
+    gap: 6px;
+  }
+
+  .subSubcategoriesContainer {
+    padding: 8px;
+  }
+
+  .subSubcategoriesList {
+    gap: 6px;
+  }
+
+  .subSubcategoryTag {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Animation for Expand/Collapse */
+.subSubcategoriesContainer {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    transform: translateY(0);
+  }
+}
+
+/* Empty State for Sub-subcategories */
+.subSubcategoriesList:empty::before {
+  content: "No types added yet";
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+  padding: 8px;
+  display: block;
+  text-align: center;
+  background: #f9fafb;
+  border-radius: 4px;
+  border: 1px dashed #d1d5db;
+}
+
+/* Add to CategoryManagement.module.css */
+
+.nestedCategoriesContainer {
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 16px;
+  background: #f8fafc;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.categoryInputGroup {
+  margin-bottom: 16px;
+}
+
+.categoryInputLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #374151;
+  font-size: 14px;
+}
+
+.categoryInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.categoryInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.categoryInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.categoryAddButton {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  transition: background-color 0.2s;
+}
+
+.categoryAddButton:hover {
+  background: #2563eb;
+}
+
+.categoryLevel {
+  margin-bottom: 8px;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.categoryHeader:hover {
+  background: #f9fafb;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  color: #6b7280;
+  transition: color 0.2s;
+}
+
+.expandButton:hover {
+  color: #374151;
+}
+
+.categoryTag {
+  flex: 1;
+  font-weight: 500;
+  color: #374151;
+  font-size: 14px;
+}
+
+.categorySlug {
+  font-size: 12px;
+  color: #6b7280;
+  margin-left: 8px;
+  font-family: monospace;
+}
+
+.categoryRemoveButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s;
+}
+
+.categoryRemoveButton:hover {
+  background: #dc2626;
+}
+
+.categoryChildren {
+  margin-left: 24px;
+  margin-top: 8px;
+  padding-left: 16px;
+  border-left: 2px solid #e5e7eb;
+}
+
+.categoryHelperText {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 8px;
+  font-style: italic;
+  line-height: 1.4;
+}
+
+/* Scrollbar styling for nested categories */
+.nestedCategoriesContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.categoryEditContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.categoryEditInput {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  flex: 1;
+}
+
+.categoryEditActions {
+  display: flex;
+  gap: 4px;
+}
+
+.categorySaveEditButton,
+.categoryCancelEditButton,
+.categoryEditButton {
+  padding: 4px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.categorySaveEditButton {
+  background: #10b981;
+  color: white;
+}
+
+.categoryCancelEditButton {
+  background: #ef4444;
+  color: white;
+}
+
+.categoryEditButton {
+  background: #3b82f6;
+  color: white;
+}
+
+.categoryActions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.categoryInput {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  flex: 1;
+  transition: border-color 0.2s;
+}
+
+.categoryInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.categoryInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.categoryAddButton {
+  padding: 8px 16px;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.categoryAddButton:hover {
+  background: #2563eb;
+}
+
+/* CategoryManagement.module.css */
+
+/* Nested Categories Container */
+.nestedCategoriesContainer {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  background-color: #f9fafb;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* Category Input Groups */
+.categoryInputGroup {
+  margin-bottom: 16px;
+}
+
+.categoryInputLabel {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 8px;
+}
+
+.categoryInputRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.categoryInput {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.categoryInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.categoryAddButton {
+  padding: 8px 16px;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.categoryAddButton:hover {
+  background-color: #2563eb;
+}
+
+.categoryAddButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+/* Category Levels */
+.categoryLevel {
+  margin-bottom: 8px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background-color: white;
+}
+
+.categoryChildren {
+  margin-left: 24px;
+  padding: 8px;
+  border-left: 2px solid #e5e7eb;
+}
+
+/* Category Header */
+.categoryHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background-color: white;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.categoryHeader:hover {
+  background-color: #f9fafb;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color 0.2s;
+}
+
+.expandButton:hover {
+  color: #374151;
+  background-color: #f3f4f6;
+}
+
+/* Category Tag */
+.categoryTag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background-color: #f3f4f6;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+}
+
+.categorySlug {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: normal;
+}
+
+/* Category Actions */
+.categoryActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.categoryEditButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.categoryEditButton:hover {
+  background-color: #3b82f6;
+  color: white;
+  border-color: #3b82f6;
+}
+
+.categoryRemoveButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.categoryRemoveButton:hover {
+  background-color: #ef4444;
+  color: white;
+  border-color: #ef4444;
+}
+
+/* Edit Category Form */
+.editCategoryForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.categoryEditInput {
+  flex: 1;
+  padding: 6px 12px;
+  border: 1px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+}
+
+.categoryEditInput:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.editActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.saveEditButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: #10b981;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.saveEditButton:hover {
+  background-color: #059669;
+}
+
+.cancelEditButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: #6b7280;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: white;
+  transition: background-color 0.2s;
+}
+
+.cancelEditButton:hover {
+  background-color: #4b5563;
+}
+
+/* Category Helper Text */
+.categoryHelperText {
+  font-size: 12px;
+  color: #6b7280;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+/* Level-specific styling for better visual hierarchy */
+.categoryLevel .categoryLevel {
+  border-color: #d1d5db;
+  background-color: #fafafa;
+}
+
+.categoryLevel .categoryLevel .categoryLevel {
+  border-color: #e5e7eb;
+  background-color: #f8f9fa;
+}
+
+.categoryLevel .categoryLevel .categoryLevel .categoryLevel {
+  border-color: #f3f4f6;
+  background-color: #ffffff;
+}
+
+/* Icon colors for different levels */
+.categoryHeader:has(.expandButton) .expandButton svg {
+  color: #3b82f6;
+}
+
+.categoryChildren .categoryHeader:has(.expandButton) .expandButton svg {
+  color: #10b981;
+}
+
+.categoryChildren
+  .categoryChildren
+  .categoryHeader:has(.expandButton)
+  .expandButton
+  svg {
+  color: #f59e0b;
+}
+
+.categoryChildren
+  .categoryChildren
+  .categoryChildren
+  .categoryHeader:has(.expandButton)
+  .expandButton
+  svg {
+  color: #ef4444;
+}
+
+/* Enhanced subcategories preview in cards */
+.subcategoriesPreview {
+  margin-top: 8px;
+}
+
+.subcategoriesLabel {
+  font-size: 12px;
+  font-weight: 500;
+  color: #6b7280;
+  display: block;
+  margin-bottom: 4px;
+}
+
+.subcategoriesList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.subcategoryPreview {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.subcategoryPreviewTag {
+  padding: 2px 6px;
+  background-color: #f3f4f6;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #374151;
+}
+
+.subSubcategoryCount {
+  font-size: 10px;
+  color: #9ca3af;
+}
+
+.moreSubcategories {
+  font-size: 11px;
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Error message for nested category edits */
+.nestedCategoriesContainer .errorMessage {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  color: #dc2626;
+  font-size: 14px;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .nestedCategoriesContainer {
+    padding: 12px;
+    max-height: 300px;
+  }
+
+  .categoryInputRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .categoryAddButton {
+    width: 100%;
+  }
+
+  .categoryChildren {
+    margin-left: 16px;
+  }
+
+  .editCategoryForm {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .editActions {
+    justify-content: flex-end;
+  }
+}
+
+/* Scrollbar styling for nested categories container */
+.nestedCategoriesContainer::-webkit-scrollbar {
+  width: 6px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.nestedCategoriesContainer::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+/* Animation for expand/collapse */
+.categoryChildren {
+  animation: slideDown 0.2s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Focus states for accessibility */
+.expandButton:focus,
+.categoryEditButton:focus,
+.categoryRemoveButton:focus,
+.saveEditButton:focus,
+.cancelEditButton:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading states */
+.categoryAddButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Enhanced visual hierarchy with shadows */
+.categoryLevel {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.categoryLevel .categoryLevel {
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.03);
+}
+
+/* Enhanced edit input styles */
+.categoryEditInput {
+  flex: 1;
+  padding: 6px 12px;
+  border: 2px solid #3b82f6;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  min-width: 120px;
+}
+
+.categoryEditInput:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Ensure the edit form takes proper space */
+.editCategoryForm {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0; /* Important for flexbox sizing */
+}
+
+/* Prevent button clicks from interfering with input */
+.editCategoryForm * {
+  pointer-events: auto;
+}
+
+.categoryHeader:has(.editCategoryForm) {
+  pointer-events: auto;
+}
+
+/* Disable other interactions when editing */
+.categoryHeader:has(.editCategoryForm) .expandButton {
+  pointer-events: none;
+  opacity: 0.5;
+}

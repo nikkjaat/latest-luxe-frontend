@@ -29,8 +29,9 @@ import { useProducts } from "../../context/ProductContext";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../context/CartContext";
 import { Zap } from "lucide-react";
+import { useCategory } from "../../context/CategoryContext";
 
-// Product Image Slider Component
+// Product Image Slider Component (keep the same as before)
 const ProductImageSlider = ({
   product,
   name,
@@ -190,6 +191,7 @@ const CategoryProductsPage = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { products, loading: productsLoading, getProducts } = useProducts();
+  const { categories: contextCategories } = useCategory();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const {
     addToCart,
@@ -199,7 +201,6 @@ const CategoryProductsPage = () => {
   } = useCart();
   const { keyword, filterCategory, name, itemCount } = location.state || {};
   const [loadingItems, setLoadingItems] = useState({});
-  // console.log(keyword, filterCategory, name, itemCount);
 
   // State management
   const [viewMode, setViewMode] = useState("grid");
@@ -217,124 +218,96 @@ const CategoryProductsPage = () => {
     getProducts();
   }, []);
 
-  // Category definitions
-  const categoryDefinitions = {
-    women: {
-      name: "Women's Fashion",
-      description:
-        "Discover the latest trends in women's clothing, from casual wear to elegant evening dresses.",
-      subcategories: ["Dresses", "Tops", "Bottoms", "Outerwear", "Activewear"],
-      slugs: ["women", "women-fashion", "womens"], // Add possible URL slugs
-    },
-    men: {
-      name: "Men's Collection",
-      description:
-        "Premium men's fashion featuring sophisticated styles for the modern gentleman.",
-      subcategories: ["Shirts", "Suits", "Casual Wear", "Accessories", "Shoes"],
-      slugs: ["men", "men-collection", "mens"], // Add possible URL slugs
-    },
-    accessories: {
-      name: "Accessories",
-      description:
-        "Complete your look with our curated selection of luxury accessories.",
-      subcategories: ["Jewelry", "Bags", "Watches", "Sunglasses", "Scarves"],
-    },
-    home: {
-      name: "Home & Living",
-      description:
-        "Transform your space with our elegant home decor and living essentials.",
-      subcategories: ["Furniture", "Decor", "Lighting", "Textiles", "Kitchen"],
-    },
-    electronics: {
-      name: "Electronics",
-      description:
-        "Latest technology and gadgets to enhance your digital lifestyle.",
-      subcategories: [
-        "Smartphones",
-        "Laptops",
-        "Audio",
-        "Smart Home",
-        "Gaming",
-      ],
-    },
-    beauty: {
-      name: "Beauty & Care",
-      description:
-        "Premium beauty products and personal care essentials for your daily routine.",
-      subcategories: [
-        "Skincare",
-        "Makeup",
-        "Fragrance",
-        "Hair Care",
-        "Wellness",
-      ],
-    },
-    sports: {
-      name: "Sports & Fitness",
-      description:
-        "High-performance gear and apparel for your active lifestyle.",
-      subcategories: [
-        "Activewear",
-        "Equipment",
-        "Footwear",
-        "Outdoor",
-        "Fitness",
-      ],
-    },
-    kids: {
-      name: "Kids & Baby",
-      description:
-        "Safe, comfortable, and stylish products for children of all ages.",
-      subcategories: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
-    },
-  };
-
-  // Get category from URL params or search params
-  const currentCategoryId = categoryId || searchParams.get("category");
+  // Get current category from context categories
   const currentCategory = useMemo(() => {
-    if (!currentCategoryId) return null;
+    if (!categoryId) return null;
 
-    return Object.values(categoryDefinitions).find(
-      (cat) =>
-        cat.slugs?.includes(currentCategoryId) ||
-        cat.name.toLowerCase().replace(/\s+/g, "-") === currentCategoryId
+    // Find category by slug or ID
+    const foundCategory = contextCategories.find(
+      (cat) => cat.slug === categoryId || cat._id === categoryId
     );
-  }, [currentCategoryId]);
 
-  // Initialize search term from URL
-  useEffect(() => {
-    const urlSearchTerm = searchParams.get("search");
-    if (urlSearchTerm) {
-      setSearchTerm(urlSearchTerm);
-    }
-  }, [searchParams]);
+    return foundCategory;
+  }, [categoryId, contextCategories]);
 
-  // Filter products for current category
+  // Get all subcategories recursively for the current category
+  const allSubcategories = useMemo(() => {
+    if (!currentCategory) return [];
+
+    const subcategories = [];
+
+    const getHierarchyLevelFromNumber = (level) => {
+      const hierarchyMap = {
+        1: "main",
+        2: "subcategory",
+        3: "type",
+        4: "variant",
+        5: "style",
+      };
+      return hierarchyMap[level] || "main";
+    };
+
+    const collectSubcategories = (category, level = 2) => {
+      if (category.subcategories && category.subcategories.length > 0) {
+        category.subcategories.forEach((subCat) => {
+          subcategories.push({
+            _id: subCat._id,
+            name: subCat.name,
+            slug: subCat.slug,
+            level: level,
+            hierarchyLevel: getHierarchyLevelFromNumber(level),
+          });
+          // Recursively collect deeper subcategories
+          collectSubcategories(subCat, level + 1);
+        });
+      }
+    };
+
+    collectSubcategories(currentCategory);
+    return subcategories;
+  }, [currentCategory]);
+
+  // Filter products for current category (including nested subcategories)
   const categoryProducts = useMemo(() => {
-    if (!currentCategoryId || !currentCategory || products.length === 0)
-      return [];
+    if (!currentCategory || products.length === 0) return [];
 
-    return products.filter((product) => {
-      const productCategory = product.category;
+    // Get all category IDs to include (main category + all nested subcategories)
+    const categoryIdsToInclude = [currentCategory._id];
+
+    const collectCategoryIds = (categories) => {
+      if (!categories || categories.length === 0) return;
+
+      categories.forEach((cat) => {
+        categoryIdsToInclude.push(cat._id);
+        if (cat.subcategories && cat.subcategories.length > 0) {
+          collectCategoryIds(cat.subcategories);
+        }
+      });
+    };
+
+    // Filter products that belong to any of these categories
+    const filteredProducts = products.filter((product) => {
+      const productCategory = product.category?.main;
       if (!productCategory) return false;
 
       // Handle both string and object category formats
       if (typeof productCategory === "string") {
+        // Check if product category string matches current category slug
         return (
-          currentCategory.slugs?.includes(productCategory.toLowerCase()) ||
-          productCategory.toLowerCase() === currentCategory.name.toLowerCase()
+          productCategory.toLowerCase() === currentCategory.slug.toLowerCase()
         );
       } else if (typeof productCategory === "object") {
+        // Check if product category ID matches current category or any subcategory
         return (
-          currentCategory.slugs?.includes(productCategory.slug) ||
-          currentCategory.slugs?.includes(productCategory._id) ||
-          productCategory.name?.toLowerCase() ===
-            currentCategory.name.toLowerCase()
+          categoryIdsToInclude.includes(productCategory._id) ||
+          productCategory.slug === currentCategory.slug
         );
       }
       return false;
     });
-  }, [products, currentCategoryId, currentCategory]);
+
+    return filteredProducts;
+  }, [products, currentCategory]);
 
   // Apply filters and search
   const filteredProducts = useMemo(() => {
@@ -368,13 +341,13 @@ const CategoryProductsPage = () => {
     // Subcategory filter
     if (selectedSubcategories.length > 0) {
       filtered = filtered.filter((product) =>
-        selectedSubcategories.some(
-          (subcat) =>
-            product.subcategory?.toLowerCase().includes(subcat.toLowerCase()) ||
-            product.tags?.some((tag) =>
-              tag.toLowerCase().includes(subcat.toLowerCase())
-            )
-        )
+        selectedSubcategories.some((subcatId) => {
+          const productCategory = product.category?.main;
+          if (typeof productCategory === "object") {
+            return productCategory._id === subcatId;
+          }
+          return false;
+        })
       );
     }
 
@@ -477,12 +450,10 @@ const CategoryProductsPage = () => {
 
   // Handle quantity change
   const handleQuantityChange = (productId, newQuantity) => {
-    // console.log(productId, newQuantity);
     setLoadingItems((prev) => ({ ...prev, [productId]: true }));
     if (newQuantity <= 0) {
       removeFromCart(productId);
     } else {
-      // Use updateQuantity instead of addToCart
       updateQuantity(productId, newQuantity);
     }
   };
@@ -503,11 +474,11 @@ const CategoryProductsPage = () => {
   };
 
   // Handle subcategory filter
-  const handleSubcategoryToggle = (subcategory) => {
+  const handleSubcategoryToggle = (subcategoryId) => {
     setSelectedSubcategories((prev) =>
-      prev.includes(subcategory)
-        ? prev.filter((item) => item !== subcategory)
-        : [...prev, subcategory]
+      prev.includes(subcategoryId)
+        ? prev.filter((item) => item !== subcategoryId)
+        : [...prev, subcategoryId]
     );
     setCurrentPage(1);
   };
@@ -571,9 +542,12 @@ const CategoryProductsPage = () => {
           <div className={styles.headerContent}>
             <h1 className={styles.title}>{currentCategory.name}</h1>
             <p className={styles.categoryDescription}>
-              {currentCategory.description}
+              {currentCategory.description ||
+                `Explore our ${currentCategory.name} collection`}
             </p>
-            <p className={styles.description}>{itemCount} products found</p>
+            <p className={styles.description}>
+              {filteredProducts.length} products found
+            </p>
           </div>
         </div>
 
@@ -694,22 +668,34 @@ const CategoryProductsPage = () => {
                 </div>
 
                 {/* Subcategories */}
-                <div className={styles.filterGroup}>
-                  <h4>Subcategories</h4>
-                  <div className={styles.subcategoryFilters}>
-                    {currentCategory.subcategories.map((subcategory) => (
-                      <label key={subcategory} className={styles.checkboxLabel}>
-                        <input
-                          type="checkbox"
-                          checked={selectedSubcategories.includes(subcategory)}
-                          onChange={() => handleSubcategoryToggle(subcategory)}
-                          className={styles.checkbox}
-                        />
-                        {subcategory}
-                      </label>
-                    ))}
+                {allSubcategories.length > 0 && (
+                  <div className={styles.filterGroup}>
+                    <h4>Subcategories</h4>
+                    <div className={styles.subcategoryFilters}>
+                      {allSubcategories.map((subcategory) => (
+                        <label
+                          key={subcategory._id}
+                          className={styles.checkboxLabel}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedSubcategories.includes(
+                              subcategory._id
+                            )}
+                            onChange={() =>
+                              handleSubcategoryToggle(subcategory._id)
+                            }
+                            className={styles.checkbox}
+                          />
+                          {subcategory.name}
+                          <span className={styles.subcategoryLevel}>
+                            ({subcategory.hierarchyLevel})
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           )}
@@ -737,23 +723,28 @@ const CategoryProductsPage = () => {
                 </button>
               </span>
             )}
-            {selectedSubcategories.map((subcategory) => (
-              <span key={subcategory} className={styles.filterTag}>
-                {subcategory}
-                <button onClick={() => handleSubcategoryToggle(subcategory)}>
-                  <X className={styles.removeIcon} />
-                </button>
-              </span>
-            ))}
+            {selectedSubcategories.map((subcatId) => {
+              const subcategory = allSubcategories.find(
+                (sub) => sub._id === subcatId
+              );
+              return subcategory ? (
+                <span key={subcatId} className={styles.filterTag}>
+                  {subcategory.name}
+                  <button onClick={() => handleSubcategoryToggle(subcatId)}>
+                    <X className={styles.removeIcon} />
+                  </button>
+                </span>
+              ) : null;
+            })}
           </div>
         )}
 
         {/* Products Grid/List */}
-        {filterCategory?.length > 0 ? (
+        {filteredProducts.length > 0 ? (
           <>
             {viewMode === "grid" ? (
               <div className={styles.productsGrid}>
-                {filterCategory.map((product) => {
+                {paginatedProducts.map((product) => {
                   const productId = product._id || product.id;
                   const inCart = isInCart(productId);
                   const cartQuantity = getCartQuantity(productId);
@@ -823,69 +814,7 @@ const CategoryProductsPage = () => {
                           </div>
                         </div>
 
-                        {inCart ? (
-                          <div className={styles.quantitySection}>
-                            <div className={styles.quantityControls}>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(
-                                    productId,
-                                    cartQuantity - 1
-                                  )
-                                }
-                                disabled={isLoading}
-                                className={styles.quantityButton}
-                              >
-                                <Minus className={styles.quantityIcon} />
-                              </button>
-                              <span className={styles.quantityDisplay}>
-                                {isLoading ? (
-                                  <Loader
-                                    className={`${styles.quantityLoader} ${styles.spinning}`}
-                                  />
-                                ) : (
-                                  `${cartQuantity} in cart`
-                                )}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(
-                                    productId,
-                                    cartQuantity + 1
-                                  )
-                                }
-                                disabled={isLoading}
-                                className={styles.quantityButton}
-                              >
-                                <Plus className={styles.quantityIcon} />
-                              </button>
-                            </div>
-                            <button
-                              className={styles.buyNowButton}
-                              onClick={() => handleBuyNow(product)}
-                            >
-                              <Zap className={styles.buyNowIcon} />
-                              Buy Now
-                            </button>
-                          </div>
-                        ) : (
-                          <div className={styles.buttonGroup}>
-                            <button
-                              className={styles.addToCartButton}
-                              onClick={() => handleAddToCart(product)}
-                            >
-                              <ShoppingCart className={styles.cartIcon} />
-                              Add to Cart
-                            </button>
-                            <button
-                              className={styles.buyNowButton}
-                              onClick={() => handleBuyNow(product)}
-                            >
-                              <Zap className={styles.buyNowIcon} />
-                              Buy Now
-                            </button>
-                          </div>
-                        )}
+                        {/* Add your cart buttons back here if needed */}
                       </div>
                     </div>
                   );
@@ -893,7 +822,7 @@ const CategoryProductsPage = () => {
               </div>
             ) : (
               <div className={styles.productsList}>
-                {filterCategory.map((product) => {
+                {paginatedProducts.map((product) => {
                   const productId = product._id || product.id;
                   const inCart = isInCart(productId);
                   const cartQuantity = getCartQuantity(productId);
@@ -975,81 +904,6 @@ const CategoryProductsPage = () => {
                                 {tag}
                               </span>
                             ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className={styles.productListActions}>
-                        {inCart ? (
-                          <div className={styles.quantitySection}>
-                            <div className={styles.quantityControls}>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(
-                                    productId,
-                                    cartQuantity - 1
-                                  )
-                                }
-                                disabled={isLoading}
-                                className={styles.quantityButton}
-                              >
-                                <Minus className={styles.quantityIcon} />
-                              </button>
-                              <span className={styles.quantityDisplay}>
-                                {isLoading ? (
-                                  <Loader
-                                    className={`${styles.cartIcon} ${styles.spinning}`}
-                                  />
-                                ) : (
-                                  <>
-                                    {isLoading ? (
-                                      <Loader
-                                        className={`${styles.quantityLoader} ${styles.spinning}`}
-                                      />
-                                    ) : (
-                                      `${cartQuantity} in cart`
-                                    )}
-                                  </>
-                                )}
-                              </span>
-                              <button
-                                onClick={() =>
-                                  handleQuantityChange(
-                                    productId,
-                                    cartQuantity + 1
-                                  )
-                                }
-                                disabled={isLoading}
-                                s
-                                className={styles.quantityButton}
-                              >
-                                <Plus className={styles.quantityIcon} />
-                              </button>
-                            </div>
-                            <button
-                              className={styles.buyNowButton}
-                              onClick={() => handleBuyNow(product)}
-                            >
-                              <Zap className={styles.buyNowIcon} />
-                              Buy Now
-                            </button>
-                          </div>
-                        ) : (
-                          <div className={styles.buttonGroup}>
-                            <button
-                              className={styles.addToCartButton}
-                              onClick={() => handleAddToCart(product)}
-                            >
-                              <ShoppingCart className={styles.cartIcon} />
-                              Add to Cart
-                            </button>
-                            <button
-                              className={styles.buyNowButton}
-                              onClick={() => handleBuyNow(product)}
-                            >
-                              <Zap className={styles.buyNowIcon} />
-                              Buy Now
-                            </button>
                           </div>
                         )}
                       </div>

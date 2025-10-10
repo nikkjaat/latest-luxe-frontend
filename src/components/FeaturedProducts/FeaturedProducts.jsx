@@ -96,22 +96,19 @@ const FeaturedProducts = () => {
       price: product.price,
       image: product.colorVariants[0].images[0].url,
     });
-
-    // Loading state will be reset automatically by the useEffect above
   };
 
   const handleBuyNow = async (product) => {
     const productId = product._id || product.id;
     setLoadingItems((prev) => ({ ...prev, [productId]: true }));
 
-    await addToCart({
-      id: productId,
-      name: product.name,
-      price: product.price,
-      image: product.images[0].url,
-    });
-
-    navigate("/cart");
+    // await addToCart({
+    //   id: productId,
+    //   name: product.name,
+    //   price: product.price,
+    //   image: product.colorVariants[0].images[0].url,
+    // });
+    navigate("/checkout");
   };
 
   const handleWishlistToggle = (product) => {
@@ -287,10 +284,10 @@ const FeaturedProducts = () => {
 
                     <div className={styles.priceContainer}>
                       <div className={styles.priceGroup}>
-                        <span className={styles.price}>${product.price}</span>
+                        <span className={styles.price}>₹{product.price}</span>
                         {product.originalPrice && (
                           <span className={styles.originalPrice}>
-                            ${product.originalPrice}
+                            ₹{product.originalPrice}
                           </span>
                         )}
                         {product.colorVariants &&
@@ -302,7 +299,7 @@ const FeaturedProducts = () => {
                       </div>
                     </div>
 
-                    <div className={styles.buttonGroup}>
+                    {/* <div className={styles.buttonGroup}>
                       {inCart ? (
                         <div className={styles.quantitySection}>
                           <div className={styles.quantityControls}>
@@ -377,7 +374,7 @@ const FeaturedProducts = () => {
                           </button>
                         </div>
                       )}
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               );

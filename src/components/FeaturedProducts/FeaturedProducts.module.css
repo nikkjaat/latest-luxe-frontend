@@ -151,7 +151,7 @@
   color: white;
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 12px;
+  font-size: 8px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -627,18 +627,16 @@
 }
 
 .productName {
-  font-size: 1.125rem;
+  font-size: 1rem;
   font-weight: 600;
   color: #111827;
   margin-bottom: 0.5rem;
   flex-grow: 1;
 
-  /* Add these lines for single line ellipsis */
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* show 2 lines max */
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  width: 100%;
-  display: block;
 }
 
 /* Ensure the link doesn't affect the text overflow */

@@ -7,7 +7,7 @@ import {
   Clock,
   XCircle,
   Eye,
-  Edit,
+  CreditCard as Edit,
   Search,
   Filter,
   Calendar,
@@ -48,10 +48,20 @@ const VendorOrders = () => {
         const response = await apiService.getVendorOrders();
         setOrders(response.orders || []);
       } catch (apiError) {
-        console.error("API call failed, using mock data:", apiError);
-        // Use mock data as fallback
-        const mockOrders = generateMockOrders();
-        setOrders(mockOrders);
+        console.error("API call failed, using localStorage data:", apiError);
+        const storedOrders = JSON.parse(
+          localStorage.getItem("userOrders") || "[]"
+        );
+        const vendorOrders = storedOrders.filter((order) =>
+          order.items?.some((item) => item.vendor_id === user?._id)
+        );
+
+        if (vendorOrders.length > 0) {
+          setOrders(vendorOrders);
+        } else {
+          const mockOrders = generateMockOrders();
+          setOrders(mockOrders);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch vendor orders:", error);

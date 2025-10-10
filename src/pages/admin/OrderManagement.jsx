@@ -18,7 +18,7 @@ import {
   ArrowLeft,
   Download,
   RefreshCw,
-  Edit,
+  CreditCard as Edit,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import apiService from "../../services/api";
@@ -47,10 +47,16 @@ const OrderManagement = () => {
         const response = await apiService.adminGetOrders();
         setOrders(response.orders || []);
       } catch (apiError) {
-        console.error("API call failed, using mock data:", apiError);
-        // Use mock data as fallback for demonstration
-        const mockOrders = generateMockOrders();
-        setOrders(mockOrders);
+        console.error("API call failed, using localStorage data:", apiError);
+        const storedOrders = JSON.parse(
+          localStorage.getItem("userOrders") || "[]"
+        );
+        if (storedOrders.length > 0) {
+          setOrders(storedOrders);
+        } else {
+          const mockOrders = generateMockOrders();
+          setOrders(mockOrders);
+        }
       }
     } catch (error) {
       console.error("Failed to fetch orders:", error);
@@ -136,12 +142,21 @@ const OrderManagement = () => {
   const updateOrderStatus = async (orderId, newStatus) => {
     try {
       setActionLoading((prev) => ({ ...prev, [orderId]: "updating" }));
-      await apiService.adminUpdateOrderStatus(orderId, newStatus);
-      setOrders((prev) =>
-        prev.map((order) =>
-          order._id === orderId ? { ...order, status: newStatus } : order
-        )
+
+      try {
+        await apiService.adminUpdateOrderStatus(orderId, newStatus);
+      } catch (apiError) {
+        console.log("API update failed, updating localStorage");
+      }
+
+      const updatedOrders = orders.map((order) =>
+        order._id === orderId || order.orderNumber === orderId
+          ? { ...order, status: newStatus }
+          : order
       );
+
+      setOrders(updatedOrders);
+      localStorage.setItem("userOrders", JSON.stringify(updatedOrders));
     } catch (error) {
       console.error("Failed to update order status:", error);
       alert("Failed to update order status");

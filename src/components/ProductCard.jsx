@@ -2,10 +2,15 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, Heart, ShoppingCart, Eye, Zap } from "lucide-react";
 import ProductColorSwatches from "./ProductColorSwatches";
+import SearchHighlight from "./SearchHighlight";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 
-const ProductCard = ({ product, showQuickActions = true }) => {
+const ProductCard = ({
+  product,
+  showQuickActions = true,
+  searchTerms = [],
+}) => {
   const [selectedVariantIndex, setSelectedVariantIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const { addToCart } = useCart();
@@ -88,7 +93,7 @@ const ProductCard = ({ product, showQuickActions = true }) => {
           <img
             src={
               primaryImage?.url ||
-              product.images?.[0]?.url ||
+              product.colorVariants[0].images[0]?.url ||
               "https://via.placeholder.com/300"
             }
             alt={product.name}
@@ -174,7 +179,11 @@ const ProductCard = ({ product, showQuickActions = true }) => {
         {/* Product Name */}
         <Link to={`/product/${product._id}`}>
           <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2 hover:text-blue-600 transition-colors">
-            {product.name}
+            {searchTerms.length > 0 ? (
+              <SearchHighlight text={product.name} searchTerms={searchTerms} />
+            ) : (
+              product.name
+            )}
           </h3>
         </Link>
 

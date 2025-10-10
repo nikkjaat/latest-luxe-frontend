@@ -19,6 +19,7 @@ import {
   TrendingUp,
   Package,
   ShoppingBag,
+  ShoppingBag as ShoppingBagIcon,
 } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 import { useCart } from "../../context/CartContext";
@@ -32,6 +33,9 @@ const Header = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [showSearchBarBelow, setShowSearchBarBelow] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [navbarTop, setNavbarTop] = useState(0);
+  const lastScrollY = useRef(0);
+  const dropdownRef = useRef(null);
 
   const { user, logout } = useAuth();
   const { totalItems } = useCart();
@@ -42,6 +46,25 @@ const Header = () => {
   const userMenuRef = useRef(null);
   const mobileMenuRef = useRef(null);
   const searchBarRef = useRef(null);
+
+  console.log(user);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY.current) {
+        // Scrolling down
+        setNavbarTop(-70);
+      } else {
+        // Scrolling up
+        setNavbarTop(0);
+      }
+      lastScrollY.current = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Get notifications and unread count
   useEffect(() => {
@@ -102,7 +125,10 @@ const Header = () => {
   };
 
   const handleSearch = (query) => {
-    navigate(`/shop?search=${encodeURIComponent(query)}`);
+    if (!query.trim()) return;
+
+    // Navigate to search page with search query
+    navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     setShowSearchBarBelow(false);
   };
 
@@ -134,7 +160,11 @@ const Header = () => {
 
   return (
     <>
-      <header className={styles.header}>
+      <header
+        className={styles.header}
+        ref={dropdownRef}
+        style={{ top: `${navbarTop}px`, transition: "top 0.3s ease" }}
+      >
         <div className={styles.container}>
           {/* Main Navigation Row */}
           <div className={styles.mainNav}>
@@ -278,7 +308,10 @@ const Header = () => {
                   >
                     <div className={styles.avatarContainer}>
                       <img
-                        src={user.avatar}
+                        src={
+                          user.avatar ||
+                          "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150"
+                        }
                         alt={user.name}
                         className={styles.avatar}
                       />
@@ -428,6 +461,14 @@ const Header = () => {
                           >
                             <Settings className="h-4 w-4" />
                             <span>Profile</span>
+                          </Link>
+                          <Link
+                            to="/orders"
+                            className={styles.dropdownItem}
+                            onClick={() => setIsUserMenuOpen(false)}
+                          >
+                            <ShoppingBagIcon className="h-4 w-4" />
+                            <span>My Orders</span>
                           </Link>
                           <Link
                             to="/vendor/signup"

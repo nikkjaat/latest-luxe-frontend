@@ -164,6 +164,85 @@ export const CategoryProvider = ({ children }) => {
     adminGetCategories();
   }, []); // Add adminGetCategories to dependency array
 
+  // Get all subcategories for a specific main category
+  const getSubcategoriesByMainCategory = useCallback(
+    (mainCategoryName) => {
+      if (!mainCategoryName) return [];
+
+      const mainCategory = categories.find(
+        (cat) =>
+          cat.name.toLowerCase() === mainCategoryName.toLowerCase() ||
+          cat.slug.toLowerCase() === mainCategoryName.toLowerCase()
+      );
+
+      return mainCategory?.subcategories || [];
+    },
+    [categories]
+  );
+
+  // Get all subcategories across all categories
+  const getAllSubcategories = useCallback(() => {
+    const allSubcategories = [];
+    categories.forEach((category) => {
+      if (category.subcategories && category.subcategories.length > 0) {
+        category.subcategories.forEach((subcategory) => {
+          allSubcategories.push({
+            name: subcategory,
+            mainCategory: category.name,
+            mainCategorySlug: category.slug,
+          });
+        });
+      }
+    });
+    return allSubcategories;
+  }, [categories]);
+
+  // Search subcategories by name
+  const searchSubcategories = useCallback(
+    (searchTerm) => {
+      if (!searchTerm) return getAllSubcategories();
+
+      return getAllSubcategories().filter((subcat) =>
+        subcat.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    },
+    [getAllSubcategories]
+  );
+
+  // Get main category by subcategory
+  const getMainCategoryBySubcategory = useCallback(
+    (subcategoryName) => {
+      const allSubcategories = getAllSubcategories();
+      const found = allSubcategories.find(
+        (subcat) => subcat.name.toLowerCase() === subcategoryName.toLowerCase()
+      );
+      return found ? found.mainCategory : null;
+    },
+    [getAllSubcategories]
+  );
+
+  // Check if subcategory exists in a main category
+  const isSubcategoryValid = useCallback(
+    (mainCategoryName, subcategoryName) => {
+      const subcategories = getSubcategoriesByMainCategory(mainCategoryName);
+      return subcategories.some(
+        (subcat) => subcat.toLowerCase() === subcategoryName.toLowerCase()
+      );
+    },
+    [getSubcategoriesByMainCategory]
+  );
+
+  // Get popular subcategories (you can customize the logic)
+  const getPopularSubcategories = useCallback(
+    (limit = 10) => {
+      const allSubcategories = getAllSubcategories();
+      // For now, just return first 'limit' subcategories
+      // You can implement more sophisticated logic based on product counts, etc.
+      return allSubcategories.slice(0, limit);
+    },
+    [getAllSubcategories]
+  );
+
   const adminCreateCategory = useCallback(async (category) => {
     try {
       const response = await apiService.adminCreateCategory(category);
@@ -194,7 +273,7 @@ export const CategoryProvider = ({ children }) => {
         throw new Error(response.message || "Failed to update category");
       }
 
-      console.log(response)
+      console.log(response);
 
       // Format the updated category with proper ID
       const updatedCategory = {
@@ -242,6 +321,13 @@ export const CategoryProvider = ({ children }) => {
         adminGetCategories,
         categories,
         isLoading,
+
+        getSubcategoriesByMainCategory,
+        getAllSubcategories,
+        searchSubcategories,
+        getMainCategoryBySubcategory,
+        isSubcategoryValid,
+        getPopularSubcategories,
       }}
     >
       {children}

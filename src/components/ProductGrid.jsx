@@ -7,6 +7,7 @@ const ProductGrid = ({
   loading = false,
   emptyMessage = "No products found",
   columns = { sm: 1, md: 2, lg: 3, xl: 4 },
+  searchTerms = [],
 }) => {
   if (loading) {
     return (
@@ -55,6 +56,7 @@ const ProductGrid = ({
           key={product._id || product.id}
           product={product}
           showQuickActions={true}
+          searchTerms={searchTerms}
         />
       ))}
     </div>

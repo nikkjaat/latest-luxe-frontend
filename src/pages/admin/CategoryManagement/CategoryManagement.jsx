@@ -12,13 +12,15 @@ import {
   Upload,
   RefreshCw,
   Package,
-  TrendingUp,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  FolderOpen,
   Link as LinkIcon,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import apiService from "../../../services/api";
 import { useCategory } from "../../../context/CategoryContext";
-import { useProducts } from "../../../context/ProductContext"; // Import ProductContext
+import { useProducts } from "../../../context/ProductContext";
 import styles from "./CategoryManagement.module.css";
 
 const CategoryManagement = () => {
@@ -29,7 +31,7 @@ const CategoryManagement = () => {
     adminDeleteCategory,
   } = useCategory();
 
-  const { products, getProducts } = useProducts(); // Get products context
+  const { products, getProducts } = useProducts();
   const navigate = useNavigate();
 
   const [categories, setCategories] = useState([]);
@@ -40,6 +42,7 @@ const CategoryManagement = () => {
   const [actionLoading, setActionLoading] = useState({});
   const [imageUploadMethod, setImageUploadMethod] = useState("url");
   const [imagePreview, setImagePreview] = useState(null);
+  const [expandedCategories, setExpandedCategories] = useState({});
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
@@ -49,7 +52,21 @@ const CategoryManagement = () => {
     imageFile: null,
     isActive: true,
     sortOrder: 0,
+    subcategories: [],
   });
+
+  // State for nested category management
+  const [categoryInputs, setCategoryInputs] = useState({
+    level1: "",
+    level2: {},
+    level3: {},
+    level4: {},
+  });
+
+  // State for editing nested categories
+  const [editingNestedCategory, setEditingNestedCategory] = useState(null);
+
+  console.log(editingNestedCategory);
 
   useEffect(() => {
     fetchCategories();
@@ -75,10 +92,8 @@ const CategoryManagement = () => {
     }
   };
 
-  // Get categories from context
   const { categories: contextCategories } = useCategory();
 
-  // Count products for each category and update categories state
   useEffect(() => {
     if (contextCategories && contextCategories.length > 0) {
       const categoriesWithProductCounts = contextCategories.map((category) => {
@@ -92,7 +107,6 @@ const CategoryManagement = () => {
     }
   }, [contextCategories, products]);
 
-  // Function to count products in a specific category
   const countProductsInCategory = (category) => {
     if (!products || products.length === 0) return 0;
 
@@ -101,10 +115,8 @@ const CategoryManagement = () => {
 
     return products.filter((product) => {
       const productCategory = product.category?.main;
-
       if (!productCategory) return false;
 
-      // Handle string category
       if (typeof productCategory === "string") {
         return (
           productCategory.toLowerCase() === slug ||
@@ -112,7 +124,6 @@ const CategoryManagement = () => {
         );
       }
 
-      // Handle object category
       if (typeof productCategory === "object") {
         return (
           productCategory.slug?.toLowerCase() === slug ||
@@ -125,20 +136,16 @@ const CategoryManagement = () => {
     }).length;
   };
 
-  // Function to get filtered products for a category (for navigation)
   const getProductsByCategory = (category) => {
     if (!products || products.length === 0) return [];
 
     const slug = category.slug?.toLowerCase();
     const name = category.name?.toLowerCase();
-    const keyword = slug || name;
 
     return products.filter((product) => {
       const productCategory = product.category?.main;
-
       if (!productCategory) return false;
 
-      // Handle string category
       if (typeof productCategory === "string") {
         return (
           productCategory.toLowerCase() === slug ||
@@ -146,7 +153,6 @@ const CategoryManagement = () => {
         );
       }
 
-      // Handle object category
       if (typeof productCategory === "object") {
         return (
           productCategory.slug?.toLowerCase() === slug ||
@@ -159,20 +165,1281 @@ const CategoryManagement = () => {
     });
   };
 
-  // Handle view category click
-  const handleViewCategory = (category) => {
-    const filterCategory = getProductsByCategory(category);
-    const keyword =
-      category.slug?.toLowerCase() || category.name?.toLowerCase();
+  // Multi-level category functions
+  const addLevel1Category = () => {
+    const categoryName = categoryInputs.level1.trim();
+    if (!categoryName) return;
 
-    navigate(`/category/${category.slug}`, {
-      state: {
-        keyword,
-        filterCategory,
-        name: category.name,
-        itemCount: category.productCount || filterCategory.length,
-      },
+    const categorySlug = generateSlug(categoryName);
+
+    // Check for duplicates
+    if (formData.subcategories.some((sub) => sub.name === categoryName)) {
+      setErrors((prev) => ({
+        ...prev,
+        subcategories: "Category already exists",
+      }));
+      return;
+    }
+
+    const newCategory = {
+      name: categoryName,
+      slug: categorySlug,
+      productCount: 0,
+      isActive: true,
+      subcategories: [],
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      subcategories: [...prev.subcategories, newCategory],
+    }));
+
+    setCategoryInputs((prev) => ({ ...prev, level1: "" }));
+    setErrors((prev) => ({ ...prev, subcategories: "" }));
+  };
+
+  const addLevel2Category = (parentCategoryName) => {
+    const categoryName = (
+      categoryInputs.level2[parentCategoryName] || ""
+    ).trim();
+    if (!categoryName) return;
+
+    const categorySlug = generateSlug(categoryName);
+
+    setFormData((prev) => ({
+      ...prev,
+      subcategories: prev.subcategories.map((sub) => {
+        if (sub.name === parentCategoryName) {
+          // Check for duplicates
+          if (
+            sub.subcategories?.some((subSub) => subSub.name === categoryName)
+          ) {
+            setErrors((prev) => ({
+              ...prev,
+              subSubcategories: "Subcategory already exists",
+            }));
+            return sub;
+          }
+
+          const newSubcategory = {
+            name: categoryName,
+            slug: categorySlug,
+            productCount: 0,
+            isActive: true,
+            subcategories: [],
+          };
+
+          return {
+            ...sub,
+            subcategories: [...(sub.subcategories || []), newSubcategory],
+          };
+        }
+        return sub;
+      }),
+    }));
+
+    setCategoryInputs((prev) => ({
+      ...prev,
+      level2: { ...prev.level2, [parentCategoryName]: "" },
+    }));
+    setErrors((prev) => ({ ...prev, subSubcategories: "" }));
+  };
+
+  const addLevel3Category = (grandParentCategoryName, parentCategoryName) => {
+    const key = `${grandParentCategoryName}-${parentCategoryName}`;
+    const categoryName = (categoryInputs.level3[key] || "").trim();
+    if (!categoryName) return;
+
+    const categorySlug = generateSlug(categoryName);
+
+    setFormData((prev) => ({
+      ...prev,
+      subcategories: prev.subcategories.map((grandParent) => {
+        if (grandParent.name === grandParentCategoryName) {
+          return {
+            ...grandParent,
+            subcategories: grandParent.subcategories.map((parent) => {
+              if (parent.name === parentCategoryName) {
+                // Check for duplicates
+                if (
+                  parent.subcategories?.some((sub) => sub.name === categoryName)
+                ) {
+                  setErrors((prev) => ({
+                    ...prev,
+                    subSubcategories: "Sub-subcategory already exists",
+                  }));
+                  return parent;
+                }
+
+                const newSubSubcategory = {
+                  name: categoryName,
+                  slug: categorySlug,
+                  productCount: 0,
+                  isActive: true,
+                  subcategories: [],
+                };
+
+                return {
+                  ...parent,
+                  subcategories: [
+                    ...(parent.subcategories || []),
+                    newSubSubcategory,
+                  ],
+                };
+              }
+              return parent;
+            }),
+          };
+        }
+        return grandParent;
+      }),
+    }));
+
+    setCategoryInputs((prev) => ({
+      ...prev,
+      level3: { ...prev.level3, [key]: "" },
+    }));
+    setErrors((prev) => ({ ...prev, subSubcategories: "" }));
+  };
+
+  const addLevel4Category = (
+    greatGrandParentCategoryName,
+    grandParentCategoryName,
+    parentCategoryName
+  ) => {
+    const key = `${greatGrandParentCategoryName}-${grandParentCategoryName}-${parentCategoryName}`;
+    const categoryName = (categoryInputs.level4[key] || "").trim();
+    if (!categoryName) return;
+
+    const categorySlug = generateSlug(categoryName);
+
+    setFormData((prev) => ({
+      ...prev,
+      subcategories: prev.subcategories.map((greatGrandParent) => {
+        if (greatGrandParent.name === greatGrandParentCategoryName) {
+          return {
+            ...greatGrandParent,
+            subcategories: greatGrandParent.subcategories.map((grandParent) => {
+              if (grandParent.name === grandParentCategoryName) {
+                return {
+                  ...grandParent,
+                  subcategories: grandParent.subcategories.map((parent) => {
+                    if (parent.name === parentCategoryName) {
+                      // Check for duplicates
+                      if (
+                        parent.subcategories?.some(
+                          (sub) => sub.name === categoryName
+                        )
+                      ) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          subSubcategories:
+                            "Sub-sub-subcategory already exists",
+                        }));
+                        return parent;
+                      }
+
+                      const newSubSubSubcategory = {
+                        name: categoryName,
+                        slug: categorySlug,
+                        productCount: 0,
+                        isActive: true,
+                      };
+
+                      return {
+                        ...parent,
+                        subcategories: [
+                          ...(parent.subcategories || []),
+                          newSubSubSubcategory,
+                        ],
+                      };
+                    }
+                    return parent;
+                  }),
+                };
+              }
+              return grandParent;
+            }),
+          };
+        }
+        return greatGrandParent;
+      }),
+    }));
+
+    setCategoryInputs((prev) => ({
+      ...prev,
+      level4: { ...prev.level4, [key]: "" },
+    }));
+    setErrors((prev) => ({ ...prev, subSubcategories: "" }));
+  };
+
+  // Remove categories at different levels
+  const removeCategory = (
+    level,
+    categoryToRemove,
+    parentCategoryName = null,
+    grandParentCategoryName = null,
+    greatGrandParentCategoryName = null
+  ) => {
+    if (level === 1) {
+      setFormData((prev) => ({
+        ...prev,
+        subcategories: prev.subcategories.filter(
+          (sub) => sub.name !== categoryToRemove.name
+        ),
+      }));
+    } else if (level === 2 && parentCategoryName) {
+      setFormData((prev) => ({
+        ...prev,
+        subcategories: prev.subcategories.map((sub) => {
+          if (sub.name === parentCategoryName) {
+            return {
+              ...sub,
+              subcategories: (sub.subcategories || []).filter(
+                (subSub) => subSub.name !== categoryToRemove.name
+              ),
+            };
+          }
+          return sub;
+        }),
+      }));
+    } else if (level === 3 && parentCategoryName && grandParentCategoryName) {
+      setFormData((prev) => ({
+        ...prev,
+        subcategories: prev.subcategories.map((grandParent) => {
+          if (grandParent.name === grandParentCategoryName) {
+            return {
+              ...grandParent,
+              subcategories: grandParent.subcategories.map((parent) => {
+                if (parent.name === parentCategoryName) {
+                  return {
+                    ...parent,
+                    subcategories: (parent.subcategories || []).filter(
+                      (subSub) => subSub.name !== categoryToRemove.name
+                    ),
+                  };
+                }
+                return parent;
+              }),
+            };
+          }
+          return grandParent;
+        }),
+      }));
+    } else if (
+      level === 4 &&
+      parentCategoryName &&
+      grandParentCategoryName &&
+      greatGrandParentCategoryName
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        subcategories: prev.subcategories.map((greatGrandParent) => {
+          if (greatGrandParent.name === greatGrandParentCategoryName) {
+            return {
+              ...greatGrandParent,
+              subcategories: greatGrandParent.subcategories.map(
+                (grandParent) => {
+                  if (grandParent.name === grandParentCategoryName) {
+                    return {
+                      ...grandParent,
+                      subcategories: grandParent.subcategories.map((parent) => {
+                        if (parent.name === parentCategoryName) {
+                          return {
+                            ...parent,
+                            subcategories: (parent.subcategories || []).filter(
+                              (subSub) => subSub.name !== categoryToRemove.name
+                            ),
+                          };
+                        }
+                        return parent;
+                      }),
+                    };
+                  }
+                  return grandParent;
+                }
+              ),
+            };
+          }
+          return greatGrandParent;
+        }),
+      }));
+    }
+  };
+
+  // Start editing a nested category
+  const startEditNestedCategory = (category, level, parentNames = []) => {
+    setEditingNestedCategory({
+      ...category,
+      level,
+      parentNames,
+      originalName: category.name,
+      editingId: `${level}-${parentNames.join("-")}-${category.name}`, // Unique identifier for editing state
     });
+  };
+
+  // Save the edited nested category
+  const saveEditNestedCategory = () => {
+    if (!editingNestedCategory) return;
+
+    const { level, parentNames, originalName, name, editingId } =
+      editingNestedCategory;
+
+    if (!name || !name.trim()) {
+      setErrors((prev) => ({ ...prev, edit: "Category name is required" }));
+      return;
+    }
+
+    setFormData((prev) => {
+      const updateCategoriesRecursively = (
+        categories,
+        currentLevel = 1,
+        currentParents = []
+      ) => {
+        return categories.map((category) => {
+          // Check if this is the category we want to edit
+          const isTargetCategory =
+            currentLevel === level &&
+            category.name === originalName &&
+            JSON.stringify(currentParents) === JSON.stringify(parentNames);
+
+          if (isTargetCategory) {
+            return {
+              ...category,
+              name: name.trim(),
+              slug: generateSlug(name.trim()),
+            };
+          }
+
+          // If this category has subcategories, search recursively
+          if (category.subcategories && category.subcategories.length > 0) {
+            return {
+              ...category,
+              subcategories: updateCategoriesRecursively(
+                category.subcategories,
+                currentLevel + 1,
+                [...currentParents, category.name]
+              ),
+            };
+          }
+
+          return category;
+        });
+      };
+
+      return {
+        ...prev,
+        subcategories: updateCategoriesRecursively(prev.subcategories),
+      };
+    });
+
+    setEditingNestedCategory(null);
+    setErrors((prev) => ({ ...prev, edit: "" }));
+  };
+
+  const isCategoryBeingEdited = (category, level, parentNames = []) => {
+    if (!editingNestedCategory) return false;
+
+    const editingId = `${level}-${parentNames.join("-")}-${category.name}`;
+    return editingNestedCategory.editingId === editingId;
+  };
+
+  const checkForDuplicateName = (level, parentNames, newName) => {
+    const findSiblings = (
+      categories,
+      currentLevel,
+      targetLevel,
+      currentParents = []
+    ) => {
+      if (currentLevel === targetLevel) {
+        // We're at the target level, check if any sibling has the same name
+        return categories.some(
+          (cat) =>
+            cat.name.toLowerCase() === newName.toLowerCase() &&
+            !currentParents.every(
+              (parent, index) => parent === parentNames[index]
+            )
+        );
+      }
+
+      // Continue searching in subcategories
+      return categories.some((cat) => {
+        if (cat.subcategories && cat.subcategories.length > 0) {
+          return findSiblings(
+            cat.subcategories,
+            currentLevel + 1,
+            targetLevel,
+            [...currentParents, cat.name]
+          );
+        }
+        return false;
+      });
+    };
+
+    return findSiblings(formData.subcategories, 1, level);
+  };
+
+  // Helper function to update category in hierarchy
+  const updateCategoryInHierarchy = (
+    categories,
+    targetLevel,
+    parentNames,
+    originalName,
+    newName
+  ) => {
+    return categories.map((category) => {
+      if (targetLevel === 1) {
+        // Level 1 category
+        if (category.name === originalName) {
+          return {
+            ...category,
+            name: newName,
+            slug: generateSlug(newName),
+          };
+        }
+      } else {
+        // Check if this is the parent category we're looking for
+        const isParent = parentNames[0] === category.name;
+
+        if (isParent && category.subcategories) {
+          if (targetLevel === 2) {
+            // Update level 2 category
+            return {
+              ...category,
+              subcategories: category.subcategories.map((subCat) => {
+                if (subCat.name === originalName) {
+                  return {
+                    ...subCat,
+                    name: newName,
+                    slug: generateSlug(newName),
+                  };
+                }
+                return subCat;
+              }),
+            };
+          } else if (targetLevel >= 3 && category.subcategories) {
+            // Recursively update deeper levels
+            return {
+              ...category,
+              subcategories: updateDeeperLevels(
+                category.subcategories,
+                targetLevel,
+                parentNames.slice(1),
+                originalName,
+                newName
+              ),
+            };
+          }
+        }
+      }
+
+      // If this category has subcategories, continue searching
+      if (category.subcategories && category.subcategories.length > 0) {
+        return {
+          ...category,
+          subcategories: updateCategoryInHierarchy(
+            category.subcategories,
+            targetLevel,
+            parentNames,
+            originalName,
+            newName
+          ),
+        };
+      }
+
+      return category;
+    });
+  };
+
+  // Helper function for updating deeper levels (3 and 4)
+  const updateDeeperLevels = (
+    categories,
+    targetLevel,
+    parentNames,
+    originalName,
+    newName
+  ) => {
+    return categories.map((category) => {
+      if (parentNames.length === 1 && category.name === parentNames[0]) {
+        // We found the direct parent
+        if (targetLevel === 3) {
+          return {
+            ...category,
+            subcategories: category.subcategories.map((subCat) => {
+              if (subCat.name === originalName) {
+                return {
+                  ...subCat,
+                  name: newName,
+                  slug: generateSlug(newName),
+                };
+              }
+              return subCat;
+            }),
+          };
+        } else if (targetLevel === 4 && category.subcategories) {
+          return {
+            ...category,
+            subcategories: category.subcategories.map((subCat) => {
+              if (subCat.subcategories) {
+                return {
+                  ...subCat,
+                  subcategories: subCat.subcategories.map((subSubCat) => {
+                    if (subSubCat.name === originalName) {
+                      return {
+                        ...subSubCat,
+                        name: newName,
+                        slug: generateSlug(newName),
+                      };
+                    }
+                    return subSubCat;
+                  }),
+                };
+              }
+              return subCat;
+            }),
+          };
+        }
+      }
+
+      // Continue searching in subcategories
+      if (category.subcategories && category.subcategories.length > 0) {
+        return {
+          ...category,
+          subcategories: updateDeeperLevels(
+            category.subcategories,
+            targetLevel,
+            parentNames,
+            originalName,
+            newName
+          ),
+        };
+      }
+
+      return category;
+    });
+  };
+
+  // Cancel editing
+  const cancelEditNestedCategory = () => {
+    setEditingNestedCategory(null);
+    setErrors((prev) => ({ ...prev, edit: "" }));
+  };
+
+  // Toggle expansion for categories - auto-close others when opening one
+  const toggleCategoryExpansion = (categoryPath, level) => {
+    setExpandedCategories((prev) => {
+      const newState = { ...prev };
+
+      // Only auto-close others when opening a main category (level 1)
+      if (!prev[categoryPath] && level === 1) {
+        // Close all currently expanded categories
+        Object.keys(newState).forEach((key) => {
+          newState[key] = false;
+        });
+      }
+
+      // Toggle the clicked category
+      newState[categoryPath] = !prev[categoryPath];
+      return newState;
+    });
+  };
+
+  // Handle input changes for different levels
+  const handleCategoryInputChange = (
+    level,
+    value,
+    parentCategoryName = null,
+    grandParentCategoryName = null,
+    greatGrandParentCategoryName = null
+  ) => {
+    if (level === 1) {
+      setCategoryInputs((prev) => ({ ...prev, level1: value }));
+    } else if (level === 2 && parentCategoryName) {
+      setCategoryInputs((prev) => ({
+        ...prev,
+        level2: { ...prev.level2, [parentCategoryName]: value },
+      }));
+    } else if (level === 3 && parentCategoryName && grandParentCategoryName) {
+      const key = `${grandParentCategoryName}-${parentCategoryName}`;
+      setCategoryInputs((prev) => ({
+        ...prev,
+        level3: { ...prev.level3, [key]: value },
+      }));
+    } else if (
+      level === 4 &&
+      parentCategoryName &&
+      grandParentCategoryName &&
+      greatGrandParentCategoryName
+    ) {
+      const key = `${greatGrandParentCategoryName}-${grandParentCategoryName}-${parentCategoryName}`;
+      setCategoryInputs((prev) => ({
+        ...prev,
+        level4: { ...prev.level4, [key]: value },
+      }));
+    }
+  };
+
+  // Handle key presses for different levels
+  const handleCategoryKeyPress = (
+    e,
+    level,
+    parentCategoryName = null,
+    grandParentCategoryName = null,
+    greatGrandParentCategoryName = null
+  ) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      if (level === 1) {
+        addLevel1Category();
+      } else if (level === 2 && parentCategoryName) {
+        addLevel2Category(parentCategoryName);
+      } else if (level === 3 && parentCategoryName && grandParentCategoryName) {
+        addLevel3Category(grandParentCategoryName, parentCategoryName);
+      } else if (
+        level === 4 &&
+        parentCategoryName &&
+        grandParentCategoryName &&
+        greatGrandParentCategoryName
+      ) {
+        addLevel4Category(
+          greatGrandParentCategoryName,
+          grandParentCategoryName,
+          parentCategoryName
+        );
+      }
+    }
+  };
+
+  // Handle nested category edit changes
+  const handleNestedCategoryEditChange = (field, value) => {
+    if (!editingNestedCategory) return;
+
+    setEditingNestedCategory((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "name" && { slug: generateSlug(value) }),
+    }));
+  };
+
+  // Render nested categories in form
+  const renderNestedCategories = () => {
+    return (
+      <div className={styles.nestedCategoriesContainer}>
+        {/* Level 1 Input */}
+        <div className={styles.categoryInputGroup}>
+          <label className={styles.categoryInputLabel}>
+            Main Categories (Level 1)
+          </label>
+          <div className={styles.categoryInputRow}>
+            <input
+              type="text"
+              value={categoryInputs.level1}
+              onChange={(e) => handleCategoryInputChange(1, e.target.value)}
+              onKeyPress={(e) => handleCategoryKeyPress(e, 1)}
+              className={styles.categoryInput}
+              placeholder="Enter main category (e.g., Footwear)"
+            />
+            <button
+              type="button"
+              onClick={addLevel1Category}
+              className={styles.categoryAddButton}
+            >
+              Add Main Category
+            </button>
+          </div>
+        </div>
+
+        {/* Render Level 1 Categories */}
+        {formData.subcategories.map((level1Cat, index1) => {
+          const level1Path = level1Cat.name;
+          const isLevel1Expanded = expandedCategories[level1Path];
+
+          return (
+            <div key={index1} className={styles.categoryLevel}>
+              <div className={styles.categoryHeader}>
+                <button
+                  type="button"
+                  onClick={() => toggleCategoryExpansion(level1Path, 1)}
+                  className={styles.expandButton}
+                >
+                  {isLevel1Expanded ? (
+                    <FolderOpen size={16} />
+                  ) : (
+                    <Folder size={16} />
+                  )}
+                  {isLevel1Expanded ? (
+                    <ChevronDown size={16} />
+                  ) : (
+                    <ChevronRight size={16} />
+                  )}
+                </button>
+
+                {isCategoryBeingEdited(level1Cat, 1, []) ? (
+                  <div className={styles.editCategoryForm}>
+                    <input
+                      type="text"
+                      value={editingNestedCategory.name}
+                      onChange={(e) =>
+                        handleNestedCategoryEditChange("name", e.target.value)
+                      }
+                      className={styles.categoryEditInput}
+                      autoFocus // This helps with input focus
+                    />
+                    <div className={styles.editActions}>
+                      <button
+                        type="button"
+                        onClick={saveEditNestedCategory}
+                        className={styles.saveEditButton}
+                      >
+                        <Save size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={cancelEditNestedCategory}
+                        className={styles.cancelEditButton}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <span className={styles.categoryTag}>
+                      {level1Cat.name}
+                      <span className={styles.categorySlug}>
+                        ({level1Cat.slug})
+                      </span>
+                    </span>
+                    <div className={styles.categoryActions}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          startEditNestedCategory(level1Cat, 1, [])
+                        }
+                        className={styles.categoryEditButton}
+                      >
+                        <Edit size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeCategory(1, level1Cat)}
+                        className={styles.categoryRemoveButton}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {isLevel1Expanded && (
+                <div className={styles.categoryChildren}>
+                  {/* Level 2 Input for this Level 1 Category */}
+                  <div className={styles.categoryInputGroup}>
+                    <label className={styles.categoryInputLabel}>
+                      Subcategories for {level1Cat.name}
+                    </label>
+                    <div className={styles.categoryInputRow}>
+                      <input
+                        type="text"
+                        value={categoryInputs.level2[level1Cat.name] || ""}
+                        onChange={(e) =>
+                          handleCategoryInputChange(
+                            2,
+                            e.target.value,
+                            level1Cat.name
+                          )
+                        }
+                        onKeyPress={(e) =>
+                          handleCategoryKeyPress(e, 2, level1Cat.name)
+                        }
+                        className={styles.categoryInput}
+                        placeholder={`Enter ${level1Cat.name} subcategory (e.g., Casual Shoes)`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addLevel2Category(level1Cat.name)}
+                        className={styles.categoryAddButton}
+                      >
+                        Add Subcategory
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Render Level 2 Categories */}
+                  {level1Cat.subcategories?.map((level2Cat, index2) => {
+                    const level2Path = `${level1Path}-${level2Cat.name}`;
+                    const isLevel2Expanded = expandedCategories[level2Path];
+
+                    return (
+                      <div key={index2} className={styles.categoryLevel}>
+                        <div className={styles.categoryHeader}>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              toggleCategoryExpansion(level2Path, 2)
+                            }
+                            className={styles.expandButton}
+                          >
+                            {isLevel2Expanded ? (
+                              <ChevronDown size={16} />
+                            ) : (
+                              <ChevronRight size={16} />
+                            )}
+                          </button>
+
+                          {isCategoryBeingEdited(level2Cat, 2, [
+                            level1Cat.name,
+                          ]) ? (
+                            <div className={styles.editCategoryForm}>
+                              <input
+                                type="text"
+                                value={editingNestedCategory.name}
+                                onChange={(e) =>
+                                  handleNestedCategoryEditChange(
+                                    "name",
+                                    e.target.value
+                                  )
+                                }
+                                className={styles.categoryEditInput}
+                                autoFocus
+                              />
+                              <div className={styles.editActions}>
+                                <button
+                                  type="button"
+                                  onClick={saveEditNestedCategory}
+                                  className={styles.saveEditButton}
+                                >
+                                  <Save size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditNestedCategory}
+                                  className={styles.cancelEditButton}
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <span className={styles.categoryTag}>
+                                {level2Cat.name}
+                                <span className={styles.categorySlug}>
+                                  ({level2Cat.slug})
+                                </span>
+                              </span>
+                              <div className={styles.categoryActions}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    startEditNestedCategory(level2Cat, 2, [
+                                      level1Cat.name,
+                                    ])
+                                  }
+                                  className={styles.categoryEditButton}
+                                >
+                                  <Edit size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    removeCategory(2, level2Cat, level1Cat.name)
+                                  }
+                                  className={styles.categoryRemoveButton}
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {isLevel2Expanded && (
+                          <div className={styles.categoryChildren}>
+                            {/* Level 3 Input for this Level 2 Category */}
+                            <div className={styles.categoryInputGroup}>
+                              <label className={styles.categoryInputLabel}>
+                                Types for {level2Cat.name}
+                              </label>
+                              <div className={styles.categoryInputRow}>
+                                <input
+                                  type="text"
+                                  value={
+                                    categoryInputs.level3[
+                                      `${level1Cat.name}-${level2Cat.name}`
+                                    ] || ""
+                                  }
+                                  onChange={(e) =>
+                                    handleCategoryInputChange(
+                                      3,
+                                      e.target.value,
+                                      level2Cat.name,
+                                      level1Cat.name
+                                    )
+                                  }
+                                  onKeyPress={(e) =>
+                                    handleCategoryKeyPress(
+                                      e,
+                                      3,
+                                      level2Cat.name,
+                                      level1Cat.name
+                                    )
+                                  }
+                                  className={styles.categoryInput}
+                                  placeholder={`Enter ${level2Cat.name} type (e.g., Sneakers)`}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    addLevel3Category(
+                                      level1Cat.name,
+                                      level2Cat.name
+                                    )
+                                  }
+                                  className={styles.categoryAddButton}
+                                >
+                                  Add Type
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Render Level 3 Categories */}
+                            {level2Cat.subcategories?.map(
+                              (level3Cat, index3) => {
+                                const level3Path = `${level2Path}-${level3Cat.name}`;
+                                const isLevel3Expanded =
+                                  expandedCategories[level3Path];
+
+                                return (
+                                  <div
+                                    key={index3}
+                                    className={styles.categoryLevel}
+                                  >
+                                    <div className={styles.categoryHeader}>
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          toggleCategoryExpansion(level3Path, 3)
+                                        }
+                                        className={styles.expandButton}
+                                      >
+                                        {isLevel3Expanded ? (
+                                          <ChevronDown size={16} />
+                                        ) : (
+                                          <ChevronRight size={16} />
+                                        )}
+                                      </button>
+
+                                      {isCategoryBeingEdited(level3Cat, 3, [
+                                        level1Cat.name,
+                                        level2Cat.name,
+                                      ]) ? (
+                                        <div
+                                          className={styles.editCategoryForm}
+                                        >
+                                          <input
+                                            type="text"
+                                            value={editingNestedCategory.name}
+                                            onChange={(e) =>
+                                              handleNestedCategoryEditChange(
+                                                "name",
+                                                e.target.value
+                                              )
+                                            }
+                                            className={styles.categoryEditInput}
+                                            autoFocus
+                                          />
+                                          <div className={styles.editActions}>
+                                            <button
+                                              type="button"
+                                              onClick={saveEditNestedCategory}
+                                              className={styles.saveEditButton}
+                                            >
+                                              <Save size={14} />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={cancelEditNestedCategory}
+                                              className={
+                                                styles.cancelEditButton
+                                              }
+                                            >
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <>
+                                          <span className={styles.categoryTag}>
+                                            {level3Cat.name}
+                                            <span
+                                              className={styles.categorySlug}
+                                            >
+                                              ({level3Cat.slug})
+                                            </span>
+                                          </span>
+                                          <div
+                                            className={styles.categoryActions}
+                                          >
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                startEditNestedCategory(
+                                                  level3Cat,
+                                                  3,
+                                                  [
+                                                    level1Cat.name,
+                                                    level2Cat.name,
+                                                  ]
+                                                )
+                                              }
+                                              className={
+                                                styles.categoryEditButton
+                                              }
+                                            >
+                                              <Edit size={14} />
+                                            </button>
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                removeCategory(
+                                                  3,
+                                                  level3Cat,
+                                                  level2Cat.name,
+                                                  level1Cat.name
+                                                )
+                                              }
+                                              className={
+                                                styles.categoryRemoveButton
+                                              }
+                                            >
+                                              <X size={14} />
+                                            </button>
+                                          </div>
+                                        </>
+                                      )}
+                                    </div>
+
+                                    {isLevel3Expanded && (
+                                      <div className={styles.categoryChildren}>
+                                        {/* Level 4 Input for this Level 3 Category */}
+                                        <div
+                                          className={styles.categoryInputGroup}
+                                        >
+                                          <label
+                                            className={
+                                              styles.categoryInputLabel
+                                            }
+                                          >
+                                            Variants for {level3Cat.name}
+                                          </label>
+                                          <div
+                                            className={styles.categoryInputRow}
+                                          >
+                                            <input
+                                              type="text"
+                                              value={
+                                                categoryInputs.level4[
+                                                  `${level1Cat.name}-${level2Cat.name}-${level3Cat.name}`
+                                                ] || ""
+                                              }
+                                              onChange={(e) =>
+                                                handleCategoryInputChange(
+                                                  4,
+                                                  e.target.value,
+                                                  level3Cat.name,
+                                                  level2Cat.name,
+                                                  level1Cat.name
+                                                )
+                                              }
+                                              onKeyPress={(e) =>
+                                                handleCategoryKeyPress(
+                                                  e,
+                                                  4,
+                                                  level3Cat.name,
+                                                  level2Cat.name,
+                                                  level1Cat.name
+                                                )
+                                              }
+                                              className={styles.categoryInput}
+                                              placeholder={`Enter ${level3Cat.name} variant (e.g., Running)`}
+                                            />
+                                            <button
+                                              type="button"
+                                              onClick={() =>
+                                                addLevel4Category(
+                                                  level1Cat.name,
+                                                  level2Cat.name,
+                                                  level3Cat.name
+                                                )
+                                              }
+                                              className={
+                                                styles.categoryAddButton
+                                              }
+                                            >
+                                              Add Variant
+                                            </button>
+                                          </div>
+                                        </div>
+
+                                        {/* Render Level 4 Categories */}
+                                        {level3Cat.subcategories?.map(
+                                          (level4Cat, index4) => (
+                                            <div
+                                              key={index4}
+                                              className={styles.categoryLevel}
+                                            >
+                                              <div
+                                                className={
+                                                  styles.categoryHeader
+                                                }
+                                              >
+                                                {isCategoryBeingEdited(
+                                                  level4Cat,
+                                                  4,
+                                                  [
+                                                    level1Cat.name,
+                                                    level2Cat.name,
+                                                    level3Cat.name,
+                                                  ]
+                                                ) ? (
+                                                  <div
+                                                    className={
+                                                      styles.editCategoryForm
+                                                    }
+                                                  >
+                                                    <input
+                                                      type="text"
+                                                      value={
+                                                        editingNestedCategory.name
+                                                      }
+                                                      onChange={(e) =>
+                                                        handleNestedCategoryEditChange(
+                                                          "name",
+                                                          e.target.value
+                                                        )
+                                                      }
+                                                      className={
+                                                        styles.categoryEditInput
+                                                      }
+                                                      autoFocus
+                                                    />
+                                                    <div
+                                                      className={
+                                                        styles.editActions
+                                                      }
+                                                    >
+                                                      <button
+                                                        type="button"
+                                                        onClick={
+                                                          saveEditNestedCategory
+                                                        }
+                                                        className={
+                                                          styles.saveEditButton
+                                                        }
+                                                      >
+                                                        <Save size={14} />
+                                                      </button>
+                                                      <button
+                                                        type="button"
+                                                        onClick={
+                                                          cancelEditNestedCategory
+                                                        }
+                                                        className={
+                                                          styles.cancelEditButton
+                                                        }
+                                                      >
+                                                        <X size={14} />
+                                                      </button>
+                                                    </div>
+                                                  </div>
+                                                ) : (
+                                                  <>
+                                                    <span
+                                                      className={
+                                                        styles.categoryTag
+                                                      }
+                                                    >
+                                                      {level4Cat.name}
+                                                      <span
+                                                        className={
+                                                          styles.categorySlug
+                                                        }
+                                                      >
+                                                        ({level4Cat.slug})
+                                                      </span>
+                                                    </span>
+                                                    <div
+                                                      className={
+                                                        styles.categoryActions
+                                                      }
+                                                    >
+                                                      <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                          startEditNestedCategory(
+                                                            level4Cat,
+                                                            4,
+                                                            [
+                                                              level1Cat.name,
+                                                              level2Cat.name,
+                                                              level3Cat.name,
+                                                            ]
+                                                          )
+                                                        }
+                                                        className={
+                                                          styles.categoryEditButton
+                                                        }
+                                                      >
+                                                        <Edit size={14} />
+                                                      </button>
+                                                      <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                          removeCategory(
+                                                            4,
+                                                            level4Cat,
+                                                            level3Cat.name,
+                                                            level2Cat.name,
+                                                            level1Cat.name
+                                                          )
+                                                        }
+                                                        className={
+                                                          styles.categoryRemoveButton
+                                                        }
+                                                      >
+                                                        <X size={14} />
+                                                      </button>
+                                                    </div>
+                                                  </>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {errors.edit && (
+          <div className={styles.errorMessage}>{errors.edit}</div>
+        )}
+      </div>
+    );
   };
 
   const validateForm = () => {
@@ -190,7 +1457,6 @@ const CategoryManagement = () => {
       newErrors.description = "Description is required";
     }
 
-    // Image validation
     if (imageUploadMethod === "url" && !formData.image.trim()) {
       newErrors.image = "Image URL is required";
     } else if (
@@ -201,7 +1467,6 @@ const CategoryManagement = () => {
       newErrors.image = "Please select an image file";
     }
 
-    // Check for duplicate slug
     const existingCategory = categories.find(
       (cat) =>
         cat.slug === formData.slug &&
@@ -213,6 +1478,21 @@ const CategoryManagement = () => {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleViewCategory = (category) => {
+    const filterCategory = getProductsByCategory(category);
+    const keyword =
+      category.slug?.toLowerCase() || category.name?.toLowerCase();
+
+    navigate(`/category/${category.slug}`, {
+      state: {
+        keyword,
+        filterCategory,
+        name: category.name,
+        itemCount: category.productCount || filterCategory.length,
+      },
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -228,7 +1508,6 @@ const CategoryManagement = () => {
       let dataToSend;
 
       if (imageUploadMethod === "file" && formData.imageFile) {
-        // Use FormData for file uploads
         const formDataToSend = new FormData();
         formDataToSend.append("name", formData.name);
         formDataToSend.append("slug", formData.slug);
@@ -237,9 +1516,12 @@ const CategoryManagement = () => {
         formDataToSend.append("sortOrder", formData.sortOrder);
         formDataToSend.append("imageSource", "file");
         formDataToSend.append("imageFile", formData.imageFile);
+        formDataToSend.append(
+          "subcategories",
+          JSON.stringify(formData.subcategories)
+        );
         dataToSend = formDataToSend;
       } else {
-        // Use JSON for URL-based images
         dataToSend = {
           name: formData.name,
           slug: formData.slug,
@@ -247,6 +1529,7 @@ const CategoryManagement = () => {
           image: formData.image,
           isActive: formData.isActive,
           sortOrder: formData.sortOrder,
+          subcategories: formData.subcategories,
           imageSource: "url",
         };
       }
@@ -275,12 +1558,21 @@ const CategoryManagement = () => {
       imageFile: null,
       isActive: true,
       sortOrder: 0,
+      subcategories: [],
     });
+    setCategoryInputs({
+      level1: "",
+      level2: {},
+      level3: {},
+      level4: {},
+    });
+    setExpandedCategories({});
     setImageUploadMethod("url");
     setImagePreview(null);
     setErrors({});
     setShowForm(false);
     setEditingCategory(null);
+    setEditingNestedCategory(null);
   };
 
   const handleEdit = (category) => {
@@ -292,8 +1584,16 @@ const CategoryManagement = () => {
       imageFile: null,
       isActive: category.isActive !== false,
       sortOrder: category.sortOrder || 0,
+      subcategories: category.subcategories || [],
     });
     setEditingCategory(category);
+    setCategoryInputs({
+      level1: "",
+      level2: {},
+      level3: {},
+      level4: {},
+    });
+    setExpandedCategories({});
     setImageUploadMethod("url");
     setImagePreview(null);
     setErrors({});
@@ -328,7 +1628,6 @@ const CategoryManagement = () => {
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Validate file type
       if (!file.type.startsWith("image/")) {
         setErrors((prev) => ({
           ...prev,
@@ -337,7 +1636,6 @@ const CategoryManagement = () => {
         return;
       }
 
-      // Validate file size (5MB limit)
       if (file.size > 5 * 1024 * 1024) {
         setErrors((prev) => ({
           ...prev,
@@ -346,17 +1644,14 @@ const CategoryManagement = () => {
         return;
       }
 
-      // Create a preview URL for the image
       const previewUrl = URL.createObjectURL(file);
       setImagePreview(previewUrl);
 
-      // Store the file in formData
       setFormData((prev) => ({
         ...prev,
         imageFile: file,
       }));
 
-      // Clear any previous image errors
       setErrors((prev) => ({ ...prev, image: "" }));
     }
   };
@@ -370,7 +1665,6 @@ const CategoryManagement = () => {
       [name]: newValue,
     }));
 
-    // Auto-generate slug when name changes
     if (name === "name") {
       setFormData((prev) => ({
         ...prev,
@@ -378,7 +1672,6 @@ const CategoryManagement = () => {
       }));
     }
 
-    // Clear errors for this field
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
     }
@@ -388,13 +1681,11 @@ const CategoryManagement = () => {
     const url = e.target.value;
     setFormData((prev) => ({ ...prev, image: url }));
 
-    // Clear image preview when switching to URL
     if (imagePreview) {
       URL.revokeObjectURL(imagePreview);
       setImagePreview(null);
     }
 
-    // Clear errors
     if (errors.image) {
       setErrors((prev) => ({ ...prev, image: "" }));
     }
@@ -446,62 +1737,6 @@ const CategoryManagement = () => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className={styles.statsGrid}>
-          <div className={styles.statCard}>
-            <div className={styles.statContent}>
-              <Grid size={32} className={styles.statIconBlue} />
-              <div className={styles.statTextContainer}>
-                <p className={styles.statLabel}>Total Categories</p>
-                <p className={styles.statValue}>{categories.length}</p>
-              </div>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statContent}>
-              <TrendingUp size={32} className={styles.statIconGreen} />
-              <div className={styles.statTextContainer}>
-                <p className={styles.statLabel}>Active Categories</p>
-                <p className={styles.statValue}>
-                  {categories.filter((cat) => cat.isActive).length}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statContent}>
-              <Package size={32} className={styles.statIconPurple} />
-              <div className={styles.statTextContainer}>
-                <p className={styles.statLabel}>Total Products</p>
-                <p className={styles.statValue}>
-                  {categories.reduce(
-                    (sum, cat) => sum + (cat.productCount || 0),
-                    0
-                  )}
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className={styles.statCard}>
-            <div className={styles.statContent}>
-              <TrendingUp size={32} className={styles.statIconOrange} />
-              <div className={styles.statTextContainer}>
-                <p className={styles.statLabel}>Avg. Products</p>
-                <p className={styles.statValue}>
-                  {categories.length > 0
-                    ? Math.round(
-                        categories.reduce(
-                          (sum, cat) => sum + (cat.productCount || 0),
-                          0
-                        ) / categories.length
-                      )
-                    : 0}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Search */}
         <div className={styles.searchContainer}>
           <div className={styles.searchWrapper}>
@@ -548,6 +1783,41 @@ const CategoryManagement = () => {
                 <p className={styles.categoryDescription}>
                   {category.description}
                 </p>
+
+                {/* Subcategories display */}
+                {category.subcategories &&
+                  category.subcategories.length > 0 && (
+                    <div className={styles.subcategoriesPreview}>
+                      <span className={styles.subcategoriesLabel}>
+                        Subcategories:
+                      </span>
+                      <div className={styles.subcategoriesList}>
+                        {category.subcategories
+                          .slice(0, 3)
+                          .map((sub, index) => (
+                            <div
+                              key={index}
+                              className={styles.subcategoryPreview}
+                            >
+                              <span className={styles.subcategoryPreviewTag}>
+                                {sub.name}
+                              </span>
+                              {sub.subcategories &&
+                                sub.subcategories.length > 0 && (
+                                  <span className={styles.subSubcategoryCount}>
+                                    ({sub.subcategories.length} types)
+                                  </span>
+                                )}
+                            </div>
+                          ))}
+                        {category.subcategories.length > 3 && (
+                          <span className={styles.moreSubcategories}>
+                            +{category.subcategories.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
                 <div className={styles.categoryFooter}>
                   <div className={styles.productCount}>
@@ -674,6 +1944,16 @@ const CategoryManagement = () => {
                   {errors.description && (
                     <p className={styles.errorText}>{errors.description}</p>
                   )}
+                </div>
+
+                {/* Nested Categories Section */}
+                <div className={styles.formField}>
+                  <label className={styles.formLabel}>Category Structure</label>
+                  {renderNestedCategories()}
+                  <p className={styles.categoryHelperText}>
+                    Build your category hierarchy: Main Categories →
+                    Subcategories → Types → Variants
+                  </p>
                 </div>
 
                 <div className={styles.formField}>

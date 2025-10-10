@@ -25,6 +25,7 @@ import {
   Watch,
   Dumbbell,
   Baby,
+  Loader,
 } from "lucide-react";
 import { useProducts } from "../context/ProductContext";
 import { useCart } from "../context/CartContext";
@@ -36,6 +37,8 @@ import styles from "./ProductDetailPage.module.css";
 const ColorImageOption = ({ variant, isSelected, onSelect, isAutoScroll }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [loadingItems, setLoadingItems] = useState({});
+
   const intervalRef = useRef(null);
 
   const variantImages = variant.images || [];
@@ -156,10 +159,17 @@ const ColorImageOption = ({ variant, isSelected, onSelect, isAutoScroll }) => {
 const ProductDetailPage = () => {
   const { id } = useParams();
   const { products, getProduct } = useProducts();
-  const { addToCart } = useCart();
+  const {
+    addToCart,
+    removeFromCart,
+    items: cartItems,
+    updateQuantity,
+  } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
   const navigate = useNavigate();
   const location = useLocation();
+
+  console.log(cartItems)
 
   // State coming from navigate
   const { keyword, filterCategory, name, itemCount } = location.state || {};
@@ -308,6 +318,16 @@ const ProductDetailPage = () => {
     }
     return true;
   };
+  const getCartQuantity = () => {
+    const cartItem = cartItems?.find(
+      (item) =>
+        item?.productId?._id === id &&
+        item.color === selectedColor &&
+        item.size === selectedSize
+    );
+    return cartItem ? cartItem.quantity : 0;
+  };
+  const inCart = getCartQuantity();
 
   useEffect(() => {
     if (showAR && cameraActive) {
@@ -819,13 +839,11 @@ const ProductDetailPage = () => {
       color: selectedColor,
       size: selectedSize,
     });
-    navigate("/cart");
+    navigate("/checkout");
   };
 
   const handleWishlistToggle = () =>
     isInWishlist(id) ? removeFromWishlist(product._id) : addToWishlist(product);
-
-  console.log(relatedProducts);
 
   return (
     <div className={styles.pageContainer}>
@@ -1126,11 +1144,15 @@ const ProductDetailPage = () => {
 
               <div className={styles.actionButtons}>
                 <button
-                  onClick={handleAddToCart}
+                  onClick={
+                    inCart > 0 ? () => navigate("/cart") : handleAddToCart
+                  }
                   className={styles.addToCartButton}
                 >
                   <ShoppingCart className={styles.cartIcon} />
-                  {!isSmallScreen && (
+                  {inCart > 0 ? (
+                    <span className={styles.inCartBadge}>{inCart} in Cart</span>
+                  ) : (
                     <span className={styles.cartText}>Add to Cart</span>
                   )}
                 </button>

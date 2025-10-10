@@ -14,6 +14,10 @@ import {
   AlertCircle,
   Check,
   Ruler,
+  Search,
+  ChevronDown,
+  ChevronRight,
+  Link as LinkIcon,
 } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useProducts } from "../../context/ProductContext";
@@ -25,8 +29,6 @@ const AddProduct = () => {
   const { addProduct, updateProduct, getProduct } = useProducts();
   const { categories, adminGetCategories } = useCategory();
 
-  console.log(categories);
-
   const isEditing = location.search.includes("edit=true");
   const editProductId = location.state?.productId;
 
@@ -35,6 +37,24 @@ const AddProduct = () => {
   const [draggedImageIndex, setDraggedImageIndex] = useState(null);
   const [draggedColorIndex, setDraggedColorIndex] = useState(null);
   const [imageUploadProgress, setImageUploadProgress] = useState({});
+
+  // New state for image upload method
+  const [imageUploadMethod, setImageUploadMethod] = useState("upload"); // "upload" or "link"
+  const [imageLink, setImageLink] = useState("");
+
+  // Category selection state
+  const [selectedMainCategory, setSelectedMainCategory] = useState("");
+  const [selectedSubcategory, setSelectedSubcategory] = useState("");
+  const [selectedType, setSelectedType] = useState("");
+  const [selectedVariant, setSelectedVariant] = useState("");
+  const [selectedStyle, setSelectedStyle] = useState("");
+
+  // Dropdown visibility state
+  const [showMainDropdown, setShowMainDropdown] = useState(false);
+  const [showSubcategoryDropdown, setShowSubcategoryDropdown] = useState(false);
+  const [showTypeDropdown, setShowTypeDropdown] = useState(false);
+  const [showVariantDropdown, setShowVariantDropdown] = useState(false);
+  const [showStyleDropdown, setShowStyleDropdown] = useState(false);
 
   // Category-specific fields definitions
   const categoryFields = {
@@ -114,6 +134,10 @@ const AddProduct = () => {
     category: {
       main: "",
       sub: "",
+      type: "",
+      variant: "",
+      style: "",
+      fullPath: "",
     },
     brand: "",
     badge: "",
@@ -144,7 +168,6 @@ const AddProduct = () => {
         ],
       },
     ],
-    // Initialize category-specific fields
     categoryFields: {},
   });
 
@@ -203,6 +226,287 @@ const AddProduct = () => {
     }
   }, [isEditing, editProductId]);
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest(".category-dropdown")) {
+        setShowMainDropdown(false);
+        setShowSubcategoryDropdown(false);
+        setShowTypeDropdown(false);
+        setShowVariantDropdown(false);
+        setShowStyleDropdown(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Helper functions to get categories at each level
+  const getMainCategories = () => {
+    return categories.filter((cat) => cat.level === 1 && cat.isActive);
+  };
+
+  const getSubcategories = (mainCategoryId) => {
+    if (!mainCategoryId) return [];
+    const mainCategory = categories.find((cat) => cat._id === mainCategoryId);
+    return mainCategory?.subcategories || [];
+  };
+
+  const getTypes = (mainCategoryId, subcategoryId) => {
+    if (!mainCategoryId || !subcategoryId) return [];
+    const subcategories = getSubcategories(mainCategoryId);
+    const subcategory = subcategories.find((cat) => cat._id === subcategoryId);
+    return subcategory?.subcategories || [];
+  };
+
+  const getVariants = (mainCategoryId, subcategoryId, typeId) => {
+    if (!mainCategoryId || !subcategoryId || !typeId) return [];
+    const types = getTypes(mainCategoryId, subcategoryId);
+    const type = types.find((cat) => cat._id === typeId);
+    return type?.subcategories || [];
+  };
+
+  const getStyles = (mainCategoryId, subcategoryId, typeId, variantId) => {
+    if (!mainCategoryId || !subcategoryId || !typeId || !variantId) return [];
+    const variants = getVariants(mainCategoryId, subcategoryId, typeId);
+    const variant = variants.find((cat) => cat._id === variantId);
+    return variant?.subcategories || [];
+  };
+
+  // Get category name by ID
+  const getCategoryNameById = (categoryId, level = 1) => {
+    if (!categoryId) return "";
+
+    const findCategory = (cats, targetId) => {
+      for (const cat of cats) {
+        if (cat._id === targetId) return cat;
+        if (cat.subcategories) {
+          const found = findCategory(cat.subcategories, targetId);
+          if (found) return found;
+        }
+      }
+      return null;
+    };
+
+    const category = findCategory(categories, categoryId);
+    return category?.name || "";
+  };
+
+  // Category selection handlers
+  // Category selection handlers - UPDATED to store only strings
+  const handleMainCategorySelect = (categoryId) => {
+    setSelectedMainCategory(categoryId);
+    setSelectedSubcategory("");
+    setSelectedType("");
+    setSelectedVariant("");
+    setSelectedStyle("");
+    setShowMainDropdown(false);
+
+    const mainCategory = categories.find((cat) => cat._id === categoryId);
+    const mainCategoryName = mainCategory?.name || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      category: {
+        main: mainCategoryName, // Store only the name as string
+        sub: "",
+        type: "",
+        variant: "",
+        style: "",
+        fullPath: mainCategory?.slug || "",
+      },
+    }));
+  };
+
+  const handleSubcategorySelect = (subcategoryId) => {
+    setSelectedSubcategory(subcategoryId);
+    setSelectedType("");
+    setSelectedVariant("");
+    setSelectedStyle("");
+    setShowSubcategoryDropdown(false);
+
+    const subcategory = getSubcategories(selectedMainCategory).find(
+      (cat) => cat._id === subcategoryId
+    );
+    const subcategoryName = subcategory?.name || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        sub: subcategoryName, // Store only the name as string
+        type: "",
+        variant: "",
+        style: "",
+        fullPath: `${prev.category.fullPath}/${subcategory?.slug || ""}`,
+      },
+    }));
+  };
+
+  const handleTypeSelect = (typeId) => {
+    setSelectedType(typeId);
+    setSelectedVariant("");
+    setSelectedStyle("");
+    setShowTypeDropdown(false);
+
+    const type = getTypes(selectedMainCategory, selectedSubcategory).find(
+      (cat) => cat._id === typeId
+    );
+    const typeName = type?.name || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        type: typeName, // Store only the name as string
+        variant: "",
+        style: "",
+        fullPath: `${prev.category.fullPath}/${type?.slug || ""}`,
+      },
+    }));
+  };
+
+  const handleVariantSelect = (variantId) => {
+    setSelectedVariant(variantId);
+    setSelectedStyle("");
+    setShowVariantDropdown(false);
+
+    const variant = getVariants(
+      selectedMainCategory,
+      selectedSubcategory,
+      selectedType
+    ).find((cat) => cat._id === variantId);
+    const variantName = variant?.name || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        variant: variantName, // Store only the name as string
+        style: "",
+        fullPath: `${prev.category.fullPath}/${variant?.slug || ""}`,
+      },
+    }));
+  };
+
+  const handleStyleSelect = (styleId) => {
+    setSelectedStyle(styleId);
+    setShowStyleDropdown(false);
+
+    const style = getStyles(
+      selectedMainCategory,
+      selectedSubcategory,
+      selectedType,
+      selectedVariant
+    ).find((cat) => cat._id === styleId);
+    const styleName = style?.name || "";
+
+    setFormData((prev) => ({
+      ...prev,
+      category: {
+        ...prev.category,
+        style: styleName, // Store only the name as string
+        fullPath: `${prev.category.fullPath}/${style?.slug || ""}`,
+      },
+    }));
+  };
+
+  // Clear category selections
+  const clearCategorySelection = (level) => {
+    switch (level) {
+      case "main":
+        setSelectedMainCategory("");
+        setSelectedSubcategory("");
+        setSelectedType("");
+        setSelectedVariant("");
+        setSelectedStyle("");
+        setFormData((prev) => ({
+          ...prev,
+          category: {
+            main: "",
+            sub: "",
+            type: "",
+            variant: "",
+            style: "",
+            fullPath: "",
+          },
+        }));
+        break;
+      case "sub":
+        setSelectedSubcategory("");
+        setSelectedType("");
+        setSelectedVariant("");
+        setSelectedStyle("");
+        setFormData((prev) => ({
+          ...prev,
+          category: {
+            ...prev.category,
+            sub: "",
+            type: "",
+            variant: "",
+            style: "",
+            fullPath: prev.category.fullPath.split("/")[0] || "",
+          },
+        }));
+        break;
+      case "type":
+        setSelectedType("");
+        setSelectedVariant("");
+        setSelectedStyle("");
+        setFormData((prev) => ({
+          ...prev,
+          category: {
+            ...prev.category,
+            type: "",
+            variant: "",
+            style: "",
+            fullPath:
+              prev.category.fullPath.split("/").slice(0, 2).join("/") || "",
+          },
+        }));
+        break;
+      case "variant":
+        setSelectedVariant("");
+        setSelectedStyle("");
+        setFormData((prev) => ({
+          ...prev,
+          category: {
+            ...prev.category,
+            variant: "",
+            style: "",
+            fullPath:
+              prev.category.fullPath.split("/").slice(0, 3).join("/") || "",
+          },
+        }));
+        break;
+      case "style":
+        setSelectedStyle("");
+        setFormData((prev) => ({
+          ...prev,
+          category: {
+            ...prev.category,
+            style: "",
+            fullPath:
+              prev.category.fullPath.split("/").slice(0, 4).join("/") || "",
+          },
+        }));
+        break;
+    }
+  };
+
+  // Get selected category path for display
+  const getSelectedCategoryPath = () => {
+    const path = [];
+    if (formData.category.main) path.push(formData.category.main);
+    if (formData.category.sub) path.push(formData.category.sub);
+    if (formData.category.type) path.push(formData.category.type);
+    if (formData.category.variant) path.push(formData.category.variant);
+    if (formData.category.style) path.push(formData.category.style);
+
+    return path.join(" > ");
+  };
+
   const loadProductForEdit = async () => {
     try {
       setLoading(true);
@@ -212,12 +516,23 @@ const AddProduct = () => {
       // Convert existing product data to new color variant format
       const colorVariants =
         product.colorVariants && product.colorVariants.length > 0
-          ? product.colorVariants
+          ? product.colorVariants.map((variant) => ({
+              ...variant,
+              images: variant.images.map((img) => ({
+                ...img,
+                source: img.source || (img.publicId ? "upload" : "link"), // Add source for existing images
+                markedForDeletion: false,
+              })),
+            }))
           : [
               {
                 colorName: "Default",
                 colorCode: "#000000",
-                images: product.images || [],
+                images: (product.images || []).map((img) => ({
+                  ...img,
+                  source: img.source || (img.publicId ? "upload" : "link"),
+                  markedForDeletion: false,
+                })),
                 sizeVariants:
                   product.sizeVariants && product.sizeVariants.length > 0
                     ? product.sizeVariants
@@ -232,12 +547,110 @@ const AddProduct = () => {
               },
             ];
 
+      // Parse category data and set selections - FIXED to ensure only strings
+      const categoryData = product.category || {
+        main: "",
+        sub: "",
+        type: "",
+        variant: "",
+        style: "",
+        fullPath: "",
+      };
+
+      // Extract category names as strings (not objects)
+      const mainCategoryName =
+        typeof categoryData.main === "object"
+          ? categoryData.main.name
+          : categoryData.main;
+      const subCategoryName =
+        typeof categoryData.sub === "object"
+          ? categoryData.sub.name
+          : categoryData.sub;
+      const typeName =
+        typeof categoryData.type === "object"
+          ? categoryData.type.name
+          : categoryData.type;
+      const variantName =
+        typeof categoryData.variant === "object"
+          ? categoryData.variant.name
+          : categoryData.variant;
+      const styleName =
+        typeof categoryData.style === "object"
+          ? categoryData.style.name
+          : categoryData.style;
+
+      // Set category selections - properly handle all 5 levels
+      if (mainCategoryName) {
+        const mainCategory = categories.find(
+          (cat) => cat.name === mainCategoryName
+        );
+        if (mainCategory) {
+          setSelectedMainCategory(mainCategory._id);
+
+          // Set subcategory if exists (Level 2)
+          if (subCategoryName) {
+            const subcategories = getSubcategories(mainCategory._id);
+            const subcategory = subcategories.find(
+              (sub) => sub.name === subCategoryName
+            );
+            if (subcategory) {
+              setSelectedSubcategory(subcategory._id);
+
+              // Set type if exists (Level 3)
+              if (typeName) {
+                const types = getTypes(mainCategory._id, subcategory._id);
+                const type = types.find((t) => t.name === typeName);
+                if (type) {
+                  setSelectedType(type._id);
+
+                  // Set variant if exists (Level 4)
+                  if (variantName) {
+                    const variants = getVariants(
+                      mainCategory._id,
+                      subcategory._id,
+                      type._id
+                    );
+                    const variant = variants.find(
+                      (v) => v.name === variantName
+                    );
+                    if (variant) {
+                      setSelectedVariant(variant._id);
+
+                      // Set style if exists (Level 5)
+                      if (styleName) {
+                        const styles = getStyles(
+                          mainCategory._id,
+                          subcategory._id,
+                          type._id,
+                          variant._id
+                        );
+                        const style = styles.find((s) => s.name === styleName);
+                        if (style) {
+                          setSelectedStyle(style._id);
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
       setFormData({
         name: product.name || "",
         description: product.description || "",
         price: product.price || "",
         originalPrice: product.originalPrice || "",
-        category: product.category || { main: "", sub: "" },
+        category: {
+          main: mainCategoryName,
+          sub: subCategoryName,
+          type: typeName,
+          variant: variantName,
+          style: styleName,
+          fullPath: categoryData.fullPath || "",
+        },
         brand: product.brand || "",
         badge: product.badge || "",
         status: product.status || "active",
@@ -278,23 +691,6 @@ const AddProduct = () => {
               : value,
         },
       }));
-    } else if (name.startsWith("category.")) {
-      const field = name.split(".")[1];
-      setFormData((prev) => ({
-        ...prev,
-        category: {
-          ...prev.category,
-          [field]: value,
-        },
-      }));
-
-      // If changing main category, reset category-specific fields
-      if (field === "main") {
-        setFormData((prev) => ({
-          ...prev,
-          categoryFields: {},
-        }));
-      }
     } else if (name.startsWith("categoryFields.")) {
       const fieldName = name.split(".")[1];
       setFormData((prev) => ({
@@ -315,7 +711,7 @@ const AddProduct = () => {
 
   // Get the current category-specific fields based on selected category
   const getCurrentCategoryFields = () => {
-    const mainCategory = formData.category.main;
+    const mainCategory = formData.category.main.toLowerCase();
     return mainCategory && categoryFields[mainCategory]
       ? categoryFields[mainCategory]
       : [];
@@ -428,7 +824,6 @@ const AddProduct = () => {
   };
 
   // Image handling for color variants
-  // Image handling for color variants
   const handleImageUpload = (colorIndex, files) => {
     const fileArray = Array.from(files);
     const maxImages = 10;
@@ -466,6 +861,7 @@ const AddProduct = () => {
       } - Image ${activeImages.length + index + 1}`,
       isPrimary: !hasExistingPrimary && index === 0, // Set as primary only if no existing primary
       markedForDeletion: false,
+      source: "upload", // Track the source of the image
     }));
 
     setFormData((prev) => ({
@@ -482,6 +878,73 @@ const AddProduct = () => {
           : variant
       ),
     }));
+  };
+
+  const handleAddImageLink = (colorIndex) => {
+    if (!imageLink.trim()) {
+      alert("Please enter a valid image URL");
+      return;
+    }
+
+    // Validate URL format
+    try {
+      new URL(imageLink);
+    } catch (error) {
+      alert("Please enter a valid image URL");
+      return;
+    }
+
+    // Check if URL points to an image (basic check)
+    const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"];
+    const isImageUrl = imageExtensions.some((ext) =>
+      imageLink.toLowerCase().includes(ext)
+    );
+
+    if (!isImageUrl) {
+      if (!confirm("This doesn't look like an image URL. Continue anyway?")) {
+        return;
+      }
+    }
+
+    const maxImages = 10;
+    const activeImages = formData.colorVariants[colorIndex].images.filter(
+      (img) => !img.markedForDeletion
+    );
+
+    if (activeImages.length >= maxImages) {
+      alert(`Maximum ${maxImages} images allowed per color`);
+      return;
+    }
+
+    const hasExistingPrimary = activeImages.some((img) => img.isPrimary);
+
+    const newImage = {
+      url: imageLink,
+      alt: `${formData.name} - ${
+        formData.colorVariants[colorIndex].colorName
+      } - Image ${activeImages.length + 1}`,
+      isPrimary: !hasExistingPrimary,
+      markedForDeletion: false,
+      source: "link", // Track the source of the image
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      colorVariants: prev.colorVariants.map((variant, i) =>
+        i === colorIndex
+          ? {
+              ...variant,
+              images: [
+                ...variant.images.filter((img) => !img.markedForDeletion),
+                newImage,
+              ],
+            }
+          : variant
+      ),
+    }));
+
+    // Clear the link input
+    setImageLink("");
   };
 
   const toggleImageDeletion = (colorIndex, imageIndex) => {
@@ -729,7 +1192,21 @@ const AddProduct = () => {
       formDataToSend.append("name", formData.name);
       formDataToSend.append("description", formData.description);
       formDataToSend.append("price", Number(formData.price));
-      formDataToSend.append("category", JSON.stringify(formData.category));
+
+      // FIX: Ensure category data is sent as strings, not objects
+      const categoryToSend = {
+        main: formData.category.main,
+        sub: formData.category.sub,
+        type: formData.category.type || "",
+        variant: formData.category.variant || "",
+        style: formData.category.style || "",
+        fullPath: formData.category.fullPath || "",
+      };
+
+      console.log("Category being sent:", categoryToSend); // Debug log
+
+      formDataToSend.append("category", JSON.stringify(categoryToSend));
+
       formDataToSend.append("brand", formData.brand || "");
       formDataToSend.append("badge", formData.badge || "");
       formDataToSend.append("status", formData.status);
@@ -766,10 +1243,22 @@ const AddProduct = () => {
         JSON.stringify(formData.categoryFields)
       );
 
-      // Color variants data (without images)
+      // Color variants data - FIXED: Include linked images properly
       const colorVariantsData = formData.colorVariants.map((variant) => ({
         colorName: variant.colorName,
         colorCode: variant.colorCode,
+        images: variant.images
+          .filter((img) => !img.markedForDeletion)
+          .map((img) => ({
+            // For linked images, include the URL and source
+            url: img.source === "link" ? img.url : undefined,
+            secure_url: img.secure_url,
+            alt: img.alt,
+            isPrimary: img.isPrimary,
+            source: img.source,
+            // Only include file reference for uploaded images
+            file: img.source === "upload" ? img.file : undefined,
+          })),
         sizeVariants: variant.sizeVariants.map((sizeVariant) => ({
           size: sizeVariant.size,
           customSize: sizeVariant.customSize,
@@ -786,7 +1275,7 @@ const AddProduct = () => {
       formData.colorVariants.forEach((variant, colorIndex) => {
         variant.images.forEach((image, imageIndex) => {
           if (image.publicId && !image.markedForDeletion) {
-            // Kept existing image
+            // Kept existing image (from previous upload)
             keptImages.push({
               ...image,
               colorIndex,
@@ -795,8 +1284,12 @@ const AddProduct = () => {
           } else if (image.publicId && image.markedForDeletion) {
             // Deleted existing image
             deletedImages.push(image);
-          } else if (image.file && !image.markedForDeletion) {
-            // New image
+          } else if (
+            image.file &&
+            !image.markedForDeletion &&
+            image.source === "upload"
+          ) {
+            // New uploaded image - add to FormData
             formDataToSend.append(`colorImages_${colorIndex}`, image.file);
             formDataToSend.append(
               `imageMetadata_${colorIndex}_${imageIndex}`,
@@ -804,8 +1297,17 @@ const AddProduct = () => {
                 alt: image.alt,
                 isPrimary: image.isPrimary,
                 order: imageIndex,
+                source: image.source,
               })
             );
+          } else if (image.source === "link" && !image.markedForDeletion) {
+            // Linked image - add to keptImages so backend knows about it
+            keptImages.push({
+              ...image,
+              colorIndex,
+              order: imageIndex,
+              source: "link",
+            });
           }
         });
       });
@@ -854,27 +1356,78 @@ const AddProduct = () => {
     setFormData((prev) => ({
       ...prev,
       name,
-      // Auto-generate subcategory from name if not set
-      category: {
-        ...prev.category,
-        sub: prev.category.sub || generateSlug(name),
-      },
     }));
   };
 
-  // Get main categories from the backend categories
-  const mainCategories = [
-    "electronics",
-    "men",
-    "women",
-    "grocery",
-    "furniture",
-    "books",
-    "toys",
-    "sports",
-    "beauty",
-    "other",
-  ];
+  // Custom Dropdown Component
+  const CategoryDropdown = ({
+    level,
+    selectedId,
+    onSelect,
+    options,
+    isOpen,
+    onToggle,
+    placeholder,
+    disabled,
+  }) => {
+    return (
+      <div className="category-dropdown relative">
+        <button
+          type="button"
+          onClick={onToggle}
+          disabled={disabled}
+          className={`w-full px-3 py-2 border rounded-md text-left flex items-center justify-between ${
+            disabled
+              ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+              : "bg-white border-gray-300 hover:border-gray-400"
+          } ${isOpen ? "border-blue-500 ring-2 ring-blue-200" : ""}`}
+        >
+          <span className={selectedId ? "text-gray-900" : "text-gray-500"}>
+            {selectedId
+              ? options.find((opt) => opt._id === selectedId)?.name
+              : placeholder}
+          </span>
+          <ChevronDown
+            size={16}
+            className={`text-gray-400 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+          />
+        </button>
+
+        {isOpen && !disabled && (
+          <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+            {options.length > 0 ? (
+              options.map((option) => (
+                <div
+                  key={option._id}
+                  onClick={() => onSelect(option._id)}
+                  className={`px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors ${
+                    selectedId === option._id
+                      ? "bg-blue-50 text-blue-600 font-medium"
+                      : "text-gray-900"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span>{option.name}</span>
+                    {option.productCount > 0 && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {option.productCount}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="px-4 py-3 text-gray-500 text-center">
+                No options available
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -959,44 +1512,184 @@ const AddProduct = () => {
                 </p>
               </div>
 
-              <div>
+              {/* Category Selection */}
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Main Category *
+                  Category Selection *
                 </label>
-                <select
-                  name="category.main"
-                  value={formData.category.main}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                    errors.category_main ? "border-red-500" : "border-gray-300"
-                  }`}
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((category) => (
-                    <option key={category.name} value={category.name}>
-                      {category.description.charAt(0).toUpperCase() + category.description.slice(1)}
-                    </option>
-                  ))}
-                </select>
+
+                {/* Selected Category Path */}
+                {getSelectedCategoryPath() && (
+                  <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-sm font-medium text-blue-800">
+                          Selected Category:
+                        </span>
+                        <span className="ml-2 text-blue-900">
+                          {getSelectedCategoryPath()}
+                        </span>
+                      </div>
+                      <div className="text-sm text-blue-600">
+                        Full Path: {formData.category.fullPath}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                  {/* Main Category */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Main Category *
+                    </label>
+                    <CategoryDropdown
+                      level={1}
+                      selectedId={selectedMainCategory}
+                      onSelect={handleMainCategorySelect}
+                      options={getMainCategories()}
+                      isOpen={showMainDropdown}
+                      onToggle={() => setShowMainDropdown(!showMainDropdown)}
+                      placeholder="Select main category"
+                      disabled={false}
+                    />
+                    {selectedMainCategory && (
+                      <button
+                        type="button"
+                        onClick={() => clearCategorySelection("main")}
+                        className="mt-1 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Subcategory */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Subcategory
+                    </label>
+                    <CategoryDropdown
+                      level={2}
+                      selectedId={selectedSubcategory}
+                      onSelect={handleSubcategorySelect}
+                      options={getSubcategories(selectedMainCategory)}
+                      isOpen={showSubcategoryDropdown}
+                      onToggle={() =>
+                        setShowSubcategoryDropdown(!showSubcategoryDropdown)
+                      }
+                      placeholder="Select subcategory"
+                      disabled={!selectedMainCategory}
+                    />
+                    {selectedSubcategory && (
+                      <button
+                        type="button"
+                        onClick={() => clearCategorySelection("sub")}
+                        className="mt-1 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Type */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type
+                    </label>
+                    <CategoryDropdown
+                      level={3}
+                      selectedId={selectedType}
+                      onSelect={handleTypeSelect}
+                      options={getTypes(
+                        selectedMainCategory,
+                        selectedSubcategory
+                      )}
+                      isOpen={showTypeDropdown}
+                      onToggle={() => setShowTypeDropdown(!showTypeDropdown)}
+                      placeholder="Select type"
+                      disabled={!selectedSubcategory}
+                    />
+                    {selectedType && (
+                      <button
+                        type="button"
+                        onClick={() => clearCategorySelection("type")}
+                        className="mt-1 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Variant */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Variant
+                    </label>
+                    <CategoryDropdown
+                      level={4}
+                      selectedId={selectedVariant}
+                      onSelect={handleVariantSelect}
+                      options={getVariants(
+                        selectedMainCategory,
+                        selectedSubcategory,
+                        selectedType
+                      )}
+                      isOpen={showVariantDropdown}
+                      onToggle={() =>
+                        setShowVariantDropdown(!showVariantDropdown)
+                      }
+                      placeholder="Select variant"
+                      disabled={!selectedType}
+                    />
+                    {selectedVariant && (
+                      <button
+                        type="button"
+                        onClick={() => clearCategorySelection("variant")}
+                        className="mt-1 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Style */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Style
+                    </label>
+                    <CategoryDropdown
+                      level={5}
+                      selectedId={selectedStyle}
+                      onSelect={handleStyleSelect}
+                      options={getStyles(
+                        selectedMainCategory,
+                        selectedSubcategory,
+                        selectedType,
+                        selectedVariant
+                      )}
+                      isOpen={showStyleDropdown}
+                      onToggle={() => setShowStyleDropdown(!showStyleDropdown)}
+                      placeholder="Select style"
+                      disabled={!selectedVariant}
+                    />
+                    {selectedStyle && (
+                      <button
+                        type="button"
+                        onClick={() => clearCategorySelection("style")}
+                        className="mt-1 text-xs text-red-600 hover:text-red-800"
+                      >
+                        Clear selection
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 {errors.category_main && (
                   <p className="mt-1 text-sm text-red-600">
                     {errors.category_main}
                   </p>
                 )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subcategory *
-                </label>
-                <input
-                  type="text"
-                  name="category.sub"
-                  value={formData.category.sub}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Enter subcategory"
-                />
               </div>
 
               {/* Brand field - shown for all categories */}
@@ -1111,61 +1804,70 @@ const AddProduct = () => {
             </div>
           </div>
 
-          {/* Category-specific Fields */}
-          {formData.category.main && categoryFields[formData.category.main] && (
-            <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-lg font-medium text-gray-900 mb-6">
-                {formData.category.main.charAt(0).toUpperCase() +
-                  formData.category.main.slice(1)}{" "}
-                Specifications
-              </h2>
+          {/* Rest of the component remains the same */}
+          {/* Category-specific Fields, Color Variants, Common Specifications, Tags, etc. */}
+          {/* ... (The rest of the component code remains unchanged) ... */}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {getCurrentCategoryFields().map((field) => (
-                  <div
-                    key={field.name}
-                    className={field.type === "textarea" ? "md:col-span-2" : ""}
-                  >
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {field.label}
-                    </label>
-                    {field.type === "textarea" ? (
-                      <textarea
-                        name={`categoryFields.${field.name}`}
-                        value={formData.cat2egoryFields[field.name] || ""}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                      />
-                    ) : field.type === "checkbox" ? (
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
+          {/* Category-specific Fields */}
+          {formData.category.main &&
+            categoryFields[formData.category.main.toLowerCase()] && (
+              <div className="bg-white shadow rounded-lg p-6">
+                <h2 className="text-lg font-medium text-gray-900 mb-6">
+                  {formData.category.main.charAt(0).toUpperCase() +
+                    formData.category.main.slice(1)}{" "}
+                  Specifications
+                </h2>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {getCurrentCategoryFields().map((field) => (
+                    <div
+                      key={field.name}
+                      className={
+                        field.type === "textarea" ? "md:col-span-2" : ""
+                      }
+                    >
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        {field.label}
+                      </label>
+                      {field.type === "textarea" ? (
+                        <textarea
                           name={`categoryFields.${field.name}`}
-                          checked={formData.categoryFields[field.name] || false}
+                          value={formData.categoryFields[field.name] || ""}
                           onChange={handleChange}
-                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={`Enter ${field.label.toLowerCase()}`}
                         />
-                        <span className="ml-2 text-sm text-gray-700">
-                          {field.label}
-                        </span>
-                      </div>
-                    ) : (
-                      <input
-                        type={field.type}
-                        name={`categoryFields.${field.name}`}
-                        value={formData.categoryFields[field.name] || ""}
-                        onChange={handleChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder={`Enter ${field.label.toLowerCase()}`}
-                      />
-                    )}
-                  </div>
-                ))}
+                      ) : field.type === "checkbox" ? (
+                        <div className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name={`categoryFields.${field.name}`}
+                            checked={
+                              formData.categoryFields[field.name] || false
+                            }
+                            onChange={handleChange}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <span className="ml-2 text-sm text-gray-700">
+                            {field.label}
+                          </span>
+                        </div>
+                      ) : (
+                        <input
+                          type={field.type}
+                          name={`categoryFields.${field.name}`}
+                          value={formData.categoryFields[field.name] || ""}
+                          onChange={handleChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder={`Enter ${field.label.toLowerCase()}`}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
           {/* Color Variants Section */}
           <div className="bg-white shadow rounded-lg p-6">
@@ -1209,6 +1911,7 @@ const AddProduct = () => {
                       </button>
                     )}
                   </div>
+
                   {/* Color Details */}
                   <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                     <div>
@@ -1257,8 +1960,8 @@ const AddProduct = () => {
                       />
                     </div>
                   </div>
-                  {/* Size Variants for this Color */}
 
+                  {/* Size Variants for this Color */}
                   <div className="mb-6">
                     <div className="flex items-center justify-between mb-4">
                       <h4 className="text-md font-medium text-gray-900 flex items-center">
@@ -1480,7 +2183,7 @@ const AddProduct = () => {
                       </ul>
                     </div>
                   </div>
-                  {/* Images Section */}
+
                   <div>
                     <div className="flex items-center justify-between mb-4">
                       <label className="block text-sm font-medium text-gray-700">
@@ -1507,38 +2210,109 @@ const AddProduct = () => {
                         )}
                       </span>
                     </div>
-                    {/* Image Upload */}
+
+                    {/* Image Upload Method Selection */}
                     <div className="mb-4">
-                      <label className="block cursor-pointer">
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
-                          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <div className="text-sm text-gray-600">
-                            <span className="text-blue-600 hover:text-blue-700">
-                              Click to upload
-                            </span>{" "}
-                            or drag and drop
+                      <div className="flex border border-gray-300 rounded-lg overflow-hidden w-fit">
+                        <button
+                          type="button"
+                          onClick={() => setImageUploadMethod("upload")}
+                          className={`px-4 py-2 text-sm font-medium flex items-center ${
+                            imageUploadMethod === "upload"
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <Upload className="h-4 w-4 mr-2" />
+                          Upload Files
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setImageUploadMethod("link")}
+                          className={`px-4 py-2 text-sm font-medium flex items-center ${
+                            imageUploadMethod === "link"
+                              ? "bg-blue-600 text-white"
+                              : "bg-white text-gray-700 hover:bg-gray-50"
+                          }`}
+                        >
+                          <LinkIcon className="h-4 w-4 mr-2" />
+                          Add Link
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* File Upload Section */}
+                    {imageUploadMethod === "upload" && (
+                      <div className="mb-4">
+                        <label className="block cursor-pointer">
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gray-400 transition-colors">
+                            <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                            <div className="text-sm text-gray-600">
+                              <span className="text-blue-600 hover:text-blue-700">
+                                Click to upload
+                              </span>{" "}
+                              or drag and drop
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                              PNG, JPG, GIF up to 5MB (Max 10 images per color)
+                            </p>
                           </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            PNG, JPG, GIF up to 5MB (Max 10 images per color)
+                          <input
+                            type="file"
+                            multiple
+                            accept="image/*"
+                            onChange={(e) =>
+                              handleImageUpload(colorIndex, e.target.files)
+                            }
+                            className="hidden"
+                          />
+                        </label>
+                      </div>
+                    )}
+
+                    {/* Image Link Section */}
+                    {imageUploadMethod === "link" && (
+                      <div className="mb-4">
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                          <LinkIcon className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                          <div className="text-sm text-gray-600 mb-4 text-center">
+                            Add image from URL
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="url"
+                              value={imageLink}
+                              onChange={(e) => setImageLink(e.target.value)}
+                              placeholder="https://example.com/image.jpg"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              onKeyPress={(e) =>
+                                e.key === "Enter" &&
+                                handleAddImageLink(colorIndex)
+                              }
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleAddImageLink(colorIndex)}
+                              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center"
+                            >
+                              <Plus className="h-4 w-4 mr-1" />
+                              Add
+                            </button>
+                          </div>
+                          <p className="text-xs text-gray-500 mt-2 text-center">
+                            Supported formats: JPG, PNG, GIF, WebP
                           </p>
                         </div>
-                        <input
-                          type="file"
-                          multiple
-                          accept="image/*"
-                          onChange={(e) =>
-                            handleImageUpload(colorIndex, e.target.files)
-                          }
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
+                      </div>
+                    )}
+
                     {errors[`images_${colorIndex}`] && (
                       <p className="mb-4 text-sm text-red-600">
                         {errors[`images_${colorIndex}`]}
                       </p>
                     )}
-                    {/* Updated image grid with proper drag and drop */}
+
+                    {/* Image Grid - UPDATED to show source badges */}
                     {variant.images.filter((img) => !img.markedForDeletion)
                       .length > 0 && (
                       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -1566,6 +2340,11 @@ const AddProduct = () => {
                                     src={image.url || image.secure_url}
                                     alt={image.alt}
                                     className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      // Handle broken images, especially for links
+                                      e.target.src =
+                                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='10' fill='%239ca3af'%3EImage Error%3C/text%3E%3C/svg%3E";
+                                    }}
                                   />
                                 </div>
 
@@ -1609,6 +2388,17 @@ const AddProduct = () => {
                                   </div>
                                 )}
 
+                                {/* Source Badge */}
+                                <div
+                                  className={`absolute top-2 right-2 text-xs px-2 py-1 rounded ${
+                                    image.source === "link"
+                                      ? "bg-blue-500 text-white"
+                                      : "bg-gray-500 text-white"
+                                  }`}
+                                >
+                                  {image.source === "link" ? "Link" : "Upload"}
+                                </div>
+
                                 {/* Image Order Number */}
                                 <div className="absolute bottom-2 left-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                                   {imageIndex + 1}
@@ -1623,6 +2413,7 @@ const AddProduct = () => {
                         )}
                       </div>
                     )}
+
                     {/* Images marked for deletion with restore option */}
                     {variant.images.filter((img) => img.markedForDeletion)
                       .length > 0 && (
@@ -1643,6 +2434,10 @@ const AddProduct = () => {
                                       src={image.url || image.secure_url}
                                       alt={image.alt}
                                       className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.target.src =
+                                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23f3f4f6'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='monospace' font-size='10' fill='%239ca3af'%3EImage Error%3C/text%3E%3C/svg%3E";
+                                      }}
                                     />
                                   </div>
 
@@ -1666,13 +2461,27 @@ const AddProduct = () => {
                                   <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                                     Will Delete
                                   </div>
+
+                                  {/* Source Badge for deleted images */}
+                                  <div
+                                    className={`absolute top-2 right-2 text-xs px-2 py-1 rounded ${
+                                      image.source === "link"
+                                        ? "bg-blue-500 text-white"
+                                        : "bg-gray-500 text-white"
+                                    }`}
+                                  >
+                                    {image.source === "link"
+                                      ? "Link"
+                                      : "Upload"}
+                                  </div>
                                 </div>
                               )
                           )}
                         </div>
                       </div>
                     )}
-                    {/* Image Instructions */}
+
+                    {/* Image Instructions - UPDATED */}
                     <div className="mt-4 p-3 bg-blue-50 rounded-lg">
                       <h5 className="font-semibold text-blue-900 text-sm mb-1">
                         Image Tips:
@@ -1690,6 +2499,10 @@ const AddProduct = () => {
                         </li>
                         <li>
                           • Images should clearly show the product in this color
+                        </li>
+                        <li>
+                          • For linked images, ensure URLs are permanent and
+                          accessible
                         </li>
                       </ul>
                     </div>
@@ -1926,6 +2739,11 @@ const AddProduct = () => {
                         </span>
                       )}
                     </div>
+                    {formData.category.main && (
+                      <div className="mt-2 text-xs text-gray-500">
+                        Category: {getSelectedCategoryPath()}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

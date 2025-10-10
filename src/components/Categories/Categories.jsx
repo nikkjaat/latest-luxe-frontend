@@ -131,39 +131,8 @@ const Categories = () => {
     kids: ["Baby Clothes", "Toys", "Shoes", "Accessories", "Gear"],
   };
 
-  // Function to handle category click - SAME LOGIC AS CategoriesPage
   const handleCategoryClick = (category) => {
-    const keyword =
-      category.slug?.toLowerCase() || category.name?.toLowerCase();
-
-    // Filter products for this category - SAME LOGIC AS CategoriesPage
-    const filterCategory = products.filter((product) => {
-      const productCat = product.category?.main;
-      if (!productCat) return false;
-
-      if (typeof productCat === "string") {
-        return productCat.toLowerCase() === keyword;
-      }
-
-      if (typeof productCat === "object") {
-        return (
-          productCat.slug?.toLowerCase() === keyword ||
-          productCat.name?.toLowerCase() === keyword
-        );
-      }
-
-      return false;
-    });
-
-    // Navigate with same data structure as CategoriesPage
-    navigate(`/category/${category.slug}`, {
-      state: {
-        keyword,
-        filterCategory,
-        name: category.name,
-        itemCount: filterCategory.length,
-      },
-    });
+    navigate(`/subcategory/${category.slug}`);
   };
 
   // Calculate item counts for each category - USE SAME LOGIC AS CategoriesPage

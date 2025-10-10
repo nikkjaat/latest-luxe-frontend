@@ -504,3 +504,191 @@
     transform: rotate(360deg);
   }
 }
+
+/* Add these styles to your CategoriesPage.module.css */
+
+/* Nested Categories Styles */
+.nestedCategories {
+  margin-top: 12px;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 12px;
+}
+
+.expandButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 0.2s;
+  width: 100%;
+}
+
+.expandButton:hover {
+  color: #374151;
+}
+
+.expandIcon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.expandIcon.expanded {
+  transform: rotate(90deg);
+}
+
+.nestedList {
+  margin-top: 8px;
+  padding-left: 8px;
+  border-left: 2px solid #e5e7eb;
+}
+
+.nestedItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.nestedItem:hover {
+  background-color: #f9fafb;
+}
+
+.nestedName {
+  font-size: 14px;
+  color: #374151;
+}
+
+.nestedLevel {
+  font-size: 12px;
+  color: #9ca3af;
+  text-transform: capitalize;
+}
+
+/* List View Nested Categories */
+.listNestedCategories {
+  border-top: 1px solid #e5e7eb;
+  margin-top: 16px;
+  padding-top: 16px;
+}
+
+.listExpandButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  transition: color 0.2s;
+  width: 100%;
+}
+
+.listExpandButton:hover {
+  color: #374151;
+}
+
+.listExpandIcon {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s;
+}
+
+.listExpandIcon.expanded {
+  transform: rotate(90deg);
+}
+
+.listNestedList {
+  margin-top: 12px;
+  padding-left: 16px;
+}
+
+.listNestedItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid #f3f4f6;
+}
+
+.listNestedItem:hover {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  transform: translateX(4px);
+}
+
+.listNestedName {
+  font-size: 14px;
+  color: #374151;
+  font-weight: 500;
+  flex: 1;
+}
+
+.listNestedLevel {
+  font-size: 12px;
+  color: #64748b;
+  text-transform: capitalize;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 12px;
+}
+
+.listNestedArrow {
+  width: 14px;
+  height: 14px;
+  color: #94a3b8;
+}
+
+/* Enhanced existing styles */
+.categoryCard {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.categoryCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+.listCard {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.listCard:hover {
+  transform: translateX(4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1),
+    0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .nestedList {
+    padding-left: 4px;
+  }
+
+  .listNestedList {
+    padding-left: 8px;
+  }
+
+  .listNestedItem {
+    padding: 6px 8px;
+    gap: 8px;
+  }
+}

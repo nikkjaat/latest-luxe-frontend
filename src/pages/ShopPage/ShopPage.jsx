@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Search,
   Filter,
-  Grid,
+  Grid2x2 as Grid,
   List,
   Star,
   Heart,
@@ -19,6 +19,7 @@ import { Link } from "react-router-dom";
 import { Zap } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useCategory } from "../../context/CategoryContext";
+import SmartSearch from "../../components/SmartSearch";
 
 const ProductImageSlider = ({
   product,
@@ -185,6 +186,13 @@ const ShopPage = () => {
   const { getProducts, products } = useProducts();
   const navigate = useNavigate();
   const { categories: contextCategories, adminGetCategories } = useCategory();
+
+  // Handle search from search bar
+  const handleSearch = (query) => {
+    if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   useEffect(() => {
     getProducts();
@@ -405,13 +413,9 @@ const ShopPage = () => {
             <div className={styles.controlsCard}>
               <div className={styles.controls}>
                 <div className={styles.searchWrapper}>
-                  <Search className={styles.searchIcon} />
-                  <input
-                    type="text"
+                  <SmartSearch
+                    onSearch={handleSearch}
                     placeholder="Search products..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className={styles.searchInput}
                   />
                 </div>
 
@@ -526,7 +530,7 @@ const ShopPage = () => {
                         </div>
                       </div>
 
-                      <div className={styles.buttonGroup}>
+                      {/* <div className={styles.buttonGroup}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -536,7 +540,7 @@ const ShopPage = () => {
                         >
                           <ShoppingCart className={styles.cartIcon} />
                           Add to Cart
-                        </button>
+                        </button> 
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -547,7 +551,7 @@ const ShopPage = () => {
                           <Zap className={styles.buyNowIcon} />
                           Buy Now
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 ))}
@@ -618,7 +622,7 @@ const ShopPage = () => {
                         </div>
                       </div>
 
-                      <div className={styles.listButtonGroup}>
+                      {/* <div className={styles.listButtonGroup}>
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -639,7 +643,7 @@ const ShopPage = () => {
                           <Zap className={styles.listBuyNowIcon} />
                           Buy Now
                         </button>
-                      </div>
+                      </div> */}
                     </div>
                   </div>
                 ))}
