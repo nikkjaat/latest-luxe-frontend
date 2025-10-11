@@ -73,6 +73,62 @@ const CategoryNavbar = () => {
     return Grid;
   };
 
+  // NEW: Function to build search query from category hierarchy
+  const buildSearchQuery = (categoryHierarchy) => {
+    const { main, sub, type, variant, style } = categoryHierarchy;
+
+    const queryParts = [];
+    if (main) queryParts.push(main.toLowerCase());
+    if (sub) queryParts.push(sub.toLowerCase());
+    if (type) queryParts.push(type.toLowerCase());
+    if (variant) queryParts.push(variant.toLowerCase().replace(/\s+/g, "-"));
+    if (style) queryParts.push(style.toLowerCase().replace(/\s+/g, "-"));
+
+    return queryParts.join(" ");
+  };
+
+  // NEW: Function to handle category navigation with search query
+  const handleCategoryNavigation = (categoryData, parentHierarchy = {}) => {
+    const currentHierarchy = {
+      ...parentHierarchy,
+      [getHierarchyLevelKey(categoryData.level)]: categoryData.name,
+    };
+
+    // Build search query from hierarchy
+    const searchQuery = buildSearchQuery(currentHierarchy);
+
+    // Navigate to search with the query
+    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+
+    setIsMobileMenuOpen(false);
+    setHoveredCategory(null);
+    setHoveredSubcategory({});
+  };
+
+  // NEW: Helper function to get hierarchy level key
+  const getHierarchyLevelKey = (level) => {
+    const levelMap = {
+      1: "main",
+      2: "sub",
+      3: "type",
+      4: "variant",
+      5: "style",
+    };
+    return levelMap[level] || "main";
+  };
+
+  // NEW: Function to get full hierarchy path for a category
+  const getCategoryHierarchy = (
+    category,
+    currentLevel = 1,
+    parentHierarchy = {}
+  ) => {
+    return {
+      ...parentHierarchy,
+      [getHierarchyLevelKey(currentLevel)]: category.name,
+    };
+  };
+
   const handleMouseEnter = (categoryId) => {
     if (hoverTimeoutRef.current) {
       clearTimeout(hoverTimeoutRef.current);
@@ -82,35 +138,40 @@ const CategoryNavbar = () => {
   };
 
   const handleMouseLeave = () => {
-    hoverTimeoutRef.current = setTimeout(() => {
-      setHoveredCategory(null);
-      setHoveredSubcategory({});
-    }, 200);
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+    }
+    setHoveredCategory(null);
+    setHoveredSubcategory({});
   };
 
   const handleSubcategoryMouseEnter = (categoryId, subcategoryId, level) => {
     if (subcategoryHoverTimeoutRef.current) {
       clearTimeout(subcategoryHoverTimeoutRef.current);
     }
-    setHoveredSubcategory((prev) => ({
-      ...prev,
-      [`${categoryId}-${level}-${subcategoryId}`]: true,
-    }));
+    if (hoveredCategory === categoryId) {
+      setHoveredSubcategory((prev) => ({
+        ...prev,
+        [`${categoryId}-${level}-${subcategoryId}`]: true,
+      }));
+    }
   };
 
   const handleSubcategoryMouseLeave = (categoryId, subcategoryId, level) => {
-    subcategoryHoverTimeoutRef.current = setTimeout(() => {
-      setHoveredSubcategory((prev) => {
-        const newState = { ...prev };
-        delete newState[`${categoryId}-${level}-${subcategoryId}`];
-        return newState;
-      });
-    }, 150);
+    if (subcategoryHoverTimeoutRef.current) {
+      clearTimeout(subcategoryHoverTimeoutRef.current);
+    }
+    setHoveredSubcategory((prev) => {
+      const newState = { ...prev };
+      delete newState[`${categoryId}-${level}-${subcategoryId}`];
+      return newState;
+    });
   };
 
+  // UPDATED: Handle main category click
   const handleCategoryClick = (category) => {
-    navigate(`/category/${category.slug}`);
-    setIsMobileMenuOpen(false);
+    const hierarchy = getCategoryHierarchy(category, 1);
+    handleCategoryNavigation(category, hierarchy);
   };
 
   const handleMobileCategoryToggle = (categoryId) => {
@@ -126,12 +187,13 @@ const CategoryNavbar = () => {
     }));
   };
 
-  // Recursive function to render desktop dropdown for any level
+  // UPDATED: Recursive function to render desktop dropdown with search query navigation
   const renderDesktopDropdown = (
     subcategories,
     categoryId,
     currentLevel = 2,
-    parentPath = ""
+    parentHierarchy = {},
+    parentCategory = null
   ) => {
     if (!subcategories || subcategories.length === 0) return null;
 
@@ -140,9 +202,11 @@ const CategoryNavbar = () => {
         subcategory.subcategories && subcategory.subcategories.length > 0;
       const uniqueKey =
         subcategory._id || `${categoryId}-${currentLevel}-${index}`;
-      const currentPath = parentPath
-        ? `${parentPath}-${subcategory.name}`
-        : subcategory.name;
+      const currentHierarchy = getCategoryHierarchy(
+        subcategory,
+        currentLevel,
+        parentHierarchy
+      );
       const isHovered =
         hoveredSubcategory[`${categoryId}-${currentLevel}-${uniqueKey}`];
 
@@ -157,15 +221,12 @@ const CategoryNavbar = () => {
             handleSubcategoryMouseLeave(categoryId, uniqueKey, currentLevel)
           }
         >
-          <Link
-            to={`/category/${categoryId}/${getPathForLevel(currentLevel)}/${
-              subcategory.slug || subcategory._id
-            }`}
+          <div
             className={styles.subcategoryItem}
-            onClick={() => {
-              setHoveredCategory(null);
-              setHoveredSubcategory({});
-            }}
+            onClick={() =>
+              handleCategoryNavigation(subcategory, parentHierarchy)
+            }
+            style={{ cursor: "pointer" }}
           >
             <div className={styles.subcategoryInfo}>
               <div className={styles.subcategoryHeader}>
@@ -185,21 +246,31 @@ const CategoryNavbar = () => {
                 </span>
               )}
             </div>
-          </Link>
+          </div>
 
           {/* Recursive dropdown for children */}
-          {hasChildren && isHovered && (
+          {hasChildren && isHovered && hoveredCategory === categoryId && (
             <div className={styles.nestedDropdown}>
               <div className={styles.nestedDropdownContent}>
                 <div className={styles.nestedDropdownHeader}>
                   <h4>{subcategory.name}</h4>
+                  <div
+                    className={styles.viewAll}
+                    onClick={() =>
+                      handleCategoryNavigation(subcategory, parentHierarchy)
+                    }
+                    style={{ cursor: "pointer" }}
+                  >
+                    View All
+                  </div>
                 </div>
                 <div className={styles.nestedDropdownGrid}>
                   {renderDesktopDropdown(
                     subcategory.subcategories,
                     categoryId,
                     currentLevel + 1,
-                    currentPath
+                    currentHierarchy,
+                    subcategory
                   )}
                 </div>
               </div>
@@ -210,12 +281,13 @@ const CategoryNavbar = () => {
     });
   };
 
-  // Recursive function to render mobile menu for any level
+  // UPDATED: Recursive function to render mobile menu with search query navigation
   const renderMobileSubcategories = (
     subcategories,
     categoryId,
     currentLevel = 2,
-    parentPath = ""
+    parentPath = "",
+    parentHierarchy = {}
   ) => {
     if (!subcategories || subcategories.length === 0) return null;
 
@@ -227,17 +299,23 @@ const CategoryNavbar = () => {
       const currentPath = parentPath
         ? `${parentPath}-${uniqueKey}`
         : `${categoryId}-${uniqueKey}`;
+      const currentHierarchy = getCategoryHierarchy(
+        subcategory,
+        currentLevel,
+        parentHierarchy
+      );
       const isExpanded = expandedMobileSubcategory[currentPath];
 
       return (
         <div key={uniqueKey} className={styles.mobileSubcategoryWrapper}>
           <div className={styles.mobileSubcategoryItem}>
-            <Link
-              to={`/category/${categoryId}/${getPathForLevel(currentLevel)}/${
-                subcategory.slug || subcategory._id
-              }`}
+            <div
               className={styles.mobileSubcategoryLink}
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={() => {
+                handleCategoryNavigation(subcategory, parentHierarchy);
+                setIsMobileMenuOpen(false);
+              }}
+              style={{ cursor: "pointer" }}
             >
               <div className={styles.subcategoryIcon}>
                 {subcategory.name
@@ -254,7 +332,7 @@ const CategoryNavbar = () => {
                   </span>
                 )}
               </div>
-            </Link>
+            </div>
             {hasChildren && (
               <button
                 onClick={() => handleMobileSubcategoryToggle(currentPath)}
@@ -276,7 +354,8 @@ const CategoryNavbar = () => {
                 subcategory.subcategories,
                 categoryId,
                 currentLevel + 1,
-                currentPath
+                currentPath,
+                currentHierarchy
               )}
             </div>
           )}
@@ -305,18 +384,6 @@ const CategoryNavbar = () => {
       5: styles.mobileSubStyleCategories,
     };
     return classMap[level] || styles.mobileSubcategories;
-  };
-
-  // Helper function to get hierarchy level name
-  const getHierarchyLevelName = (level) => {
-    const levelMap = {
-      1: "Main",
-      2: "Subcategory",
-      3: "Type",
-      4: "Variant",
-      5: "Style",
-    };
-    return levelMap[level] || "Category";
   };
 
   useEffect(() => {
@@ -389,6 +456,7 @@ const CategoryNavbar = () => {
               const Icon = getCategoryIcon(category.name);
               const hasSubcategories =
                 category.subcategories && category.subcategories.length > 0;
+              const mainCategoryHierarchy = getCategoryHierarchy(category, 1);
 
               return (
                 <div
@@ -399,16 +467,17 @@ const CategoryNavbar = () => {
                   onMouseEnter={() => handleMouseEnter(category._id)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <Link
-                    to={`/category/${category.slug}`}
+                  <div
                     className={styles.categoryLink}
+                    onClick={() => handleCategoryClick(category)}
+                    style={{ cursor: "pointer" }}
                   >
                     <Icon size={18} />
                     <span>{capitalizeFirstLetter(category.name)}</span>
                     {hasSubcategories && (
                       <ChevronDown size={16} className={styles.chevron} />
                     )}
-                  </Link>
+                  </div>
 
                   {/* Main Dropdown - Level 2 */}
                   {hasSubcategories && hoveredCategory === category._id && (
@@ -416,17 +485,21 @@ const CategoryNavbar = () => {
                       <div className={styles.dropdownContent}>
                         <div className={styles.dropdownHeader}>
                           <h3>{capitalizeFirstLetter(category.name)}</h3>
-                          <Link
-                            to={`/category/${category.slug}`}
+                          <div
                             className={styles.viewAll}
+                            onClick={() => handleCategoryClick(category)}
+                            style={{ cursor: "pointer" }}
                           >
                             View All
-                          </Link>
+                          </div>
                         </div>
                         <div className={styles.subcategoryGrid}>
                           {renderDesktopDropdown(
                             category.subcategories,
-                            category._id
+                            category._id,
+                            2,
+                            mainCategoryHierarchy,
+                            category
                           )}
                         </div>
                       </div>
@@ -461,20 +534,24 @@ const CategoryNavbar = () => {
             </div>
 
             <div className={styles.mobileMenuContent}>
-              <Link
-                to="/shop"
+              <div
                 className={styles.mobileCategoryItem}
-                onClick={() => setIsMobileMenuOpen(false)}
+                onClick={() => {
+                  navigate("/search");
+                  setIsMobileMenuOpen(false);
+                }}
+                style={{ cursor: "pointer" }}
               >
                 <Grid size={20} />
                 <span>All Products</span>
-              </Link>
+              </div>
 
               {categories.map((category) => {
                 const Icon = getCategoryIcon(category.name);
                 const hasSubcategories =
                   category.subcategories && category.subcategories.length > 0;
                 const isExpanded = expandedMobileCategory === category._id;
+                const mainCategoryHierarchy = getCategoryHierarchy(category, 1);
 
                 return (
                   <div
@@ -482,14 +559,14 @@ const CategoryNavbar = () => {
                     className={styles.mobileCategoryWrapper}
                   >
                     <div className={styles.mobileCategoryItem}>
-                      <Link
-                        to={`/category/${category.slug}`}
+                      <div
                         className={styles.mobileCategoryLink}
                         onClick={() => handleCategoryClick(category)}
+                        style={{ cursor: "pointer" }}
                       >
                         <Icon size={20} />
                         <span>{category.name}</span>
-                      </Link>
+                      </div>
                       {hasSubcategories && (
                         <button
                           onClick={() =>
@@ -511,7 +588,10 @@ const CategoryNavbar = () => {
                       <div className={styles.mobileSubcategories}>
                         {renderMobileSubcategories(
                           category.subcategories,
-                          category._id
+                          category._id,
+                          2,
+                          `${category._id}`,
+                          mainCategoryHierarchy
                         )}
                       </div>
                     )}

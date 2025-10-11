@@ -47,7 +47,7 @@ const Header = () => {
   const mobileMenuRef = useRef(null);
   const searchBarRef = useRef(null);
 
-  console.log(user);
+  // console.log(user);
 
   useEffect(() => {
     const handleScroll = () => {

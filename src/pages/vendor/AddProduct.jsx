@@ -293,6 +293,48 @@ const AddProduct = () => {
     return category?.name || "";
   };
 
+  // Helper function to build full category path from current selections
+  const buildCategoryPath = (
+    mainId,
+    subId = "",
+    typeId = "",
+    variantId = "",
+    styleId = ""
+  ) => {
+    const pathSegments = [];
+
+    if (mainId) {
+      const main = categories.find((cat) => cat._id === mainId);
+      if (main?.slug) pathSegments.push(main.slug);
+    }
+
+    if (subId && mainId) {
+      const subcategories = getSubcategories(mainId);
+      const sub = subcategories.find((cat) => cat._id === subId);
+      if (sub?.slug) pathSegments.push(sub.slug);
+    }
+
+    if (typeId && mainId && subId) {
+      const types = getTypes(mainId, subId);
+      const type = types.find((cat) => cat._id === typeId);
+      if (type?.slug) pathSegments.push(type.slug);
+    }
+
+    if (variantId && mainId && subId && typeId) {
+      const variants = getVariants(mainId, subId, typeId);
+      const variant = variants.find((cat) => cat._id === variantId);
+      if (variant?.slug) pathSegments.push(variant.slug);
+    }
+
+    if (styleId && mainId && subId && typeId && variantId) {
+      const styles = getStyles(mainId, subId, typeId, variantId);
+      const style = styles.find((cat) => cat._id === styleId);
+      if (style?.slug) pathSegments.push(style.slug);
+    }
+
+    return pathSegments.join("/");
+  };
+
   // Category selection handlers
   // Category selection handlers - UPDATED to store only strings
   const handleMainCategorySelect = (categoryId) => {
@@ -309,12 +351,12 @@ const AddProduct = () => {
     setFormData((prev) => ({
       ...prev,
       category: {
-        main: mainCategoryName, // Store only the name as string
+        main: mainCategoryName,
         sub: "",
         type: "",
         variant: "",
         style: "",
-        fullPath: mainCategory?.slug || "",
+        fullPath: buildCategoryPath(categoryId), // Build fresh path
       },
     }));
   };
@@ -335,11 +377,11 @@ const AddProduct = () => {
       ...prev,
       category: {
         ...prev.category,
-        sub: subcategoryName, // Store only the name as string
+        sub: subcategoryName,
         type: "",
         variant: "",
         style: "",
-        fullPath: `${prev.category.fullPath}/${subcategory?.slug || ""}`,
+        fullPath: buildCategoryPath(selectedMainCategory, subcategoryId), // Build fresh path
       },
     }));
   };
@@ -359,10 +401,14 @@ const AddProduct = () => {
       ...prev,
       category: {
         ...prev.category,
-        type: typeName, // Store only the name as string
+        type: typeName,
         variant: "",
         style: "",
-        fullPath: `${prev.category.fullPath}/${type?.slug || ""}`,
+        fullPath: buildCategoryPath(
+          selectedMainCategory,
+          selectedSubcategory,
+          typeId
+        ), // Build fresh path
       },
     }));
   };
@@ -383,9 +429,14 @@ const AddProduct = () => {
       ...prev,
       category: {
         ...prev.category,
-        variant: variantName, // Store only the name as string
+        variant: variantName,
         style: "",
-        fullPath: `${prev.category.fullPath}/${variant?.slug || ""}`,
+        fullPath: buildCategoryPath(
+          selectedMainCategory,
+          selectedSubcategory,
+          selectedType,
+          variantId
+        ), // Build fresh path
       },
     }));
   };
@@ -406,8 +457,14 @@ const AddProduct = () => {
       ...prev,
       category: {
         ...prev.category,
-        style: styleName, // Store only the name as string
-        fullPath: `${prev.category.fullPath}/${style?.slug || ""}`,
+        style: styleName,
+        fullPath: buildCategoryPath(
+          selectedMainCategory,
+          selectedSubcategory,
+          selectedType,
+          selectedVariant,
+          styleId
+        ), // Build fresh path
       },
     }));
   };
@@ -446,7 +503,7 @@ const AddProduct = () => {
             type: "",
             variant: "",
             style: "",
-            fullPath: prev.category.fullPath.split("/")[0] || "",
+            fullPath: buildCategoryPath(selectedMainCategory), // Rebuild path with only main
           },
         }));
         break;
@@ -461,8 +518,10 @@ const AddProduct = () => {
             type: "",
             variant: "",
             style: "",
-            fullPath:
-              prev.category.fullPath.split("/").slice(0, 2).join("/") || "",
+            fullPath: buildCategoryPath(
+              selectedMainCategory,
+              selectedSubcategory
+            ), // Rebuild path with main + sub
           },
         }));
         break;
@@ -475,8 +534,11 @@ const AddProduct = () => {
             ...prev.category,
             variant: "",
             style: "",
-            fullPath:
-              prev.category.fullPath.split("/").slice(0, 3).join("/") || "",
+            fullPath: buildCategoryPath(
+              selectedMainCategory,
+              selectedSubcategory,
+              selectedType
+            ), // Rebuild path with main + sub + type
           },
         }));
         break;
@@ -487,8 +549,12 @@ const AddProduct = () => {
           category: {
             ...prev.category,
             style: "",
-            fullPath:
-              prev.category.fullPath.split("/").slice(0, 4).join("/") || "",
+            fullPath: buildCategoryPath(
+              selectedMainCategory,
+              selectedSubcategory,
+              selectedType,
+              selectedVariant
+            ), // Rebuild path with main + sub + type + variant
           },
         }));
         break;
