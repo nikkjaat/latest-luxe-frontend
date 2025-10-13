@@ -200,6 +200,7 @@ class ApiService {
 
   async searchProducts(params = {}) {
     const queryString = new URLSearchParams(params).toString();
+    console.log(queryString);
     return this.request(`/products/search?${queryString}`);
   }
 
@@ -209,7 +210,6 @@ class ApiService {
   }
 
   async addToCart(item) {
-    console.log(item);
     return this.request(`/customer/addtocart`, {
       method: "POST",
       body: JSON.stringify(item),
@@ -924,7 +924,7 @@ class ApiService {
   }
 
   // Search endpoints - Updated with better error handling
-  async searchProducts(searchParams = {}) {
+  async intelligentSearchProducts(searchParams = {}) {
     try {
       const queryString = new URLSearchParams(searchParams).toString();
       const endpoint = `/search/products${
@@ -970,9 +970,7 @@ class ApiService {
         return { success: true, suggestions: [] };
       }
 
-      const endpoint = `/search/suggestions?q=${encodeURIComponent(
-        query
-      )}&limit=8`;
+      const endpoint = `/search/suggestions?query=${encodeURIComponent(query)}`;
       return await this.request(endpoint);
     } catch (error) {
       console.error("All search suggestions failed:", error);
@@ -980,30 +978,23 @@ class ApiService {
     }
   }
 
-  async getSmartSearchSuggestions(query) {
+  async recordSearchClick(keyword, productId = null) {
     try {
-      if (!query || query.length < 2) {
-        return { success: true, suggestions: [] };
-      }
-
-      const endpoint = `/search/smart/suggestions?q=${encodeURIComponent(
-        query
-      )}&limit=10`;
-      return await this.request(endpoint);
+      return await this.request("/search/click", {
+        method: "POST",
+        body: JSON.stringify({ keyword, productId }),
+      });
     } catch (error) {
-      console.error("Smart search suggestions failed:", error);
-      return this.getFallbackSuggestions(query);
+      console.error("Record click error:", error);
     }
   }
 
-  // Get popular searches
   async getPopularSearches(type = "terms") {
     try {
-      const endpoint = `/search/popular?type=${type}&limit=5`;
+      const endpoint = `/search/popular?type=${type}`;
       return await this.request(endpoint);
     } catch (error) {
       console.error("Popular searches error:", error);
-      // Fallback to default popular searches
       return {
         success: true,
         data: [
@@ -1100,6 +1091,37 @@ class ApiService {
       success: true,
       suggestions: suggestions.slice(0, 8),
     };
+  }
+
+  async addSearchHistory(searchQuery) {
+    console.log(searchQuery);
+    return this.request("/search-history/search", {
+      method: "POST",
+      body: JSON.stringify({ searchQuery }),
+    });
+  }
+
+  async addProductViewHistory(productId) {
+    return this.request("/search-history/product-view", {
+      method: "POST",
+      body: JSON.stringify({ productId }),
+    });
+  }
+
+  async getSearchHistory(limit = 10) {
+    return this.request(`/search-history?limit=${limit}`);
+  }
+
+  async clearSearchHistory() {
+    return this.request("/search-history/clear", {
+      method: "DELETE",
+    });
+  }
+
+  async deleteHistoryItem(id) {
+    return this.request(`/search-history/${id}`, {
+      method: "DELETE",
+    });
   }
 }
 

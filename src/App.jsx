@@ -9,6 +9,7 @@ import Categories from "./components/Categories/Categories";
 import Testimonials from "./components/Testimonials";
 import Newsletter from "./components/Newsletter/Newsletter";
 import Footer from "./components/Footer/Footer";
+import SearchHistory from "./components/SearchHistory/SearchHistory";
 import LoginPage from "./pages/LoginPage/LoginPage";
 import SignupPage from "./pages/SignupPage/SignupPage";
 import VendorSignupPage from "./pages/VendorSignupPage";
@@ -46,12 +47,13 @@ import PromotionBanner from "./components/PromotionBanner";
 import LiveChat from "./components/LiveChat";
 import SearchResults from "./components/SearchResults";
 import SearchResultsPage from "./pages/SearchResultsPage/SearchResultsPage";
-import ProtectedAuthRoute from "../ProtectedAuthRoute/ProtectedAuthRoute";
+import ProtectedAuthRoute from "./ProtectedAuthRoute/ProtectedAuthRoute";
 
 function HomePage() {
   return (
     <>
       <Hero />
+      <SearchHistory />
       <FeaturedProducts />
       <Categories />
       <Testimonials />

@@ -30,8 +30,10 @@ import {
 import { useProducts } from "../context/ProductContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
+import { useAuth } from "../context/AuthContext";
 import ProductReviews from "../components/ProductReviews";
 import ComparisonTool from "../components/ComparisonTool";
+import apiService from "../services/api";
 import styles from "./ProductDetailPage.module.css";
 
 const ColorImageOption = ({ variant, isSelected, onSelect, isAutoScroll }) => {
@@ -169,7 +171,7 @@ const ProductDetailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  console.log(cartItems)
+  console.log(cartItems);
 
   // State coming from navigate
   const { keyword, filterCategory, name, itemCount } = location.state || {};
@@ -279,12 +281,20 @@ const ProductDetailPage = () => {
     }
   }, [selectedSize, selectedColorVariant, product]);
 
+  const { isAuthenticated } = useAuth();
+
   useEffect(() => {
     const foundProduct = products.find((p) => p._id === id);
     if (foundProduct) {
       setProduct(foundProduct);
+
+      if (isAuthenticated) {
+        apiService.addProductViewHistory(foundProduct._id).catch((err) => {
+          console.error("Failed to record product view:", err);
+        });
+      }
     }
-  }, [products, id]);
+  }, [products, id, isAuthenticated]);
 
   useEffect(() => {
     const handleScroll = () => {

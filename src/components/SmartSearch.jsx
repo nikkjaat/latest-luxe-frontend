@@ -12,6 +12,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { useAI } from "../context/AIContext";
+import { useAuth } from "../context/AuthContext";
 import VoiceSearch from "./VoiceSearch";
 import VisualSearch from "./VisualSearch";
 import apiService from "../services/api";
@@ -30,10 +31,10 @@ const SmartSearch = ({
   const [voiceText, setVoiceText] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const { getSmartSearchSuggestions } = useAI();
+  const { isAuthenticated } = useAuth();
   const searchRef = useRef(null);
   const inputRef = useRef(null);
   const suggestionsRef = useRef(null);
-
   // Load recent searches from localStorage
   useEffect(() => {
     const saved = localStorage.getItem("recentSearches");
@@ -168,7 +169,7 @@ const SmartSearch = ({
     }
   }, [selectedIndex]);
 
-  const handleSearch = (searchQuery) => {
+  const handleSearch = async (searchQuery) => {
     const finalQuery = searchQuery || query;
     if (finalQuery.trim()) {
       // Save to recent searches
@@ -179,6 +180,12 @@ const SmartSearch = ({
 
       setRecentSearches(updatedRecent);
       localStorage.setItem("recentSearches", JSON.stringify(updatedRecent));
+
+      if (isAuthenticated) {
+        await apiService.addSearchHistory(finalQuery.trim()).catch((err) => {
+          console.error("Failed to record search history:", err);
+        });
+      }
 
       // Execute search
       onSearch(finalQuery);
@@ -216,6 +223,7 @@ const SmartSearch = ({
     // You can implement visual search integration here
   };
 
+  // In your SmartSearch component, update the getSuggestionIcon function:
   const getSuggestionIcon = (type) => {
     switch (type) {
       case "product":
@@ -225,16 +233,87 @@ const SmartSearch = ({
       case "category":
       case "subcategory":
         return <Sparkles className="h-4 w-4 text-green-500" />;
-      case "contextual":
-        return <User className="h-4 w-4 text-orange-500" />;
       case "trending":
         return <TrendingUp className="h-4 w-4 text-orange-500" />;
+      case "popular":
+        return <TrendingUp className="h-4 w-4 text-red-500" />;
+      case "tag":
+        return <Tag className="h-4 w-4 text-indigo-500" />;
       case "recent":
         return <Clock className="h-4 w-4 text-gray-500" />;
       default:
         return <Search className="h-4 w-4 text-gray-500" />;
     }
   };
+
+  // And update the suggestion rendering to show analytics data:
+  {
+    suggestions.map((suggestion, index) => (
+      <button
+        key={index}
+        onClick={() => handleSuggestionClick(suggestion)}
+        className={`w-full flex items-center px-3 py-2.5 rounded-lg text-left transition-colors group ${
+          selectedIndex === index
+            ? "bg-blue-50 border-l-4 border-blue-500"
+            : "hover:bg-gray-50"
+        }`}
+      >
+        <div className="flex items-center flex-1">
+          {getSuggestionIcon(suggestion.type)}
+          <div className="ml-3 flex-1">
+            <span
+              className={`text-sm font-medium ${
+                selectedIndex === index
+                  ? "text-blue-700"
+                  : "text-gray-800 group-hover:text-blue-600"
+              }`}
+            >
+              {suggestion.display || suggestion.name}
+            </span>
+
+            {/* Show additional info for different types */}
+            {suggestion.type === "product" && suggestion.price && (
+              <div className="text-xs text-gray-500">${suggestion.price}</div>
+            )}
+
+            {suggestion.type === "trending" && (
+              <div className="text-xs text-orange-600 font-medium">
+                🔥 Trending
+              </div>
+            )}
+
+            {suggestion.type === "popular" && suggestion.count && (
+              <div className="text-xs text-gray-500">
+                {suggestion.count} searches
+              </div>
+            )}
+
+            {suggestion.type === "category" && suggestion.count && (
+              <div className="text-xs text-gray-500">
+                {suggestion.count} products
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Show popularity indicators */}
+        {suggestion.trending && (
+          <div className="flex items-center space-x-1">
+            <TrendingUp className="h-3 w-3 text-orange-500" />
+            <span className="text-xs text-orange-600 font-medium">
+              Trending
+            </span>
+          </div>
+        )}
+
+        {suggestion.count > 1000 && !suggestion.trending && (
+          <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+            Popular
+          </span>
+        )}
+      </button>
+    ));
+  }
 
   const clearSearch = () => {
     setQuery("");
@@ -374,8 +453,8 @@ const SmartSearch = ({
                           : "text-gray-500 bg-gray-100"
                       }`}
                     >
-                      {suggestion.count}{" "}
-                      {suggestion.type === "product" ? "matches" : "items"}
+                      search {suggestion.count}{" "}
+                      {suggestion.type === "product" ? "matches" : "times"}
                     </span>
                   )}
                 </button>

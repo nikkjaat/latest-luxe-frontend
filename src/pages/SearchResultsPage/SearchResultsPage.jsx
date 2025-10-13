@@ -60,24 +60,34 @@ const SearchResultsPage = () => {
     setLoading(true);
     try {
       const params = {
-        q: query,
+        query,
         page,
         limit: 12,
-        sortBy,
-        ...filters,
+        sortBy:
+          sortBy === "price-low"
+            ? "price_low"
+            : sortBy === "price-high"
+            ? "price_high"
+            : sortBy,
+        ...(filters.minPrice && { minPrice: filters.minPrice }),
+        ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
+        ...(filters.brand && { brand: filters.brand }),
+        ...(filters.category && { category: filters.category }),
+        ...(filters.minRating && { rating: filters.minRating }),
+        ...(filters.inStock && { inStock: "true" }),
       };
 
-      const response = await apiService.searchProducts(params);
+      const response = await apiService.intelligentSearchProducts(params);
 
       if (response.success) {
         setProducts(response.products || []);
-        setTotal(response.total || 0);
+        setTotal(response.pagination?.totalProducts || 0);
 
         if (response.filters) {
           setAvailableFilters({
             brands: response.filters.brands || [],
             categories: response.filters.categories || [],
-            priceRange: response.filters.priceRange?.[0] || {
+            priceRange: response.filters.priceRange || {
               minPrice: 0,
               maxPrice: 1000,
             },
@@ -214,9 +224,9 @@ const SearchResultsPage = () => {
                     className={styles.filterSelect}
                   >
                     <option value="">All Brands</option>
-                    {availableFilters.brands.map((brand) => (
-                      <option key={brand._id} value={brand._id}>
-                        {brand._id} ({brand.count})
+                    {availableFilters.brands.map((brand, index) => (
+                      <option key={brand + index} value={brand}>
+                        {brand}
                       </option>
                     ))}
                   </select>
@@ -234,9 +244,13 @@ const SearchResultsPage = () => {
                     className={styles.filterSelect}
                   >
                     <option value="">All Categories</option>
-                    {availableFilters.categories.map((cat) => (
-                      <option key={cat._id} value={cat._id}>
-                        {cat._id} ({cat.count})
+                    {availableFilters.categories.map((cat, index) => (
+                      <option
+                        key={`${cat._id?.main || "cat"}-${index}`}
+                        value={cat._id?.main}
+                      >
+                        {cat._id?.main} {cat._id?.sub && `> ${cat._id.sub}`} (
+                        {cat.count})
                       </option>
                     ))}
                   </select>

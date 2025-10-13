@@ -74,38 +74,64 @@ const CategoryNavbar = () => {
   };
 
   // NEW: Function to build search query from category hierarchy
+  // UPDATED: Function to build search query from category hierarchy
   const buildSearchQuery = (categoryHierarchy) => {
     const { main, sub, type, variant, style } = categoryHierarchy;
 
     const queryParts = [];
+
+    // Add all available category levels in order
     if (main) queryParts.push(main.toLowerCase());
     if (sub) queryParts.push(sub.toLowerCase());
     if (type) queryParts.push(type.toLowerCase());
-    if (variant) queryParts.push(variant.toLowerCase().replace(/\s+/g, "-"));
-    if (style) queryParts.push(style.toLowerCase().replace(/\s+/g, "-"));
+    if (variant) queryParts.push(variant.toLowerCase());
+    if (style) queryParts.push(style.toLowerCase());
 
-    return queryParts.join(" ");
+    // Join with spaces and clean up
+    return queryParts
+      .join(" ")
+      .replace(/\s+/g, " ") // Replace multiple spaces with single space
+      .trim();
   };
+
+  // Add this function to enrich categories with level information
+  const enrichCategoriesWithLevels = (categories, level = 1) => {
+    return categories.map((category) => ({
+      ...category,
+      level: level,
+      subcategories: category.subcategories
+        ? enrichCategoriesWithLevels(category.subcategories, level + 1)
+        : [],
+    }));
+  };
+
+  const enrichedCategories = enrichCategoriesWithLevels(categories || []);
 
   // NEW: Function to handle category navigation with search query
+  // UPDATED: Function to handle category navigation with search query
   const handleCategoryNavigation = (categoryData, parentHierarchy = {}) => {
-    const currentHierarchy = {
-      ...parentHierarchy,
-      [getHierarchyLevelKey(categoryData.level)]: categoryData.name,
-    };
+    // Build the complete hierarchy including current category
+    const currentHierarchy = getCategoryHierarchy(
+      categoryData,
+      categoryData.level || 1,
+      parentHierarchy
+    );
 
-    // Build search query from hierarchy
+    // Build search query from complete hierarchy
     const searchQuery = buildSearchQuery(currentHierarchy);
 
-    // Navigate to search with the query
-    navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    if (searchQuery.trim()) {
+      // Navigate to search with the query
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
 
-    setIsMobileMenuOpen(false);
-    setHoveredCategory(null);
-    setHoveredSubcategory({});
+      // Close menus
+      setIsMobileMenuOpen(false);
+      setHoveredCategory(null);
+      setHoveredSubcategory({});
+    }
   };
 
-  // NEW: Helper function to get hierarchy level key
+  // UPDATED: Helper function to get hierarchy level key
   const getHierarchyLevelKey = (level) => {
     const levelMap = {
       1: "main",
@@ -118,15 +144,40 @@ const CategoryNavbar = () => {
   };
 
   // NEW: Function to get full hierarchy path for a category
+  // UPDATED: Function to get full hierarchy path for a category
   const getCategoryHierarchy = (
     category,
     currentLevel = 1,
     parentHierarchy = {}
   ) => {
-    return {
+    const levelKey = getHierarchyLevelKey(currentLevel);
+
+    // Create new hierarchy with current category
+    const newHierarchy = {
       ...parentHierarchy,
-      [getHierarchyLevelKey(currentLevel)]: category.name,
+      [levelKey]: category.name,
     };
+
+    return newHierarchy;
+  };
+
+  // Add this to see the generated query in console
+  const debugCategoryNavigation = (categoryData, parentHierarchy) => {
+    const currentHierarchy = getCategoryHierarchy(
+      categoryData,
+      categoryData.level || 1,
+      parentHierarchy
+    );
+    const searchQuery = buildSearchQuery(currentHierarchy);
+
+    console.log("Category Navigation Debug:");
+    console.log("Category Data:", categoryData);
+    console.log("Parent Hierarchy:", parentHierarchy);
+    console.log("Current Hierarchy:", currentHierarchy);
+    console.log("Generated Query:", searchQuery);
+    console.log("URL:", `/search?q=${encodeURIComponent(searchQuery)}`);
+
+    return searchQuery;
   };
 
   const handleMouseEnter = (categoryId) => {
@@ -170,8 +221,13 @@ const CategoryNavbar = () => {
 
   // UPDATED: Handle main category click
   const handleCategoryClick = (category) => {
-    const hierarchy = getCategoryHierarchy(category, 1);
-    handleCategoryNavigation(category, hierarchy);
+    // Ensure main category has level 1
+    const categoryWithLevel = {
+      ...category,
+      level: 1,
+    };
+    const hierarchy = getCategoryHierarchy(categoryWithLevel, 1);
+    handleCategoryNavigation(categoryWithLevel, hierarchy);
   };
 
   const handleMobileCategoryToggle = (categoryId) => {
@@ -188,6 +244,7 @@ const CategoryNavbar = () => {
   };
 
   // UPDATED: Recursive function to render desktop dropdown with search query navigation
+  // UPDATED: Recursive function to render desktop dropdown with search query navigation
   const renderDesktopDropdown = (
     subcategories,
     categoryId,
@@ -202,8 +259,15 @@ const CategoryNavbar = () => {
         subcategory.subcategories && subcategory.subcategories.length > 0;
       const uniqueKey =
         subcategory._id || `${categoryId}-${currentLevel}-${index}`;
+
+      // Add level information to subcategory
+      const subcategoryWithLevel = {
+        ...subcategory,
+        level: currentLevel,
+      };
+
       const currentHierarchy = getCategoryHierarchy(
-        subcategory,
+        subcategoryWithLevel,
         currentLevel,
         parentHierarchy
       );
@@ -224,7 +288,7 @@ const CategoryNavbar = () => {
           <div
             className={styles.subcategoryItem}
             onClick={() =>
-              handleCategoryNavigation(subcategory, parentHierarchy)
+              handleCategoryNavigation(subcategoryWithLevel, parentHierarchy)
             }
             style={{ cursor: "pointer" }}
           >
@@ -257,7 +321,10 @@ const CategoryNavbar = () => {
                   <div
                     className={styles.viewAll}
                     onClick={() =>
-                      handleCategoryNavigation(subcategory, parentHierarchy)
+                      handleCategoryNavigation(
+                        subcategoryWithLevel,
+                        parentHierarchy
+                      )
                     }
                     style={{ cursor: "pointer" }}
                   >
@@ -299,8 +366,15 @@ const CategoryNavbar = () => {
       const currentPath = parentPath
         ? `${parentPath}-${uniqueKey}`
         : `${categoryId}-${uniqueKey}`;
+
+      // Add level information to subcategory
+      const subcategoryWithLevel = {
+        ...subcategory,
+        level: currentLevel,
+      };
+
       const currentHierarchy = getCategoryHierarchy(
-        subcategory,
+        subcategoryWithLevel,
         currentLevel,
         parentHierarchy
       );
@@ -312,7 +386,7 @@ const CategoryNavbar = () => {
             <div
               className={styles.mobileSubcategoryLink}
               onClick={() => {
-                handleCategoryNavigation(subcategory, parentHierarchy);
+                handleCategoryNavigation(subcategoryWithLevel, parentHierarchy);
                 setIsMobileMenuOpen(false);
               }}
               style={{ cursor: "pointer" }}
