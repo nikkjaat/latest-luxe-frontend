@@ -24,7 +24,8 @@ const SearchResultsPage = () => {
   const navigate = useNavigate();
   const query = searchParams.get("q") || "";
 
-  const [products, setProducts] = useState([]);
+  const [allProducts, setAllProducts] = useState([]); // All products from initial search
+  const [filteredProducts, setFilteredProducts] = useState([]); // Products after local filtering
   const [loading, setLoading] = useState(false);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -50,37 +51,35 @@ const SearchResultsPage = () => {
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
+  // Initial search when query changes
   useEffect(() => {
     if (query) {
-      searchProducts();
+      performSearch();
     }
-  }, [query, page, sortBy, filters]);
+  }, [query]);
 
-  const searchProducts = async () => {
+  // Local filtering when filters or sort change
+  useEffect(() => {
+    if (allProducts.length > 0) {
+      applyLocalFilters();
+    }
+  }, [filters, sortBy, allProducts]);
+
+  const performSearch = async () => {
     setLoading(true);
     try {
       const params = {
         query,
-        page,
-        limit: 12,
-        sortBy:
-          sortBy === "price-low"
-            ? "price_low"
-            : sortBy === "price-high"
-            ? "price_high"
-            : sortBy,
-        ...(filters.minPrice && { minPrice: filters.minPrice }),
-        ...(filters.maxPrice && { maxPrice: filters.maxPrice }),
-        ...(filters.brand && { brand: filters.brand }),
-        ...(filters.category && { category: filters.category }),
-        ...(filters.minRating && { rating: filters.minRating }),
-        ...(filters.inStock && { inStock: "true" }),
+        page: 1, // Always get first page for local filtering
+        limit: 100, // Get more products for local filtering
+        sortBy: "relevance", // We'll handle sorting locally
       };
 
       const response = await apiService.intelligentSearchProducts(params);
 
       if (response.success) {
-        setProducts(response.products || []);
+        setAllProducts(response.products || []);
+        setFilteredProducts(response.products || []);
         setTotal(response.pagination?.totalProducts || 0);
 
         if (response.filters) {
@@ -101,16 +100,101 @@ const SearchResultsPage = () => {
     }
   };
 
+  const applyLocalFilters = () => {
+    let filtered = [...allProducts];
+
+    // Apply price filter
+    if (filters.minPrice) {
+      filtered = filtered.filter(
+        (product) => product.price >= parseFloat(filters.minPrice)
+      );
+    }
+    if (filters.maxPrice) {
+      filtered = filtered.filter(
+        (product) => product.price <= parseFloat(filters.maxPrice)
+      );
+    }
+
+    // Apply brand filter
+    if (filters.brand) {
+      filtered = filtered.filter(
+        (product) =>
+          product.brand?.toLowerCase() === filters.brand.toLowerCase()
+      );
+    }
+
+    // Apply category filter
+    if (filters.category) {
+      filtered = filtered.filter(
+        (product) =>
+          product.category?.main?.toLowerCase() ===
+          filters.category.toLowerCase()
+      );
+    }
+
+    // Apply rating filter
+    if (filters.minRating) {
+      filtered = filtered.filter(
+        (product) => product.rating?.average >= parseFloat(filters.minRating)
+      );
+    }
+
+    // Apply stock filter
+    if (filters.inStock) {
+      filtered = filtered.filter((product) => product.stock > 0);
+    }
+
+    // Apply sorting
+    filtered = applySorting(filtered, sortBy);
+
+    setFilteredProducts(filtered);
+    setPage(1); // Reset to first page when filters change
+  };
+
+  const applySorting = (products, sortType) => {
+    const sorted = [...products];
+
+    switch (sortType) {
+      case "price-low":
+        return sorted.sort((a, b) => a.price - b.price);
+      case "price-high":
+        return sorted.sort((a, b) => b.price - a.price);
+      case "rating":
+        return sorted.sort(
+          (a, b) => (b.rating?.average || 0) - (a.rating?.average || 0)
+        );
+      case "newest":
+        return sorted.sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        );
+      case "popularity":
+        return sorted.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+      case "relevance":
+      default:
+        // For relevance, maintain the original search order
+        return sorted;
+    }
+  };
+
   const handleSearch = (newQuery) => {
     if (newQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(newQuery.trim())}`);
       setPage(1);
+      // Reset filters when new search is performed
+      setFilters({
+        minPrice: "",
+        maxPrice: "",
+        brand: "",
+        category: "",
+        minRating: "",
+        inStock: false,
+      });
     }
   };
 
   const handleFilterChange = (key, value) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
-    setPage(1);
+    // No API call here - local filtering will handle it
   };
 
   const handleClearFilters = () => {
@@ -123,6 +207,11 @@ const SearchResultsPage = () => {
       inStock: false,
     });
     setPage(1);
+  };
+
+  const handleSortChange = (newSortBy) => {
+    setSortBy(newSortBy);
+    // Sorting is handled in the local filtering effect
   };
 
   const handleWishlistToggle = (product) => {
@@ -148,6 +237,13 @@ const SearchResultsPage = () => {
     return product.colorVariants?.[0]?.images?.[0]?.url || "";
   };
 
+  // Pagination logic
+  const productsPerPage = 12;
+  const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
+  const startIndex = (page - 1) * productsPerPage;
+  const endIndex = startIndex + productsPerPage;
+  const currentProducts = filteredProducts.slice(startIndex, endIndex);
+
   return (
     <div className={styles.page}>
       <div className={styles.container}>
@@ -167,7 +263,10 @@ const SearchResultsPage = () => {
                 <span className={styles.query}>{query}</span>"
               </h1>
               <p className={styles.resultCount}>
-                Found {total} {total === 1 ? "product" : "products"}
+                Showing {currentProducts.length} of {filteredProducts.length}{" "}
+                products
+                {allProducts.length !== filteredProducts.length &&
+                  ` (filtered from ${allProducts.length} total)`}
               </p>
             </div>
           )}
@@ -297,12 +396,20 @@ const SearchResultsPage = () => {
               >
                 <SlidersHorizontal className={styles.icon} />
                 Filters
+                {(filters.minPrice ||
+                  filters.maxPrice ||
+                  filters.brand ||
+                  filters.category ||
+                  filters.minRating ||
+                  filters.inStock) && (
+                  <span className={styles.activeFiltersDot}></span>
+                )}
               </button>
 
               <div className={styles.controlsRight}>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
+                  onChange={(e) => handleSortChange(e.target.value)}
                   className={styles.sortSelect}
                 >
                   <option value="relevance">Most Relevant</option>
@@ -339,14 +446,27 @@ const SearchResultsPage = () => {
                 <Loader className={styles.spinner} />
                 <p>Searching products...</p>
               </div>
-            ) : products.length === 0 ? (
+            ) : currentProducts.length === 0 ? (
               <div className={styles.emptyState}>
                 <Search className={styles.emptyIcon} />
-                <h3 className={styles.emptyTitle}>No products found</h3>
+                <h3 className={styles.emptyTitle}>
+                  {allProducts.length === 0
+                    ? "No products found"
+                    : "No products match your filters"}
+                </h3>
                 <p className={styles.emptyText}>
-                  Try adjusting your search or filters to find what you're
-                  looking for.
+                  {allProducts.length === 0
+                    ? "Try adjusting your search to find what you're looking for."
+                    : "Try adjusting your filters to see more products."}
                 </p>
+                {allProducts.length > 0 && (
+                  <button
+                    onClick={handleClearFilters}
+                    className={styles.clearFiltersButton}
+                  >
+                    Clear All Filters
+                  </button>
+                )}
               </div>
             ) : (
               <>
@@ -357,7 +477,7 @@ const SearchResultsPage = () => {
                       : styles.productsList
                   }
                 >
-                  {products.map((product) => (
+                  {currentProducts.map((product) => (
                     <div
                       key={product._id}
                       className={
@@ -433,12 +553,21 @@ const SearchResultsPage = () => {
                               </span>
                             )}
                         </div>
+
+                        <button
+                          onClick={(e) => handleAddToCart(product, e)}
+                          className={styles.addToCartButton}
+                          disabled={product.stock === 0}
+                        >
+                          <ShoppingCart className={styles.cartIcon} />
+                          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                        </button>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {total > 12 && (
+                {totalPages > 1 && (
                   <div className={styles.pagination}>
                     <button
                       onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -448,11 +577,11 @@ const SearchResultsPage = () => {
                       Previous
                     </button>
                     <span className={styles.pageInfo}>
-                      Page {page} of {Math.ceil(total / 12)}
+                      Page {page} of {totalPages}
                     </span>
                     <button
                       onClick={() => setPage((p) => p + 1)}
-                      disabled={page >= Math.ceil(total / 12)}
+                      disabled={page >= totalPages}
                       className={styles.paginationButton}
                     >
                       Next
