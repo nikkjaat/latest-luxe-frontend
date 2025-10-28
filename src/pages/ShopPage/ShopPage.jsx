@@ -515,10 +515,10 @@ const ShopPage = () => {
 
                       <div className={styles.priceContainer}>
                         <div className={styles.priceGroup}>
-                          <span className={styles.price}>${product.price}</span>
+                          <span className={styles.price}>₹{product.price}</span>
                           {product.originalPrice && (
                             <span className={styles.originalPrice}>
-                              ${product.originalPrice}
+                              ₹{product.originalPrice}
                             </span>
                           )}
                           {product.colorVariants &&
@@ -606,7 +606,7 @@ const ShopPage = () => {
                         </Link>
                         <div className={styles.listPriceGroup}>
                           <span className={styles.listPrice}>
-                            ${product.price}
+                            ₹{product.price}
                           </span>
                           {product.originalPrice && (
                             <span className={styles.listOriginalPrice}>

@@ -154,7 +154,7 @@ const CartPage = () => {
                                   {item.color}
                                   {colorAdjustment > 0 && (
                                     <span className={styles.priceAdjustment}>
-                                      (+${colorAdjustment})
+                                      (+₹{colorAdjustment})
                                     </span>
                                   )}
                                 </span>
@@ -171,7 +171,7 @@ const CartPage = () => {
                                   {item.size}
                                   {sizeAdjustment > 0 && (
                                     <span className={styles.priceAdjustment}>
-                                      (+${sizeAdjustment})
+                                      (+₹{sizeAdjustment})
                                     </span>
                                   )}
                                 </span>
@@ -194,7 +194,7 @@ const CartPage = () => {
                           </div>
 
                           <p className={styles.productPrice}>
-                            ${finalPrice.toFixed(2)}/
+                            ₹{finalPrice.toFixed(2)}/
                           </p>
                         </div>
 
@@ -261,7 +261,7 @@ const CartPage = () => {
                     Subtotal ({totalItems} items)
                   </span>
                   <span className={styles.summaryValue}>
-                    ${totalPrice.toFixed(2)}
+                    ₹{totalPrice.toFixed(2)}
                   </span>
                 </div>
                 <div className={styles.summaryRow}>
@@ -270,19 +270,14 @@ const CartPage = () => {
                     Free
                   </span>
                 </div>
-                <div className={styles.summaryRow}>
-                  <span className={styles.summaryLabel}>Tax</span>
-                  <span className={styles.summaryValue}>
-                    ${(totalPrice * 0.08).toFixed(2)}
-                  </span>
-                </div>
+
                 <div
                   className={`${styles.summaryRow} ${styles.summaryDivider}`}
                 >
                   <div className={styles.summaryTotal}>
                     <span className={styles.totalLabel}>Total</span>
                     <span className={styles.totalValue}>
-                      ${(totalPrice * 1.08).toFixed(2)}
+                      ₹{(totalPrice ).toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -305,14 +300,14 @@ const CartPage = () => {
                 </div>
                 <div className={styles.feature}>
                   <Truck className={`${styles.featureIcon} ${styles.truck}`} />
-                  <span>Free shipping on orders over $100</span>
+                  <span>Free shipping on orders over ₹100</span>
                 </div>
               </div>
 
               <div className={styles.offerCard}>
                 <h3 className={styles.offerTitle}>Special Offer!</h3>
                 <p className={styles.offerText}>
-                  Add $50 more to get free express shipping and a complimentary
+                  Add ₹50 more to get free express shipping and a complimentary
                   gift wrap.
                 </p>
               </div>

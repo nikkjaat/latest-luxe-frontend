@@ -717,7 +717,7 @@ const CategoryProductsPage = () => {
             )}
             {(priceRange.min || priceRange.max) && (
               <span className={styles.filterTag}>
-                Price: ${priceRange.min || "0"} - ${priceRange.max || "∞"}
+                Price: ₹{priceRange.min || "0"} - ₹{priceRange.max || "∞"}
                 <button onClick={() => setPriceRange({ min: "", max: "" })}>
                   <X className={styles.removeIcon} />
                 </button>
@@ -799,11 +799,11 @@ const CategoryProductsPage = () => {
                             {product.originalPrice &&
                               product.originalPrice > product.price && (
                                 <span className={styles.originalPrice}>
-                                  ${product.originalPrice}
+                                  ₹{product.originalPrice}
                                 </span>
                               )}
                             <span className={styles.currentPrice}>
-                              ${product.price}
+                              ₹{product.price}
                             </span>
                             {product.colorVariants &&
                               product.colorVariants.length > 1 && (

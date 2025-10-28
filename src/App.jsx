@@ -32,6 +32,7 @@ import UserManagement from "./pages/admin/UserManagament/UserManagement";
 import ProductManagement from "./pages/admin/ProductManagement";
 import OrderManagement from "./pages/admin/OrderManagement";
 import OrdersPage from "./pages/OrderPage/OrderPage";
+import OrderDetailPage from "./pages/OrderDetailPage";
 import AnalyticsDashboard from "./pages/admin/AnalyticsDashboard/AnalyticsDashboard";
 import CategoryManagement from "./pages/admin/CategoryManagement/CategoryManagement";
 import SystemSettings from "./pages/admin/SystemSettings";
@@ -162,6 +163,14 @@ function App() {
             element={
               <RoleBasedRoute allowedRoles={["customer"]}>
                 <OrdersPage />
+              </RoleBasedRoute>
+            }
+          />
+          <Route
+            path="/order/:orderId"
+            element={
+              <RoleBasedRoute allowedRoles={["customer"]}>
+                <OrderDetailPage />
               </RoleBasedRoute>
             }
           />

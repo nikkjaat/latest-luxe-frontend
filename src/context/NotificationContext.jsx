@@ -1,87 +1,104 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import apiService from "../services/api";
+import { useAuth } from "./AuthContext";
 
 const NotificationContext = createContext(undefined);
 
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (context === undefined) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 };
 
 export const NotificationProvider = ({ children }) => {
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      type: 'order',
-      title: 'New Order Received',
-      message: 'Order #ORD-001 has been placed',
-      time: '2 minutes ago',
-      read: false,
-      userId: 'vendor_1'
-    },
-    {
-      id: '2',
-      type: 'vendor',
-      title: 'New Vendor Application',
-      message: 'Tech Gadgets Pro has applied to become a vendor',
-      time: '1 hour ago',
-      read: false,
-      userId: 'admin'
-    },
-    {
-      id: '3',
-      type: 'promotion',
-      title: 'Flash Sale Started',
-      message: '50% off on selected items - Limited time!',
-      time: '3 hours ago',
-      read: true,
-      userId: 'all'
+  const { isAuthenticated, user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchNotifications = async () => {
+    if (!isAuthenticated) return;
+
+    try {
+      setLoading(true);
+      const response = await apiService.getNotifications();
+      if (response.success) {
+        setNotifications(response.notifications || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    } finally {
+      setLoading(false);
     }
-  ]);
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000);
+      return () => clearInterval(interval);
+    } else {
+      setNotifications([]);
+    }
+  }, [isAuthenticated]);
 
   const addNotification = (notification) => {
     const newNotification = {
       ...notification,
-      id: Date.now().toString(),
-      time: 'Just now',
-      read: false
+      _id: Date.now().toString(),
+      createdAt: new Date().toISOString(),
+      isRead: false,
     };
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications((prev) => [newNotification, ...prev]);
   };
 
-  const markAsRead = (id) => {
-    setNotifications(prev => prev.map(notif => 
-      notif.id === id ? { ...notif, read: true } : notif
-    ));
+  const markAsRead = async (id) => {
+    try {
+      await apiService.markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif._id === id ? { ...notif, isRead: true } : notif
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await apiService.markAllNotificationsAsRead();
+      setNotifications((prev) =>
+        prev.map((notif) => ({ ...notif, isRead: true }))
+      );
+    } catch (error) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
   };
 
-  const getUnreadCount = (userId) => {
-    return notifications.filter(notif => 
-      !notif.read && (notif.userId === userId || notif.userId === 'all')
-    ).length;
+  const getUnreadCount = () => {
+    return notifications.filter((notif) => !notif.isRead).length;
   };
 
-  const getUserNotifications = (userId) => {
-    return notifications.filter(notif => 
-      notif.userId === userId || notif.userId === 'all'
-    );
+  const refreshNotifications = () => {
+    fetchNotifications();
   };
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      addNotification,
-      markAsRead,
-      markAllAsRead,
-      getUnreadCount,
-      getUserNotifications
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        loading,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        getUnreadCount,
+        refreshNotifications,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

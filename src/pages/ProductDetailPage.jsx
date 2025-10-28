@@ -837,8 +837,10 @@ const ProductDetailPage = () => {
 
   const handleBuyNow = () => {
     if (!validateSelection()) return;
-    addToCart({
-      id: product._id,
+
+    const buyNowItem = {
+      productId: product,
+      _id: product._id,
       name: product.name,
       price: currentPrice,
       image:
@@ -848,8 +850,9 @@ const ProductDetailPage = () => {
       quantity,
       color: selectedColor,
       size: selectedSize,
-    });
-    navigate("/checkout");
+    };
+
+    navigate("/checkout", { state: { buyNowItems: [buyNowItem] } });
   };
 
   const handleWishlistToggle = () =>
@@ -981,16 +984,16 @@ const ProductDetailPage = () => {
 
               <div className={styles.priceContainer}>
                 <span className={styles.currentPrice}>
-                  ${currentPrice.toFixed(2)}
+                  ₹{currentPrice.toFixed(2)}
                 </span>
                 {product.originalPrice &&
                   product.originalPrice > currentPrice && (
                     <>
                       <span className={styles.originalPrice}>
-                        ${product.originalPrice}
+                        ₹{product.originalPrice}
                       </span>
                       <span className={styles.discountBadge}>
-                        Save $
+                        Save ₹
                         {(product.originalPrice - currentPrice).toFixed(2)}
                       </span>
                     </>
@@ -1347,7 +1350,7 @@ const ProductDetailPage = () => {
                     </h3>
                     <div className={styles.relatedProductPriceContainer}>
                       <span className={styles.relatedProductPrice}>
-                        ${relatedProduct.price}
+                        ₹{relatedProduct.price}
                       </span>
                       <div className={styles.relatedProductRating}>
                         <Star className={styles.relatedStar} />

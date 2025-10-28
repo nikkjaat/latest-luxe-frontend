@@ -843,7 +843,7 @@ class ApiService {
   // Vendor specific endpoints
   async getVendorOrders(params = {}) {
     const queryString = new URLSearchParams(params).toString();
-    return this.request(`/vendor/orders?${queryString}`);
+    return this.request(`/orders/vendor/orders?${queryString}`);
   }
 
   async getVendorAnalytics(params = {}) {
@@ -865,6 +865,7 @@ class ApiService {
   }
 
   async markNotificationAsRead(id) {
+    console.log(id)
     return this.request(`/notifications/${id}/read`, {
       method: "PUT",
     });
@@ -1121,6 +1122,56 @@ class ApiService {
   async deleteHistoryItem(id) {
     return this.request(`/search-history/${id}`, {
       method: "DELETE",
+    });
+  }
+
+  async createRazorpayOrder(amount, currency = "INR") {
+    return this.request("/payment/create-order", {
+      method: "POST",
+      body: JSON.stringify({ amount, currency }),
+    });
+  }
+
+  async verifyRazorpayPayment(paymentData) {
+    return this.request("/payment/verify", {
+      method: "POST",
+      body: JSON.stringify(paymentData),
+    });
+  }
+
+  async createOrderFromPayment(orderData) {
+    return this.request("/orders/create", {
+      method: "POST",
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  async createSingleItemOrder(orderData) {
+    return this.request("/orders/create-single", {
+      method: "POST",
+      body: JSON.stringify(orderData),
+    });
+  }
+
+  async getMyOrders() {
+    return this.request("/orders/my-orders");
+  }
+
+  async getOrderDetails(orderId) {
+    return this.request(`/orders/${orderId}`);
+  }
+
+  async cancelOrder(orderId, cancelReason) {
+    return this.request(`/orders/${orderId}/cancel`, {
+      method: "PUT",
+      body: JSON.stringify({ cancelReason }),
+    });
+  }
+
+  async createCODOrder(orderData) {
+    return this.request("/payment/create-cod-order", {
+      method: "POST",
+      body: JSON.stringify(orderData),
     });
   }
 }

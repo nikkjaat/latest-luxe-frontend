@@ -1,4 +1,4 @@
-/* CategoryNavbar.module.css */
+/* CategoryNavbar.module.css - Enhanced Mobile & Tablet Design */
 
 .navbar {
   background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
@@ -7,8 +7,6 @@
   top: 0px;
   z-index: 100;
   transition: all 0.3s ease;
-  display: flex;
-  gap: 1em;
 }
 
 .container {
@@ -80,7 +78,7 @@
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
   margin-top: 8px;
   animation: dropdownSlideIn 0.2s ease;
-  z-index: 11; /* Increased z-index */
+  z-index: 11;
 }
 
 @keyframes dropdownSlideIn {
@@ -139,10 +137,9 @@
   gap: 8px;
 }
 
-/* Subcategory Wrapper - CRITICAL FIX */
 .subcategoryWrapper {
   position: relative;
-  z-index: 12; /* Establish stacking context */
+  z-index: 12;
 }
 
 .subcategoryItem {
@@ -185,7 +182,6 @@
   color: #6b7280;
 }
 
-/* Subcategory Header */
 .subcategoryHeader {
   display: flex;
   align-items: center;
@@ -204,21 +200,19 @@
   transform: translateX(2px);
 }
 
-/* Nested Dropdown - CRITICAL FIXES */
 .nestedDropdown {
   position: absolute;
   left: 100%;
-  top: -8px; /* Align with parent item */
+  top: -8px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   min-width: 250px;
-  z-index: 13; /* Higher than parent dropdown */
+  z-index: 13;
   animation: slideInRight 0.2s ease-out;
 }
 
-/* Ensure nested dropdowns don't get cut off */
 .subcategoryWrapper:hover .nestedDropdown {
   display: block;
 }
@@ -226,7 +220,6 @@
 .nestedDropdownContent {
   padding: 16px;
   max-height: 400px;
-  /* overflow-y: auto; */
 }
 
 .nestedDropdownHeader {
@@ -248,7 +241,6 @@
   gap: 4px;
 }
 
-/* Animation for nested dropdown */
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -260,36 +252,47 @@
   }
 }
 
-/* Mobile Styles */
+/* Mobile Menu Button - Enhanced Design */
 .mobileMenuButton {
   display: none;
   align-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 8px;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
   color: white;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
   width: 100%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .mobileMenuButton:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.25);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
+.mobileMenuButton:active {
+  transform: translateY(0);
+}
+
+/* Mobile Overlay - Improved Animation */
 .mobileMenuOverlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 112; /* Higher than navbar */
-  animation: fadeIn 0.2s ease;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 112;
+  animation: fadeIn 0.3s ease;
 }
 
 @keyframes fadeIn {
@@ -301,104 +304,148 @@
   }
 }
 
+/* Mobile Menu - Premium Design */
 .mobileMenu {
   position: fixed;
   top: 0;
   left: 0;
   bottom: 0;
-  width: 85%;
-  max-width: 400px;
-  background: white;
-  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  width: 320px;
+  max-width: 85vw;
+  background: linear-gradient(to bottom, #ffffff 0%, #f9fafb 100%);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
-  animation: slideInLeft 0.3s ease;
+  animation: slideInLeft 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
-  z-index: 17; /* Higher than overlay */
+  z-index: 113;
 }
 
 @keyframes slideInLeft {
   from {
     transform: translateX(-100%);
+    opacity: 0;
   }
   to {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 
+/* Mobile Header - Modern Design */
 .mobileMenuHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 20px 24px;
-  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  padding: 24px 20px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%);
   color: white;
   flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .mobileMenuHeader h2 {
   margin: 0;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .closeButton {
-  background: none;
+  background: rgba(255, 255, 255, 0.15);
   border: none;
   color: white;
   cursor: pointer;
-  padding: 8px;
+  padding: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 6px;
+  border-radius: 10px;
   transition: all 0.2s;
+  backdrop-filter: blur(10px);
 }
 
 .closeButton:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(1.05);
 }
 
+.closeButton:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Content - Enhanced Scrolling */
 .mobileMenuContent {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 20px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
 
+.mobileMenuContent::-webkit-scrollbar {
+  width: 6px;
+}
+
+.mobileMenuContent::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.mobileMenuContent::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+
+.mobileMenuContent::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Mobile Categories - Card Design */
 .mobileCategoryWrapper {
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .mobileCategoryItem {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #f9fafb;
-  border-radius: 10px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
   overflow: hidden;
-  transition: all 0.2s;
+  transition: all 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .mobileCategoryItem:hover {
-  background: #f3f4f6;
+  background: #f8fafc;
+  border-color: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+  transform: translateX(4px);
 }
 
 .mobileCategoryLink {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
+  gap: 14px;
+  padding: 16px 18px;
   flex: 1;
   text-decoration: none;
-  color: #1a1a1a;
+  color: #111827;
   font-size: 15px;
   font-weight: 600;
+  transition: color 0.2s;
+}
+
+.mobileCategoryLink svg {
+  color: #2563eb;
+  flex-shrink: 0;
 }
 
 .expandButton {
-  background: none;
+  background: transparent;
   border: none;
-  padding: 14px 16px;
+  padding: 16px 18px;
   cursor: pointer;
   color: #6b7280;
   display: flex;
@@ -408,125 +455,171 @@
 }
 
 .expandButton:hover {
-  color: #1a1a1a;
+  color: #2563eb;
+  background: #eff6ff;
 }
 
 .expandButton svg {
-  transition: transform 0.2s ease;
+  transition: transform 0.3s ease;
 }
 
 .expandButton .rotated {
   transform: rotate(180deg);
 }
 
-/* Mobile Subcategories */
+/* Mobile Subcategories - Nested Design */
 .mobileSubcategories {
-  padding: 8px 0 8px 16px;
-  animation: expandDown 0.2s ease;
+  padding: 12px 0 12px 20px;
+  margin-top: 8px;
+  animation: expandDown 0.3s ease;
 }
 
 @keyframes expandDown {
   from {
     opacity: 0;
-    max-height: 0;
+    transform: translateY(-10px);
   }
   to {
     opacity: 1;
-    max-height: 500px;
+    transform: translateY(0);
   }
+}
+
+.mobileSubcategoryWrapper {
+  margin-bottom: 8px;
 }
 
 .mobileSubcategoryItem {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 16px;
-  text-decoration: none;
-  border-radius: 8px;
-  margin-bottom: 6px;
-  transition: all 0.2s;
+  justify-content: space-between;
+  padding: 14px 16px;
   background: white;
   border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  transition: all 0.2s;
+  cursor: pointer;
 }
 
 .mobileSubcategoryItem:hover {
   background: #eff6ff;
-  border-color: #2563eb;
+  border-color: #3b82f6;
   transform: translateX(4px);
 }
 
+.mobileSubcategoryLink {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
 .subcategoryIcon {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  min-width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-/* Level 3 - Sub Subcategories */
+.mobileSubcategoryLink .subcategoryInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.mobileSubcategoryLink .subcategoryInfo span:first-child {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 2px;
+}
+
+/* Level 3 - Enhanced Nested Style */
 .mobileSubSubcategories {
-  margin-left: 25px;
-  border-left: 2px solid #e5e7eb;
-  padding-left: 12px;
+  margin-left: 16px;
+  padding-left: 16px;
+  border-left: 3px solid #e5e7eb;
+  margin-top: 8px;
 }
 
 .mobileSubSubcategories .mobileSubcategoryItem {
-  padding: 10px 12px;
-  font-size: 14px;
+  padding: 12px 14px;
+  border-radius: 8px;
 }
 
 .mobileSubSubcategories .subcategoryIcon {
-  width: 22px;
-  height: 22px;
+  min-width: 28px;
+  height: 28px;
   font-size: 11px;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
 }
 
 /* Level 4 - Variant Categories */
 .mobileSubVariantCategories {
-  margin-left: 20px;
-  border-left: 2px solid #e5e7eb;
+  margin-left: 12px;
   padding-left: 12px;
+  border-left: 2px solid #f3f4f6;
+  margin-top: 6px;
 }
 
 .mobileSubVariantCategories .mobileSubcategoryItem {
-  padding: 8px 12px;
-  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 6px;
 }
 
 .mobileSubVariantCategories .subcategoryIcon {
-  width: 20px;
-  height: 20px;
+  min-width: 24px;
+  height: 24px;
   font-size: 10px;
   background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3);
+}
+
+.mobileSubVariantCategories
+  .mobileSubcategoryLink
+  .subcategoryInfo
+  span:first-child {
+  font-size: 13px;
 }
 
 /* Level 5 - Style Categories */
 .mobileSubStyleCategories {
-  margin-left: 15px;
-  border-left: 1px solid #f3f4f6;
+  margin-left: 10px;
   padding-left: 10px;
+  border-left: 2px solid #f9fafb;
+  margin-top: 4px;
 }
 
 .mobileSubStyleCategories .mobileSubcategoryItem {
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 6px;
 }
 
 .mobileSubStyleCategories .subcategoryIcon {
-  width: 18px;
-  height: 18px;
+  min-width: 20px;
+  height: 20px;
   font-size: 9px;
   background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.3);
 }
 
-/* Enhanced hover states for better UX */
+.mobileSubStyleCategories
+  .mobileSubcategoryLink
+  .subcategoryInfo
+  span:first-child {
+  font-size: 12px;
+}
+
+/* Enhanced hover states */
 .subcategoryWrapper:hover > .subcategoryItem {
   background-color: #f8fafc;
 }
@@ -535,7 +628,7 @@
   background-color: #f1f5f9;
 }
 
-/* Scrollbar styling for nested dropdowns */
+/* Scrollbar styling */
 .nestedDropdownContent::-webkit-scrollbar {
   width: 4px;
 }
@@ -550,11 +643,7 @@
   border-radius: 2px;
 }
 
-.nestedDropdownContent::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
-}
-
-/* Responsive Design */
+/* Tablet & Mobile Responsive Design */
 @media (max-width: 1024px) {
   .desktopNav {
     display: none;
@@ -568,82 +657,168 @@
     position: sticky;
     top: 0;
   }
+
+  .container {
+    padding: 12px 20px;
+  }
 }
 
 @media (max-width: 768px) {
   .container {
-    padding: 0 16px;
+    padding: 10px 16px;
+  }
+
+  .mobileMenuButton {
+    padding: 12px 18px;
+    font-size: 14px;
+    border-radius: 10px;
   }
 
   .mobileMenu {
-    width: 90%;
+    width: 280px;
   }
 
-  .dropdown {
-    width: 10em;
-    left: 50%;
-    transform: translateX(-50%);
+  .mobileMenuHeader {
+    padding: 20px 18px;
   }
 
-  .mobileSubVariantCategories {
-    margin-left: 15px;
-    padding-left: 10px;
+  .mobileMenuHeader h2 {
+    font-size: 20px;
   }
 
-  .mobileSubStyleCategories {
-    margin-left: 10px;
-    padding-left: 8px;
+  .mobileMenuContent {
+    padding: 16px 14px;
+  }
+
+  .mobileCategoryItem {
+    border-radius: 10px;
+  }
+
+  .mobileCategoryLink {
+    padding: 14px 16px;
+    font-size: 14px;
+  }
+
+  .mobileSubcategories {
+    padding-left: 16px;
   }
 }
 
 @media (max-width: 640px) {
-  .dropdown {
-    width: 10em;
-    max-width: calc(100vw - 32px);
-    left: 16px;
-    right: 16px;
-    transform: none;
+  .container {
+    padding: 10px 12px;
   }
 
-  .subcategoryGrid {
-    max-height: 250px;
+  .mobileMenuButton {
+    padding: 10px 16px;
+    font-size: 13px;
+    gap: 8px;
+    border-radius: 8px;
   }
 
-  .dropdownContent {
-    padding: 12px;
-  }
-
-  .dropdownHeader h3 {
-    font-size: 14px;
+  .mobileMenu {
+    width: 90vw;
+    max-width: 320px;
   }
 
   .mobileMenuHeader {
-    padding: 16px 20px;
+    padding: 18px 16px;
   }
 
   .mobileMenuHeader h2 {
     font-size: 18px;
   }
 
+  .closeButton {
+    padding: 8px;
+  }
+
   .mobileMenuContent {
-    padding: 12px;
+    padding: 14px 12px;
+  }
+
+  .mobileCategoryWrapper {
+    margin-bottom: 10px;
+  }
+
+  .mobileCategoryItem {
+    border-radius: 8px;
+  }
+
+  .mobileCategoryLink {
+    padding: 12px 14px;
+    gap: 12px;
+    font-size: 13px;
+  }
+
+  .expandButton {
+    padding: 12px 14px;
+  }
+
+  .mobileSubcategories {
+    padding-left: 12px;
+  }
+
+  .mobileSubcategoryItem {
+    padding: 12px 14px;
+    border-radius: 8px;
+  }
+
+  .subcategoryIcon {
+    min-width: 28px;
+    height: 28px;
+    font-size: 11px;
   }
 }
 
 @media (max-width: 480px) {
   .container {
-    padding: 0 12px;
+    padding: 8px 12px;
   }
 
   .mobileMenuButton {
     padding: 10px 14px;
-    font-size: 13px;
+    font-size: 12px;
   }
 
   .mobileMenu {
     width: 100%;
     max-width: 100%;
   }
+
+  .mobileMenuHeader {
+    padding: 16px 14px;
+  }
+
+  .mobileMenuHeader h2 {
+    font-size: 17px;
+  }
+
+  .mobileMenuContent {
+    padding: 12px 10px;
+  }
+
+  .mobileCategoryLink {
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  .expandButton {
+    padding: 12px;
+  }
+
+  .mobileSubcategoryItem {
+    padding: 10px 12px;
+  }
+
+  .mobileSubcategoryLink .subcategoryInfo span:first-child {
+    font-size: 13px;
+  }
 }
 
-
+/* Smooth scroll behavior for mobile menu */
+@media (prefers-reduced-motion: no-preference) {
+  .mobileMenuContent {
+    scroll-behavior: smooth;
+  }
+}

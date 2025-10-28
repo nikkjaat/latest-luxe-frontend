@@ -321,7 +321,7 @@ const NotificationCenter = () => {
                       <div className="flex space-x-2">
                         {!notification.read && (
                           <button
-                            onClick={() => markAsRead(notification.id)}
+                            onClick={() => markAsRead(notification._id)}
                             className="text-blue-600 hover:text-blue-800"
                             title="Mark as read"
                           >

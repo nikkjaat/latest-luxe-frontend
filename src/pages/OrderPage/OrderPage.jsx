@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Package,
   Truck,
@@ -11,30 +11,36 @@ import {
   ChevronRight,
   Search,
   Filter,
+  RefreshCw,
 } from "lucide-react";
+import apiService from "../../services/api";
 import styles from "./OrdersPage.module.css";
 
 const OrdersPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const [orders, setOrders] = useState([]);
   const [filteredOrders, setFilteredOrders] = useState([]);
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const response = await apiService.getMyOrders();
+      if (response.success) {
+        setOrders(response.orders || []);
+      }
+    } catch (error) {
+      console.error("Failed to fetch orders:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const storedOrders = JSON.parse(localStorage.getItem("userOrders") || "[]");
-    const newOrder = location.state?.newOrder;
-
-    if (newOrder) {
-      const updatedOrders = [newOrder, ...storedOrders];
-      localStorage.setItem("userOrders", JSON.stringify(updatedOrders));
-      setOrders(updatedOrders);
-      window.history.replaceState({}, document.title);
-    } else {
-      setOrders(storedOrders);
-    }
-  }, [location.state]);
+    fetchOrders();
+  }, []);
 
   useEffect(() => {
     let filtered = orders;
@@ -45,7 +51,7 @@ const OrdersPage = () => {
 
     if (searchQuery) {
       filtered = filtered.filter((order) =>
-        order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
+        order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
@@ -90,6 +96,15 @@ const OrdersPage = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <RefreshCw className={styles.loadingIcon} />
+        <p>Loading your orders...</p>
+      </div>
+    );
+  }
+
   if (orders.length === 0) {
     return (
       <div className={styles.emptyContainer}>
@@ -125,6 +140,11 @@ const OrdersPage = () => {
             />
           </div>
 
+          <button onClick={fetchOrders} className={styles.refreshButton}>
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+
           <div className={styles.filterButtons}>
             <button
               onClick={() => setSelectedFilter("all")}
@@ -141,6 +161,14 @@ const OrdersPage = () => {
               }`}
             >
               Pending
+            </button>
+            <button
+              onClick={() => setSelectedFilter("confirmed")}
+              className={`${styles.filterButton} ${
+                selectedFilter === "confirmed" ? styles.active : ""
+              }`}
+            >
+              Confirmed
             </button>
             <button
               onClick={() => setSelectedFilter("processing")}
@@ -171,10 +199,12 @@ const OrdersPage = () => {
 
         <div className={styles.ordersList}>
           {filteredOrders.map((order) => (
-            <div key={order.orderNumber} className={styles.orderCard}>
+            <div key={order._id} className={styles.orderCard}>
               <div className={styles.orderHeader}>
                 <div className={styles.orderInfo}>
-                  <h3 className={styles.orderNumber}>{order.orderNumber}</h3>
+                  <h3 className={styles.orderNumber}>
+                    {order.orderNumber || `Order ${order._id.slice(-8)}`}
+                  </h3>
                   <div className={styles.orderMeta}>
                     <Calendar size={16} />
                     <span>
@@ -201,14 +231,13 @@ const OrdersPage = () => {
 
               <div className={styles.orderItems}>
                 {order.items.slice(0, 3).map((item, index) => {
+                  const product = item.product || {};
                   const itemImage =
-                    item.productId?.colorVariants?.[0]?.images?.[0]?.url ||
-                    item.productId?.images?.[0]?.url ||
+                    product.colorVariants?.[0]?.images?.[0]?.url ||
                     item.image ||
                     "https://via.placeholder.com/80";
 
-                  const itemName =
-                    item.productId?.name || item.name || "Product";
+                  const itemName = item.name || product.name || "Product";
 
                   return (
                     <div key={index} className={styles.orderItem}>
@@ -220,9 +249,8 @@ const OrdersPage = () => {
                       <div className={styles.itemDetails}>
                         <p className={styles.itemName}>{itemName}</p>
                         <p className={styles.itemMeta}>
-                          {item.color && <span>Color: {item.color}</span>}
-                          {item.size && <span> • Size: {item.size}</span>}
-                          <span> • Qty: {item.quantity || 1}</span>
+                          <span>Qty: {item.quantity || 1}</span>
+                          <span> • ${item.price.toFixed(2)}</span>
                         </p>
                       </div>
                     </div>
@@ -239,14 +267,14 @@ const OrdersPage = () => {
                 <div className={styles.orderAddress}>
                   <MapPin size={16} />
                   <span>
-                    {order.address?.address}, {order.address?.city},{" "}
-                    {order.address?.state} {order.address?.zipCode}
+                    {order.shippingAddress?.street},{" "}
+                    {order.shippingAddress?.city}
                   </span>
                 </div>
                 <div className={styles.orderTotal}>
                   <span className={styles.totalLabel}>Total:</span>
                   <span className={styles.totalAmount}>
-                    ${order.total.toFixed(2)}
+                    ${order.totalAmount.toFixed(2)}
                   </span>
                 </div>
               </div>
@@ -255,24 +283,20 @@ const OrdersPage = () => {
                 <div className={styles.paymentInfo}>
                   <span className={styles.paymentLabel}>Payment:</span>
                   <span className={styles.paymentMethod}>
-                    {order.paymentMethod.toUpperCase()}
+                    {order.paymentMethod === "razorpay" ? "Card/UPI" : "COD"}
                   </span>
                   <span
                     className={`${styles.paymentStatus} ${
-                      order.paymentStatus === "completed"
+                      order.paymentStatus === "paid"
                         ? styles.paid
                         : styles.pending
                     }`}
                   >
-                    {order.paymentStatus === "completed" ? "Paid" : "Pending"}
+                    {order.paymentStatus === "paid" ? "Paid" : "Pending"}
                   </span>
                 </div>
                 <button
-                  onClick={() =>
-                    navigate(`/order/${order.orderNumber}`, {
-                      state: { order },
-                    })
-                  }
+                  onClick={() => navigate(`/order/${order._id}`)}
                   className={styles.detailsButton}
                 >
                   View Details

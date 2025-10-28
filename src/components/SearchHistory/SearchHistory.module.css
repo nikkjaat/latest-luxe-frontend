@@ -265,3 +265,38 @@
     width: 240px;
   }
 }
+
+/* Add these styles to your SearchHistory.module.css */
+
+.itemMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 4px;
+}
+
+.timeAgo {
+  font-size: 11px;
+  color: #666;
+  font-weight: 400;
+}
+
+.searchContent,
+.productContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.viewLabel {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: #666;
+}
+
+.searchLabel {
+  font-size: 11px;
+  color: #666;
+  font-weight: 500;
+}

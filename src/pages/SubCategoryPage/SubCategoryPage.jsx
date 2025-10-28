@@ -546,7 +546,7 @@ const SubCategoryPage = () => {
                     <div className={styles.productImageContainer}>
                       <img
                         src={
-                          product.images?.[0]?.url ||
+                          product.colorVariants[0].images?.[0]?.url ||
                           product.image ||
                           "https://via.placeholder.com/300"
                         }
@@ -589,7 +589,7 @@ const SubCategoryPage = () => {
                         {product.rating && (
                           <div className={styles.rating}>
                             <Star className={styles.starIcon} />
-                            <span>{product?.rating?.toFixed(1) || "4.9"}</span>
+                            {/* <span>{product?.rating?.toFixed(1) || "4.9"}</span> */}
                           </div>
                         )}
                         <div className={styles.price}>
@@ -604,14 +604,6 @@ const SubCategoryPage = () => {
                           </span>
                         </div>
                       </div>
-
-                      <button
-                        className={styles.addToCartButton}
-                        onClick={() => handleAddToCart(product)}
-                      >
-                        <ShoppingCart className={styles.cartIcon} />
-                        Add to Cart
-                      </button>
                     </div>
                   </div>
                 );

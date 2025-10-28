@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { useCart } from "../../context/CartContext";
 import { useAuth } from "../../context/AuthContext";
+import apiService from "../../services/api";
 import styles from "./CheckoutPage.module.css";
 
 // Mock user addresses - in real app, this would come from user context/API
@@ -67,7 +68,7 @@ const CheckoutPage = () => {
     upiId: "",
   });
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("card");
+  const [paymentMethod, setPaymentMethod] = useState("razorpay");
   const [showAddressPopup, setShowAddressPopup] = useState(false);
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [addresses, setAddresses] = useState(mockAddresses);
@@ -209,6 +210,16 @@ const CheckoutPage = () => {
     setIsEditingAddress(false);
   };
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -217,54 +228,146 @@ const CheckoutPage = () => {
       return;
     }
 
-    if (
-      paymentMethod === "card" &&
-      (!formData.cardNumber ||
-        !formData.cardName ||
-        !formData.expiryDate ||
-        !formData.cvv)
-    ) {
-      alert("Please fill all card details");
-      return;
-    }
-
-    if (paymentMethod === "upi" && !formData.upiId) {
-      alert("Please enter UPI ID");
-      return;
-    }
-
-    if (
-      ["gpay", "phonepe", "paytm"].includes(paymentMethod) &&
-      !formData.phone
-    ) {
-      alert("Please enter phone number for payment");
-      return;
-    }
-
     setIsProcessing(true);
 
-    const orderData = {
-      orderNumber: `ORD-${Date.now()}`,
-      items: checkoutItems,
-      total: total + (paymentMethod === "cod" ? 20 : 0),
-      address: addresses.find((a) => a.id === selectedAddress),
-      paymentMethod,
-      paymentStatus: paymentMethod === "cod" ? "pending" : "completed",
-      status: "pending",
-      userId: user?.id,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      const selectedAddr = addresses.find((a) => a.id === selectedAddress);
+      const finalTotal = total + (paymentMethod === "cod" ? 20 : 0);
 
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+      const orderItems = checkoutItems.map((item) => ({
+        productId: item.productId?._id || item.productId,
+        product: item.productId?._id || item.productId,
+        color: item.color,
+        size: item.size,
+        quantity: item.quantity,
+        colorVariant: item.colorVariant,
+        sizeVariant: item.sizeVariant,
+      }));
 
-    // localStorage.setItem("lastOrder", JSON.stringify(orderData));
+      const shippingAddress = {
+        name: `${selectedAddr.firstName} ${selectedAddr.lastName}`,
+        phone: selectedAddr.phone,
+        street: selectedAddr.address,
+        city: selectedAddr.city,
+        state: selectedAddr.state,
+        zipCode: selectedAddr.zipCode,
+        country: "US",
+      };
 
-    if (!isBuyNow) {
-      clearCart();
+      if (paymentMethod === "cod") {
+        const orderPayload = {
+          orderData: {
+            items: orderItems,
+            shippingAddress,
+            billingAddress: shippingAddress,
+            totalAmount: finalTotal,
+            subtotal,
+            tax,
+            shipping,
+            clearCart: !isBuyNow,
+          },
+        };
+
+        const response = await apiService.createCODOrder(orderPayload);
+
+        if (response.success) {
+          if (!isBuyNow) {
+            clearCart();
+          }
+          alert("Order placed successfully!");
+          navigate("/orders");
+        }
+      } else {
+        const scriptLoaded = await loadRazorpayScript();
+
+        if (!scriptLoaded) {
+          alert("Failed to load payment gateway. Please try again.");
+          setIsProcessing(false);
+          return;
+        }
+
+        const razorpayOrderResponse = await apiService.createRazorpayOrder(
+          finalTotal,
+          "INR"
+        );
+
+        if (!razorpayOrderResponse.success) {
+          alert("Failed to create payment order");
+          setIsProcessing(false);
+          return;
+        }
+
+        const options = {
+          key:
+            razorpayOrderResponse.key ||
+            import.meta.env.VITE_RAZORPAY_KEY_ID ||
+            "rzp_test_YOUR_KEY_ID",
+          amount: razorpayOrderResponse.order.amount,
+          currency: razorpayOrderResponse.order.currency,
+          name: "LUXE Store",
+          description: "Purchase from LUXE",
+          order_id: razorpayOrderResponse.order.id,
+          handler: async function (response) {
+            try {
+              const verificationPayload = {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                orderData: {
+                  items: orderItems,
+                  shippingAddress,
+                  billingAddress: shippingAddress,
+                  totalAmount: finalTotal,
+                  subtotal,
+                  tax,
+                  shipping,
+                  clearCart: !isBuyNow,
+                },
+              };
+
+              const verifyResponse = await apiService.verifyRazorpayPayment(
+                verificationPayload
+              );
+
+              if (verifyResponse.success) {
+                if (!isBuyNow) {
+                  clearCart();
+                }
+                alert("Payment successful! Order placed.");
+                navigate("/orders");
+              } else {
+                alert("Payment verification failed");
+              }
+            } catch (error) {
+              console.error("Payment verification error:", error);
+              alert("Payment verification failed");
+            } finally {
+              setIsProcessing(false);
+            }
+          },
+          prefill: {
+            name: `${selectedAddr.firstName} ${selectedAddr.lastName}`,
+            email: user?.email || "",
+            contact: selectedAddr.phone,
+          },
+          theme: {
+            color: "#000000",
+          },
+          modal: {
+            ondismiss: function () {
+              setIsProcessing(false);
+            },
+          },
+        };
+
+        const razorpay = new window.Razorpay(options);
+        razorpay.open();
+      }
+    } catch (error) {
+      console.error("Order creation error:", error);
+      alert("Failed to place order. Please try again.");
+      setIsProcessing(false);
     }
-
-    setIsProcessing(false);
-    navigate("/orders", { state: { newOrder: orderData } });
   };
 
   const calculateTotal = () => {
@@ -369,87 +472,19 @@ const CheckoutPage = () => {
                   <div className={styles.paymentOptions}>
                     <label
                       className={`${styles.paymentOption} ${
-                        paymentMethod === "card" ? styles.selected : ""
+                        paymentMethod === "razorpay" ? styles.selected : ""
                       }`}
                     >
                       <input
                         type="radio"
                         name="paymentMethod"
-                        value="card"
-                        checked={paymentMethod === "card"}
+                        value="razorpay"
+                        checked={paymentMethod === "razorpay"}
                         onChange={(e) => setPaymentMethod(e.target.value)}
                         className={styles.paymentRadio}
                       />
                       <CreditCard size={20} />
-                      <span>Card</span>
-                    </label>
-
-                    <label
-                      className={`${styles.paymentOption} ${
-                        paymentMethod === "upi" ? styles.selected : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="upi"
-                        checked={paymentMethod === "upi"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentRadio}
-                      />
-                      <QrCode size={20} />
-                      <span>UPI ID</span>
-                    </label>
-
-                    <label
-                      className={`${styles.paymentOption} ${
-                        paymentMethod === "gpay" ? styles.selected : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="gpay"
-                        checked={paymentMethod === "gpay"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentRadio}
-                      />
-                      <Wallet size={20} />
-                      <span>GPay</span>
-                    </label>
-
-                    <label
-                      className={`${styles.paymentOption} ${
-                        paymentMethod === "phonepe" ? styles.selected : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="phonepe"
-                        checked={paymentMethod === "phonepe"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentRadio}
-                      />
-                      <Wallet size={20} />
-                      <span>PhonePe</span>
-                    </label>
-
-                    <label
-                      className={`${styles.paymentOption} ${
-                        paymentMethod === "paytm" ? styles.selected : ""
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value="paytm"
-                        checked={paymentMethod === "paytm"}
-                        onChange={(e) => setPaymentMethod(e.target.value)}
-                        className={styles.paymentRadio}
-                      />
-                      <Wallet size={20} />
-                      <span>Paytm</span>
+                      <span>Card / UPI / Wallet</span>
                     </label>
 
                     <label
@@ -466,188 +501,27 @@ const CheckoutPage = () => {
                         className={styles.paymentRadio}
                       />
                       <Truck size={20} />
-                      <span>COD</span>
+                      <span>Cash on Delivery</span>
                     </label>
                   </div>
 
-                  {/* Payment forms remain the same */}
-                  {paymentMethod === "card" && (
+                  {paymentMethod === "razorpay" && (
                     <div className={styles.paymentForm}>
                       <div className={styles.securityBadge}>
                         <Lock className={styles.lockIcon} />
-                        <span>Secure SSL encrypted payment</span>
+                        <span>Secure payment powered by Razorpay</span>
                       </div>
-                      <div className={styles.formGrid}>
-                        <div
-                          className={`${styles.formGroup} ${styles.fullWidth}`}
-                        >
-                          <label className={styles.label}>Card Number</label>
-                          <input
-                            type="text"
-                            name="cardNumber"
-                            value={formData.cardNumber}
-                            onChange={handleInputChange}
-                            placeholder="1234 5678 9012 3456"
-                            className={styles.input}
-                            maxLength="19"
-                            required
-                          />
-                        </div>
-                        <div
-                          className={`${styles.formGroup} ${styles.fullWidth}`}
-                        >
-                          <label className={styles.label}>
-                            Cardholder Name
-                          </label>
-                          <input
-                            type="text"
-                            name="cardName"
-                            value={formData.cardName}
-                            onChange={handleInputChange}
-                            className={styles.input}
-                            required
-                          />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>Expiry Date</label>
-                          <input
-                            type="text"
-                            name="expiryDate"
-                            value={formData.expiryDate}
-                            onChange={handleInputChange}
-                            placeholder="MM/YY"
-                            className={styles.input}
-                            maxLength="5"
-                            required
-                          />
-                        </div>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>CVV</label>
-                          <input
-                            type="text"
-                            name="cvv"
-                            value={formData.cvv}
-                            onChange={handleInputChange}
-                            placeholder="123"
-                            className={styles.input}
-                            maxLength="4"
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {paymentMethod === "upi" && (
-                    <div className={styles.paymentForm}>
-                      <div className={styles.securityBadge}>
-                        <Lock className={styles.lockIcon} />
-                        <span>Secure UPI Payment</span>
-                      </div>
-                      <div
-                        className={`${styles.formGroup} ${styles.fullWidth}`}
-                      >
-                        <label className={styles.label}>UPI ID</label>
-                        <input
-                          type="text"
-                          name="upiId"
-                          value={formData.upiId}
-                          onChange={handleInputChange}
-                          placeholder="yourname@upi"
-                          className={styles.input}
-                          required
-                        />
-                        <p className={styles.helperText}>
-                          Enter your UPI ID (e.g., username@paytm, username@ybl)
-                        </p>
-                      </div>
-                      <div className={styles.upiApps}>
-                        <div className={styles.upiApp}>GPay</div>
-                        <div className={styles.upiApp}>PhonePe</div>
-                        <div className={styles.upiApp}>Paytm</div>
-                        <div className={styles.upiApp}>BHIM</div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Other payment methods remain the same */}
-                  {paymentMethod === "gpay" && (
-                    <div className={styles.paymentForm}>
-                      <div className={styles.walletNotice}>
-                        <div className={styles.walletLogo}>
-                          <Wallet size={32} />
-                          <h3>Google Pay</h3>
-                        </div>
+                      <div className={styles.razorpayInfo}>
                         <p>
-                          You will be redirected to Google Pay to complete the
-                          payment
+                          You will be redirected to Razorpay's secure payment
+                          gateway where you can pay using:
                         </p>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>Phone Number</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="+91 XXXXX XXXXX"
-                            className={styles.input}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {paymentMethod === "phonepe" && (
-                    <div className={styles.paymentForm}>
-                      <div className={styles.walletNotice}>
-                        <div className={styles.walletLogo}>
-                          <Wallet size={32} />
-                          <h3>PhonePe</h3>
-                        </div>
-                        <p>
-                          You will be redirected to PhonePe to complete the
-                          payment
-                        </p>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>Phone Number</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="+91 XXXXX XXXXX"
-                            className={styles.input}
-                            required
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {paymentMethod === "paytm" && (
-                    <div className={styles.paymentForm}>
-                      <div className={styles.walletNotice}>
-                        <div className={styles.walletLogo}>
-                          <Wallet size={32} />
-                          <h3>Paytm</h3>
-                        </div>
-                        <p>
-                          You will be redirected to Paytm to complete the
-                          payment
-                        </p>
-                        <div className={styles.formGroup}>
-                          <label className={styles.label}>Phone Number</label>
-                          <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            placeholder="+91 XXXXX XXXXX"
-                            className={styles.input}
-                            required
-                          />
-                        </div>
+                        <ul className={styles.paymentMethods}>
+                          <li>Credit/Debit Cards</li>
+                          <li>UPI (GPay, PhonePe, Paytm)</li>
+                          <li>Net Banking</li>
+                          <li>Wallets</li>
+                        </ul>
                       </div>
                     </div>
                   )}

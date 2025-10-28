@@ -115,7 +115,7 @@ const ARShowroom = () => {
                       <h3 className={styles.productName}>{product.name}</h3>
                       <div className={styles.productInfo}>
                         <span className={styles.productPrice}>
-                          ${product.price}
+                          ₹{product.price}
                         </span>
                         <div className={styles.arBadge}>
                           <Sparkles className={styles.arIcon} />

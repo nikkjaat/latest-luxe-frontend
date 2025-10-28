@@ -545,23 +545,20 @@ const SearchResultsPage = () => {
                         </div>
 
                         <div className={styles.priceContainer}>
-                          <span className={styles.price}>${product.price}</span>
+                          <span className={styles.price}>₹{product.price}</span>
                           {product.originalPrice &&
                             product.originalPrice > product.price && (
                               <span className={styles.originalPrice}>
-                                ${product.originalPrice}
+                                ₹{product.originalPrice}
                               </span>
                             )}
                         </div>
 
-                        <button
-                          onClick={(e) => handleAddToCart(product, e)}
-                          className={styles.addToCartButton}
-                          disabled={product.stock === 0}
-                        >
-                          <ShoppingCart className={styles.cartIcon} />
-                          {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
-                        </button>
+                        {product.stock === 0 && (
+                          <p style={{ textAlign: "right", color: "red" }}>
+                            Out of Stock
+                          </p>
+                        )}
                       </div>
                     </div>
                   ))}
