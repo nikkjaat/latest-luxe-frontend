@@ -7,6 +7,9 @@
   top: 0px;
   z-index: 100;
   transition: all 0.3s ease;
+  display: flex;
+  width: 100%;
+  align-items: center;
 }
 
 .container {
