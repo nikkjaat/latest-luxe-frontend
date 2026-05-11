@@ -260,7 +260,7 @@ const LoginPage = () => {
             </div>
 
             {/* Demo Credentials with Quick Fill Buttons */}
-            <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            {/* <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
               <h4 className="text-sm font-medium text-gray-900 mb-2">
                 Demo Credentials (Click to fill)
               </h4>
@@ -290,7 +290,7 @@ const LoginPage = () => {
                   <strong>User:</strong> user@luxe.com / user123
                 </button>
               </div>
-            </div>
+            </div> */}
 
             <div className={styles.formOptions}>
               <div className={styles.checkboxGroup}>
